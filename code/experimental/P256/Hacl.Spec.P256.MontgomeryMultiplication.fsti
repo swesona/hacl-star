@@ -41,6 +41,8 @@ val toDomain_: a: int -> Tot (r: nat (*{r =  a * pow2 256 % prime}*))
 
 val lemmaFromDomain: a: int -> Lemma (fromDomain_ (a) == a * modp_inv2 (pow2 256) % prime)
 
+val lemmaToDomain: a: int -> Lemma (toDomain_(a) == a * (pow2 256) % prime)
+
 val lemmaToDomainAndBackIsTheSame: a: nat { a < prime} -> Lemma (fromDomain_ (toDomain_ a) == a)
   [SMTPat (fromDomain_ (toDomain_ a))]
 

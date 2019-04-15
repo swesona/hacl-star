@@ -55,6 +55,8 @@ let toDomain a =
 
 let lemmaFromDomain a = admit()
 
+let lemmaToDomain a = admit()
+
 let lemmaToDomainAndBackIsTheSame a = 
   let to = toDomain_ a in 
   let from = fromDomain_ to in 
