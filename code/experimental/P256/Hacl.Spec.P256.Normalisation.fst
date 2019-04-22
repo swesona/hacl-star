@@ -41,9 +41,11 @@ let _norm (p : nat * nat * nat) =
   let y3 = (z3i * y) % prime in 
   let z3 = 1 in 
   assert(x3 == (x * (pow (z * z) (prime -2) % prime) % prime));
+  assert(y3 == (y * (pow (z * z * z) (prime - 2) % prime) % prime));
+  assert(z3 == 1);
   (x3, y3, z3)
 
 open FStar.Mul
 
 (* z * z * pow2 256 * z % prime *)
-val lemma_1: z: nat-> Lemma (toDomain_ (fromDomain_ (toDomain_ (z * z % prime)) * z % prime) == toDomain_ (z * z * z % prime))
+val lemma_erase_norm: z: nat-> Lemma (toDomain_ (fromDomain_ (toDomain_ (z * z % prime)) * z % prime) == toDomain_ (z * z * z % prime))

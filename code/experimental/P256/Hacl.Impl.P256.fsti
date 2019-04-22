@@ -20,7 +20,7 @@ open Hacl.Spec.P256.SolinasReduction
 open Hacl.Spec.P256.MontgomeryMultiplication
 open Hacl.Spec.P256.MontgomeryMultiplication.PointDouble
 open Hacl.Spec.P256.MontgomeryMultiplication.PointAdd
-
+open Hacl.Spec.P256.Normalisation 
 
 
 open Lib.Loops
@@ -109,7 +109,21 @@ val norm: p: point -> resultPoint: point -> tempBuffer: lbuffer uint64 (size 32)
   (requires fun h -> live h p /\ live h resultPoint /\ live h tempBuffer /\ disjoint p tempBuffer /\ disjoint tempBuffer resultPoint /\ 
     as_nat h (gsub p (size 0) (size 4)) < prime /\
     as_nat h (gsub p (size 4) (size 4)) < prime /\
-    as_nat h (gsub p (size 8) (size 4)) < prime  
+    as_nat h (gsub p (size 8) (size 4)) < prime 
+  ) 
+  (ensures fun h0 _ h1 -> 
+      modifies2 tempBuffer resultPoint h0 h1 (*/\* (	   
+
+      let x3 = point_x_as_nat h1 resultPoint in  
+      let y3 = point_y_as_nat h1 resultPoint in 
+      let z3 = point_z_as_nat h1 resultPoint in 
+
+      let xD = fromDomain_ (point_x_as_nat h0 p) in 
+      let yD = fromDomain_ (point_x_as_nat h0 p) in 
+      let zD = fromDomain_ (point_x_as_nat h0 p) in 
+
+      let (xN, yN, zN) = _norm (xD, yD, zD) in 
+      x3 == xN /\ y3 == yN /\ z3 == zN 
+   )    *)
   )
-  (ensures fun h0 _ h1 -> True)
 

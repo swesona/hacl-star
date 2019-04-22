@@ -1,4 +1,4 @@
-module Hacl.Impl.P256
+module Hacl.Impl.P256 
 
 open FStar.HyperStack.All
 open FStar.HyperStack
@@ -20,6 +20,7 @@ open Hacl.Spec.P256.SolinasReduction
 open Hacl.Spec.P256.MontgomeryMultiplication
 open Hacl.Spec.P256.MontgomeryMultiplication.PointDouble
 open Hacl.Spec.P256.MontgomeryMultiplication.PointAdd
+open Hacl.Spec.P256.Normalisation 
 
 open Lib.Loops
 open FStar.Math.Lemmas
@@ -920,7 +921,7 @@ let point_add p q result tempBuffer =
    
 val uploadOneImpl: f: felem -> Stack unit
   (requires fun h -> live h f)
-  (ensures fun h0 _ h1 -> as_nat h1 f == 1)
+  (ensures fun h0 _ h1 -> as_nat h1 f == 1 /\ modifies1 f h0 h1)
   
 let uploadOneImpl f = 
   upd f (size 0) (u64 1);
@@ -946,39 +947,54 @@ let norm p resultPoint tempBuffer =
     let h0 = ST.get() in 
   Hacl.Spec.P256.MontgomeryMultiplication.montgomery_multiplication_buffer zf zf z2f;
   Hacl.Spec.P256.MontgomeryMultiplication.montgomery_multiplication_buffer z2f zf z3f;
-    let open Hacl.Spec.P256.Normalisation in 
-      lemma_1 (fromDomain_ (as_nat h0 zf));
+
   Hacl.Spec.P256.MontgomeryMultiplication.exponent z2f z2f tempBuffer20;
   Hacl.Spec.P256.MontgomeryMultiplication.exponent z3f z3f tempBuffer20;
-    let h4 = ST.get() in 
- 
-	power_distributivity (fromDomain_ (as_nat h0 zf) * fromDomain_ (as_nat h0 zf)) (prime -2) prime;
-    assert(let k = fromDomain_ (as_nat h0 zf) * fromDomain_ (as_nat h0 zf) in as_nat h4 z2f = toDomain_ ((pow k (prime - 2)) % prime));
-
-      power_distributivity (fromDomain_ (as_nat h0 zf) * fromDomain_ (as_nat h0 zf) * fromDomain_ (as_nat h0 zf)) (prime -2) prime; 
-    assert(let k = fromDomain_ (as_nat h0 zf) * fromDomain_ (as_nat h0 zf) * fromDomain_ (as_nat h0 zf) in 
-      as_nat h4 z3f = toDomain_ ((pow k (prime - 2)) % prime));  
-
+     
   Hacl.Spec.P256.MontgomeryMultiplication.montgomery_multiplication_buffer xf z2f z2f;
-    let h5 = ST.get() in 
-    assert(as_seq h5 z2f == montgomery_multiplication_seq (as_seq h0 xf) (as_seq h4 z2f));  
-    
-    assert(let xD = fromDomain_(point_x_as_nat h0 p) in 
-      let zD = fromDomain_ (point_z_as_nat h0 p) in  
-      felem_seq_as_nat (as_seq h5 z2f) == toDomain_ (xD * ((pow (zD * zD) (prime - 2)) % prime) % prime));
-
-
-    admit();
-
   Hacl.Spec.P256.MontgomeryMultiplication.montgomery_multiplication_buffer yf z3f z3f;
+     let h1 = ST.get() in 
+    assert(modifies1 tempBuffer h0 h1);
+
 
   fromDomain z2f resultX;
   fromDomain z3f resultY;
-  
-    let h6 = ST.get() in 
- assume (let x3 = point_x_as_nat h6 result in
+    let h2 = ST.get() in 
+    assert(modifies1 resultPoint h1 h2);
+  uploadOneImpl resultZ;
+    let h3 = ST.get() in 
+    assert(modifies1 resultPoint h2 h3);
+    assert(modifies2 tempBuffer resultPoint h0 h3); 
+
+    lemma_erase_norm (fromDomain_ (as_nat h0 zf));
+    power_distributivity (fromDomain_ (as_nat h0 zf) * fromDomain_ (as_nat h0 zf)) (prime -2) prime;
+    power_distributivity (fromDomain_ (as_nat h0 zf) * fromDomain_ (as_nat h0 zf) * fromDomain_ (as_nat h0 zf)) (prime -2) prime;
+    
+    (*assert(as_seq h5 z2f == montgomery_multiplication_seq (as_seq h0 xf) (as_seq h4 z2f));  
+    assert(as_seq h5 z3f == montgomery_multiplication_seq (as_seq h0 yf) (as_seq h4 z3f)); *)
+    
+    assert(let xD = fromDomain_(point_x_as_nat h0 p) in 
+      let zD = fromDomain_ (point_z_as_nat h0 p) in  
+      felem_seq_as_nat (as_seq h1 z2f) == toDomain_ (xD * ((pow (zD * zD) (prime - 2)) % prime) % prime));
+
+    assert(let yD = fromDomain_ (point_y_as_nat h0 p) in 
+      let zD = fromDomain_ (point_z_as_nat h0 p) in 
+      felem_seq_as_nat (as_seq h1 z3f) == toDomain_ (yD * ((pow (zD * zD * zD) (prime - 2)) % prime) % prime));
+      
+   (* assert(as_nat h6 resultX = fromDomain_ (as_nat h5 z2f)); *)
+    assert(let xD = fromDomain_(point_x_as_nat h0 p) in 
+      let zD = fromDomain_ (point_z_as_nat h0 p) in  
+      as_nat h3 resultX = xD * ((pow (zD * zD) (prime - 2)) % prime) % prime); 
+
+    assert(let yD = fromDomain_(point_y_as_nat h0 p) in 
+      let zD = fromDomain_ (point_z_as_nat h0 p) in 
+      as_nat h3 resultY = yD * ((pow (zD * zD * zD) (prime -2)) % prime) % prime);
+
+    assert (let x3 = point_x_as_nat h2 resultPoint in
     let zD = fromDomain_(point_z_as_nat h0 p) in 
     let xD = fromDomain_(point_x_as_nat h0 p) in 
-    x3 == modp_inv2 (zD * zD % prime) * xD % prime); 
-  uploadOneImpl resultZ
+    x3 == xD * (pow (zD * zD) (prime - 2) % prime) % prime)
 
+    (**)
+
+ 
