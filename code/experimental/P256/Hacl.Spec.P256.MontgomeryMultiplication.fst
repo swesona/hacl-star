@@ -253,8 +253,6 @@ let rec pow_plus a b c =
 private val lemma_mod_twice : a:int -> p:pos -> Lemma ((a % p) % p == a % p)
 private let lemma_mod_twice a p = lemma_mod_mod (a % p) a p
 
-val power_distributivity: a: nat -> b: nat -> c: pos -> Lemma ((pow (a % c) b) % c = (pow a b) % c)
-
 let rec power_distributivity a b c =
    match b with 
    | 0 -> ()

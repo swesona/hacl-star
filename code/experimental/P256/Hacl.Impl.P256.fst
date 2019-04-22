@@ -928,6 +928,7 @@ let uploadOneImpl f =
   upd f (size 2) (u64 0);
   upd f (size 3) (u64 0)
 
+#reset-options "--z3refresh --z3rlimit 500" 
 
 let norm p resultPoint tempBuffer = 
   let xf = sub p (size 0) (size 4) in
@@ -944,44 +945,40 @@ let norm p resultPoint tempBuffer =
 
     let h0 = ST.get() in 
   Hacl.Spec.P256.MontgomeryMultiplication.montgomery_multiplication_buffer zf zf z2f;
-    let h1 = ST.get() in 
-    assert(as_seq h1 z2f == montgomery_multiplication_seq (as_seq h0 zf) (as_seq h0 zf));
-    
-    assert(felem_seq_as_nat (montgomery_multiplication_seq (as_seq h0 zf) (as_seq h0 zf)) = toDomain_ (fromDomain_ (
-    felem_seq_as_nat (as_seq h0 zf)) * fromDomain_ (felem_seq_as_nat (as_seq h0 zf)) % prime));
-    
-    assert(felem_seq_as_nat (as_seq h1 z2f) = toDomain_ (fromDomain_ (
-    felem_seq_as_nat (as_seq h0 zf)) * fromDomain_ (felem_seq_as_nat (as_seq h0 zf)) % prime));
-
-    assert(as_nat h1 z2f = toDomain_ (fromDomain_ (as_nat h0 zf) * fromDomain_ (as_nat h0 zf) % prime));
-
   Hacl.Spec.P256.MontgomeryMultiplication.montgomery_multiplication_buffer z2f zf z3f;
-    let h2 = ST.get() in  
-    assert(as_seq h2 z3f == montgomery_multiplication_seq (as_seq h1 z2f) (as_seq h0 zf));
-    assert(as_nat h2 z3f == toDomain_ (fromDomain_ (as_nat h1 z2f) * fromDomain_ (as_nat h0 zf) % prime));
-    assert(as_nat h2 z3f == toDomain_ (fromDomain_ (toDomain_ (fromDomain_ (as_nat h0 zf) * fromDomain_ (as_nat h0 zf) % prime)) * fromDomain_ (as_nat h0 zf) % prime));
     let open Hacl.Spec.P256.Normalisation in 
       lemma_1 (fromDomain_ (as_nat h0 zf));
-      assert(let z = fromDomain_ (as_nat h0 zf) in as_nat h2 z3f == toDomain_ (z * z * z % prime));
-      assert(let z = fromDomain_ (as_nat h0 zf) in as_nat h2 z2f == toDomain_ (z * z % prime));
   Hacl.Spec.P256.MontgomeryMultiplication.exponent z2f z2f tempBuffer20;
-    let h3 = ST.get() in 
-    assert(let k = fromDomain_ (as_nat h2 z2f) in as_nat h3 z2f = toDomain_ ((pow k (prime - 2)) % prime));
-    assert(let k = fromDomain_ (as_nat h0 zf) * fromDomain_ (as_nat h0 zf) % prime in as_nat h3 z2f = toDomain_ ((pow k (prime - 2)) % prime));
-    (* power distributivity *)
-    assume(let k = fromDomain_ (as_nat h0 zf) * fromDomain_ (as_nat h0 zf) in as_nat h3 z2f = toDomain_ ((pow k (prime - 2)) % prime));
   Hacl.Spec.P256.MontgomeryMultiplication.exponent z3f z3f tempBuffer20;
     let h4 = ST.get() in 
-    assert(let k = fromDomain_ (as_nat h3 z3f) in as_nat h4 z3f = toDomain_ ((pow k (prime - 2)) % prime));
-    admit();
-    let h4 = ST.get() in 
-    assert(let k = fromDomain_ (as_nat h3 z3f) in as_nat h4 z3f = toDomain_ ((pow k (prime - 2)) % prime));
-    admit();
+ 
+	power_distributivity (fromDomain_ (as_nat h0 zf) * fromDomain_ (as_nat h0 zf)) (prime -2) prime;
+    assert(let k = fromDomain_ (as_nat h0 zf) * fromDomain_ (as_nat h0 zf) in as_nat h4 z2f = toDomain_ ((pow k (prime - 2)) % prime));
+
+      power_distributivity (fromDomain_ (as_nat h0 zf) * fromDomain_ (as_nat h0 zf) * fromDomain_ (as_nat h0 zf)) (prime -2) prime; 
+    assert(let k = fromDomain_ (as_nat h0 zf) * fromDomain_ (as_nat h0 zf) * fromDomain_ (as_nat h0 zf) in 
+      as_nat h4 z3f = toDomain_ ((pow k (prime - 2)) % prime));  
 
   Hacl.Spec.P256.MontgomeryMultiplication.montgomery_multiplication_buffer xf z2f z2f;
+    let h5 = ST.get() in 
+    assert(as_seq h5 z2f == montgomery_multiplication_seq (as_seq h0 xf) (as_seq h4 z2f));  
+    
+    assert(let xD = fromDomain_(point_x_as_nat h0 p) in 
+      let zD = fromDomain_ (point_z_as_nat h0 p) in  
+      felem_seq_as_nat (as_seq h5 z2f) == toDomain_ (xD * ((pow (zD * zD) (prime - 2)) % prime) % prime));
+
+
+    admit();
+
   Hacl.Spec.P256.MontgomeryMultiplication.montgomery_multiplication_buffer yf z3f z3f;
 
   fromDomain z2f resultX;
   fromDomain z3f resultY;
+  
+    let h6 = ST.get() in 
+ assume (let x3 = point_x_as_nat h6 result in
+    let zD = fromDomain_(point_z_as_nat h0 p) in 
+    let xD = fromDomain_(point_x_as_nat h0 p) in 
+    x3 == modp_inv2 (zD * zD % prime) * xD % prime); 
   uploadOneImpl resultZ
 
