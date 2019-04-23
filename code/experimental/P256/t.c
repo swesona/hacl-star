@@ -93,7 +93,7 @@ void testToDomain(uint64_t * basePoint)
    }
 
    if (flag)
-      printf("%s\n", "The test is correct"); 
+      printf("%s\n", "The test (casting to Domain) is correct"); 
    else
       {
          printf("%s\n", "The test has not passed");
@@ -137,7 +137,7 @@ void pointAddTest(uint64_t * pointA, uint64_t * pointB)
    }
 
    if (flag)
-      printf("%s\n", "The test is correct"); 
+      printf("%s\n", "The test (point addition) is correct"); 
    else
       {
          printf("%s\n", "The test has not passed");
@@ -156,7 +156,40 @@ void pointDoubleTest(uint64_t * pointA)
    pointToDomain(pointA, pointA);
    point_double(pointA, resultPoint, tempBuffer);
    norm(resultPoint, resultPoint, tempBuffer);
-   print_uu_l(resultPoint, 12, false);
+
+   uint64_t * expectedResult = (uint64_t *) malloc (sizeof (uint64_t) * 12);
+   
+   expectedResult[0] = 12166265573283071317uL;
+   expectedResult[1] = 651836049588995208uL;
+   expectedResult[2] = 8576576477032308956uL;
+   expectedResult[3] = 14038888694816908229uL;
+
+   expectedResult[4] = 406750811229934272uL;
+   expectedResult[5] = 17370794130649372875uL;
+   expectedResult[6] = 6917402344331298187uL;
+   expectedResult[7] = 2808755901269482612uL;
+ 
+   expectedResult[8] = 1uL;
+   expectedResult[9] = 0uL;
+   expectedResult[10] = 0uL;
+   expectedResult[11] = 0uL;
+   
+   bool flag = true;
+   for (int i = 0; i< 12; i++)
+   {
+      flag = flag && ~(expectedResult[i] ^ resultPoint[i]);
+   }
+
+   if (flag)
+      printf("%s\n", "The test (point double) is correct"); 
+   else
+      {
+         printf("%s\n", "The test has not passed");
+         printf("%s\n", "The expectedResult:");
+         print_uu_l(expectedResult, 12, false);
+         printf("%s\n", "The gotten result");
+         print_uu_l(resultPoint, 12, false);
+      }
    
 }
 

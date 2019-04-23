@@ -969,32 +969,15 @@ let norm p resultPoint tempBuffer =
     lemma_erase_norm (fromDomain_ (as_nat h0 zf));
     power_distributivity (fromDomain_ (as_nat h0 zf) * fromDomain_ (as_nat h0 zf)) (prime -2) prime;
     power_distributivity (fromDomain_ (as_nat h0 zf) * fromDomain_ (as_nat h0 zf) * fromDomain_ (as_nat h0 zf)) (prime -2) prime;
-    
-    (*assert(as_seq h5 z2f == montgomery_multiplication_seq (as_seq h0 xf) (as_seq h4 z2f));  
-    assert(as_seq h5 z3f == montgomery_multiplication_seq (as_seq h0 yf) (as_seq h4 z3f)); *)
-    
-    assert(let xD = fromDomain_(point_x_as_nat h0 p) in 
-      let zD = fromDomain_ (point_z_as_nat h0 p) in  
-      felem_seq_as_nat (as_seq h1 z2f) == toDomain_ (xD * ((pow (zD * zD) (prime - 2)) % prime) % prime));
 
-    assert(let yD = fromDomain_ (point_y_as_nat h0 p) in 
-      let zD = fromDomain_ (point_z_as_nat h0 p) in 
-      felem_seq_as_nat (as_seq h1 z3f) == toDomain_ (yD * ((pow (zD * zD * zD) (prime - 2)) % prime) % prime));
-      
-   (* assert(as_nat h6 resultX = fromDomain_ (as_nat h5 z2f)); *)
-    assert(let xD = fromDomain_(point_x_as_nat h0 p) in 
-      let zD = fromDomain_ (point_z_as_nat h0 p) in  
-      as_nat h3 resultX = xD * ((pow (zD * zD) (prime - 2)) % prime) % prime); 
+   lemma_norm_as_specification (fromDomain_ (point_x_as_nat h0 p)) (fromDomain_ (point_y_as_nat h0 p)) (fromDomain_ (point_z_as_nat h0 p)) (point_x_as_nat h3 resultPoint) (point_y_as_nat h3 resultPoint) (point_z_as_nat h3 resultPoint);
 
-    assert(let yD = fromDomain_(point_y_as_nat h0 p) in 
-      let zD = fromDomain_ (point_z_as_nat h0 p) in 
-      as_nat h3 resultY = yD * ((pow (zD * zD * zD) (prime -2)) % prime) % prime);
-
-    assert (let x3 = point_x_as_nat h2 resultPoint in
-    let zD = fromDomain_(point_z_as_nat h0 p) in 
-    let xD = fromDomain_(point_x_as_nat h0 p) in 
-    x3 == xD * (pow (zD * zD) (prime - 2) % prime) % prime)
-
+    assert(
+       let zD = fromDomain_(point_z_as_nat h0 p) in 
+       let xD = fromDomain_(point_x_as_nat h0 p) in 
+       let yD = fromDomain_(point_y_as_nat h0 p) in 
+       let (xN, yN, zN) = _norm (xD, yD, zD) in 
+       point_x_as_nat h3 resultPoint == xN /\ point_y_as_nat h3 resultPoint == yN /\ point_z_as_nat h3 resultPoint == zN)
     (**)
 
  
