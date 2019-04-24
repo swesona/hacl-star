@@ -690,6 +690,10 @@ let lemma_inDomainModulo a b =
   lemma_mod_mul_distr_r a b prime
 
 
+let lemmaEraseToDomainFromDomain z = 
+  lemma_mod_mul_distr_l (z * z) z prime
+
+
 val big_power: a: nat -> b: nat -> c: nat -> d: nat -> e: nat -> Lemma (pow a b * pow a c * pow a d * pow a e = pow a (b + c + d + e))
 
 let big_power a b c d e = 

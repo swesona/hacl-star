@@ -1,36 +1,24 @@
 module Hacl.Spec.P256.MontgomeryMultiplication
 
-open Lib.IntTypes
 open FStar.Math.Lemmas
 open FStar.Math.Lib
-open Hacl.Spec.P256.Lemmas
-open Hacl.Spec.P256.Definitions
-
-open Hacl.Spec.Curve25519.Field64.Definition
-open Hacl.Spec.P256.Core
-
-
+open FStar.Mul
 
 open FStar.HyperStack.All
 open FStar.HyperStack
 open FStar.HyperStack.ST
-
 module ST = FStar.HyperStack.ST
-module HS = FStar.HyperStack
 
-open Lib.Buffer
-open Lib.Sequence
+open Hacl.Spec.P256.Lemmas
+open Hacl.Spec.P256.Definitions
+open Hacl.Spec.P256.Core
 
 open Hacl.Impl.Curve25519.Field64.Core
-module C =  Hacl.Spec.Curve25519.Field64.Core
 module D = Hacl.Spec.Curve25519.Field64.Definition
-open  Hacl.Spec.P256.Core
-module Loop = Lib.LoopCombinators
 
-
-open Lib.Loops
-
-open FStar.Mul
+open Lib.IntTypes
+open Lib.Buffer
+open Lib.Sequence
 
 
 noextract
@@ -51,9 +39,7 @@ val lemmaFromDomainToDomain: a: nat { a < prime} -> Lemma (toDomain_ (fromDomain
 noextract
 val pow: a:nat -> b:nat -> res:nat
 
-
 val power_distributivity: a: nat -> b: nat -> c: pos -> Lemma ((pow (a % c) b) % c = (pow a b) % c)
-
 
 noextract 
 val felem_add_seq: a: felem_seq{felem_seq_as_nat a < prime} -> b: felem_seq{felem_seq_as_nat b < prime} -> 
@@ -74,12 +60,8 @@ inline_for_extraction noextract
 val montgomery_multiplication_buffer: a: felem -> b: felem -> r: felem ->  Stack unit
   (requires (fun h -> live h a /\ as_nat h a < prime /\ live h b /\ live h r /\ as_nat h b < prime)) 
   (ensures (fun h0 _ h1 -> modifies1 r h0 h1 /\ 
-    as_nat h1 r < prime /\ 
-    (*as_nat h1 r == as_nat h0 a * as_nat h0 b * modp_inv2(pow2 256) % prime /\
-    as_nat h1 r == toDomain_ (fromDomain_(as_nat h0 a) * fromDomain_ (as_nat h0 b)) *)
+    as_nat h1 r < prime /\
     as_seq h1 r == montgomery_multiplication_seq (as_seq h0 a) (as_seq h0 b)))
-
-
 
 noextract
 val mm_cube_seq: a: felem_seq {felem_seq_as_nat a < prime}-> 
@@ -90,8 +72,6 @@ noextract
 val mm_quatre_seq: a: felem_seq {felem_seq_as_nat a < prime} -> 
   Tot (r: felem_seq {felem_seq_as_nat r < prime /\ 
   felem_seq_as_nat r = toDomain_ (fromDomain_ (felem_seq_as_nat a) * fromDomain_ (felem_seq_as_nat a) * fromDomain_ (felem_seq_as_nat a) * fromDomain_ (felem_seq_as_nat a) % prime)})
-
-
 
 noextract 
 val mm_byTwo_seq: a: felem_seq {felem_seq_as_nat a < prime} -> Tot (r: felem_seq {felem_seq_as_nat r < prime /\
@@ -113,6 +93,7 @@ noextract
 val mm_byMinusThree_seq: a: felem_seq {felem_seq_as_nat a < prime} -> Tot (r: felem_seq {felem_seq_as_nat r < prime /\
   felem_seq_as_nat r = toDomain_ ((-3) * fromDomain_ (felem_seq_as_nat a) % prime)})
 
+val lemmaEraseToDomainFromDomain: z: nat-> Lemma (toDomain_ (fromDomain_ (toDomain_ (z * z % prime)) * z % prime) == toDomain_ (z * z * z % prime))
 
 val exponent: a: felem ->result: felem -> tempBuffer: lbuffer uint64 (size 20) ->  Stack unit
   (requires fun h -> live h a /\ live h tempBuffer /\ live h result /\ disjoint tempBuffer result /\ 
