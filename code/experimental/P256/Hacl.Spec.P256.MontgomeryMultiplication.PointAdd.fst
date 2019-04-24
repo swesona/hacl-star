@@ -19,7 +19,7 @@ open Hacl.Spec.P256.MontgomeryMultiplication.PointDouble
 #reset-options "--z3rlimit 300" 
 
 noextract
-let _point_add p q : point_nat = 
+let _point_add (p:point_nat) (q:point_nat) : point_nat = 
   let open FStar.Tactics in 
   let open FStar.Tactics.Canon in 
 
@@ -66,7 +66,6 @@ let _point_add p q : point_nat =
 	(x2, y2, z2) 
       else  
 	(x3, y3, z3)
-	
     end	
 
 
@@ -298,7 +297,6 @@ let computeZ3_point_add_seq z1 z2 h =
   let open FStar.Tactics in 
   let open FStar.Tactics.Canon in 
 
-
   let z1z2 = montgomery_multiplication_seq z1 z2 in 
   let z3 = montgomery_multiplication_seq h z1z2 in 
 
@@ -378,7 +376,7 @@ let point_double_condition_seq u1 u2 s1 s2 z1 z2 =
     lemma_multiplication_not_mod_prime (felem_seq_as_nat z2) (modp_inv2 (pow2 256));
     lemmaFromDomain (felem_seq_as_nat z1);
     lemmaFromDomain (felem_seq_as_nat z2);
-    eq_u64 result (u64 (u64 0xffffffffffffffff))     
+    eq_u64 result (u64 0xffffffffffffffff)     
 
 val copy_conditional_tuple: out: felem4{as_nat4 out < prime} -> x: felem4 {as_nat4 x < prime} -> 
   mask: uint64 {uint_v mask = 0 \/ uint_v mask = pow2 64 - 1} -> 

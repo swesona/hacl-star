@@ -60,6 +60,7 @@ let point_z_as_nat (h: mem) (e: point) : GTot nat =
   let s3 = s.[11] in 
   D.as_nat4 (s0, s1, s2, s3)
 
+
 val pointToDomain: p: point -> result: point -> Stack unit 
   (requires fun h -> live h p /\ live h result /\ disjoint p result /\
     point_x_as_nat h p < prime /\ point_y_as_nat h p < prime /\ point_z_as_nat h p < prime)
@@ -67,6 +68,7 @@ val pointToDomain: p: point -> result: point -> Stack unit
     point_x_as_nat h1 result == toDomain_ (point_x_as_nat h0 p) /\
     point_y_as_nat h1 result == toDomain_ (point_y_as_nat h0 p) /\
     point_z_as_nat h1 result == toDomain_ (point_z_as_nat h0 p))
+
 
 val pointFromDomain: p: point -> result: point-> Stack unit 
   (requires fun h -> live h p /\ live h result/\ disjoint result p /\ 
@@ -91,7 +93,6 @@ val point_double: p: point -> result: point ->  tempBuffer: lbuffer uint64 (size
   )
 
 
-  
 val point_add: p: point -> q: point -> result: point -> tempBuffer: lbuffer uint64 (size 88) -> 
    Stack unit (requires fun h -> live h p /\ live h q /\ live h result /\ live h tempBuffer /\ 
    LowStar.Monotonic.Buffer.all_disjoint [loc p; loc q; loc result; loc tempBuffer] /\
@@ -112,8 +113,7 @@ val norm: p: point -> resultPoint: point -> tempBuffer: lbuffer uint64 (size 32)
     as_nat h (gsub p (size 8) (size 4)) < prime 
   ) 
   (ensures fun h0 _ h1 -> 
-      modifies2 tempBuffer resultPoint h0 h1 /\	   
-(
+      modifies2 tempBuffer resultPoint h0 h1 /\	(
       let x3 = point_x_as_nat h1 resultPoint in  
       let y3 = point_y_as_nat h1 resultPoint in 
       let z3 = point_z_as_nat h1 resultPoint in 

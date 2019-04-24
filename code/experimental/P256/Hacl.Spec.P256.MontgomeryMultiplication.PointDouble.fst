@@ -25,7 +25,7 @@ let _point_double p =
   (x3, y3, z3)
 
 
-val computeS: px: felem_seq{felem_seq_as_nat px < prime} -> py: felem_seq{felem_seq_as_nat py < prime} -> 
+val computeS: px: felem_seq_prime -> py: felem_seq_prime -> 
   Lemma ((
     let pxD = fromDomain_ (felem_seq_as_nat px) in let pyD = fromDomain_(felem_seq_as_nat py) in 
     let s = mm_byFour_seq (montgomery_multiplication_seq px (montgomery_multiplication_seq py py)) in 
@@ -46,7 +46,7 @@ let computeS px py =
   
   lemma_mod_mul_distr_r 4 (pxD * pyD * pyD) prime
 
-val computeM: px: felem_seq{felem_seq_as_nat px < prime} -> pz: felem_seq{felem_seq_as_nat pz < prime} -> 
+val computeM: px: felem_seq_prime -> pz: felem_seq_prime -> 
   Lemma ((let pxD = fromDomain_ (felem_seq_as_nat px) in let pzD = fromDomain_(felem_seq_as_nat pz) in 
   let m = felem_add_seq (mm_byMinusThree_seq(mm_quatre_seq pz)) (mm_byThree_seq(montgomery_multiplication_seq px px)) in  
   felem_seq_as_nat m = toDomain_ ((((-3) * pzD * pzD * pzD * pzD + 3 * pxD * pxD) % prime)))) 
@@ -71,7 +71,7 @@ let computeM px pz =
   modulo_distributivity ((-3) * pzD * pzD * pzD * pzD) (3 * pxD * pxD) prime
  
 
-val computeZ3: py: felem_seq{felem_seq_as_nat py < prime} -> pz: felem_seq{felem_seq_as_nat pz < prime} -> 
+val computeZ3: py: felem_seq_prime -> pz: felem_seq_prime-> 
   Lemma (
     let z3 = mm_byTwo_seq(montgomery_multiplication_seq py pz) in 
     let pyD = fromDomain_ (felem_seq_as_nat py) in let pzD = fromDomain_(felem_seq_as_nat pz) in 
@@ -114,9 +114,7 @@ val lemma_yToSpecification: pxD: nat -> pyD: nat -> pzD: nat ->
 let lemma_yToSpecification pxD pyD pzD s m x3 y3 = ()
 
 
-val lemma_zToSpecification: pxD: nat ->  pyD: nat -> pzD: nat -> 
-  z3: felem_seq{felem_seq_as_nat z3 = toDomain_(2 * pyD * pzD % prime)} -> 
-  Lemma (let (xN, yN, zN) = _point_double (pxD, pyD, pzD) in felem_seq_as_nat z3 = toDomain_ (zN))
+val lemma_zToSpecification: pxD: nat ->  pyD: nat -> pzD: nat -> z3: felem_seq{felem_seq_as_nat z3 = toDomain_(2 * pyD * pzD % prime)} -> Lemma (let (xN, yN, zN) = _point_double (pxD, pyD, pzD) in felem_seq_as_nat z3 = toDomain_ (zN))
 
 let lemma_zToSpecification pxD pyD pzD z3 = ()
 
@@ -130,8 +128,7 @@ let copy_point_seq p = p
 
 noextract
 val point_double_compute_s_m_seq:  
-  p: point_seq
-    {let x = Lib.Sequence.sub p 0 4 in let y = Lib.Sequence.sub p 4 4 in let z = Lib.Sequence.sub p 8 4 in felem_seq_as_nat x < prime /\ felem_seq_as_nat y < prime /\ felem_seq_as_nat z < prime} -> 
+  p: point_prime -> 
   Tot (r: tuple2 felem_seq felem_seq{let s, m = r in 
       let px = Lib.Sequence.sub p 0 4 in 
       let py = Lib.Sequence.sub p 4 4 in 
@@ -164,11 +161,9 @@ let point_double_compute_s_m_seq p =
 
 
 noextract
-val point_double_compute_x3_seq: s: felem_seq {felem_seq_as_nat s < prime} -> 
-  m: felem_seq{felem_seq_as_nat m < prime} -> 
-  Tot (x3: felem_seq {
-    let mD = fromDomain_ (felem_seq_as_nat m) in let sD = fromDomain_ (felem_seq_as_nat s) in 
-    felem_seq_as_nat x3 < prime /\ felem_seq_as_nat x3 = toDomain_ (((mD * mD - 2 * sD) % prime))})
+val point_double_compute_x3_seq: s: felem_seq_prime ->  m: felem_seq_prime -> 
+  Tot (x3: felem_seq_prime {let mD = fromDomain_ (felem_seq_as_nat m) in let sD = fromDomain_ (felem_seq_as_nat s) in 
+    felem_seq_as_nat x3 = toDomain_ (((mD * mD - 2 * sD) % prime))})
 
 let point_double_compute_x3_seq s m = 
   let twoS = mm_byTwo_seq s in 
@@ -179,9 +174,9 @@ let point_double_compute_x3_seq s m =
 
 
 noextract
-val point_double_compute_y3_seq: p_y: felem_seq{felem_seq_as_nat p_y < prime} -> x3: felem_seq {felem_seq_as_nat x3 < prime}->  s: felem_seq{felem_seq_as_nat s < prime} -> m: felem_seq{felem_seq_as_nat m < prime} -> Tot (y3: felem_seq {
+val point_double_compute_y3_seq: p_y: felem_seq_prime -> x3: felem_seq_prime->  s: felem_seq_prime -> m: felem_seq_prime -> Tot (y3: felem_seq_prime {
    let mD = fromDomain_ (felem_seq_as_nat m) in let sD = fromDomain_ (felem_seq_as_nat s) in let x3D = fromDomain_ (felem_seq_as_nat x3) in let pyD = fromDomain_ (felem_seq_as_nat p_y) in
-felem_seq_as_nat y3 < prime /\ felem_seq_as_nat y3 = toDomain_ (((mD * (sD - x3D) - (8 * pyD * pyD * pyD * pyD))% prime))})
+   felem_seq_as_nat y3 = toDomain_ (((mD * (sD - x3D) - (8 * pyD * pyD * pyD * pyD))% prime))})
 
 let point_double_compute_y3_seq py x3 s m = 
     let open FStar.Tactics in 
@@ -207,16 +202,13 @@ let point_double_compute_y3_seq py x3 s m =
 
 
 noextract
-val point_double_seq: p: point_seq{let x = Lib.Sequence.sub p 0 4 in let y = Lib.Sequence.sub p 4 4 in let z = Lib.Sequence.sub p 8 4 in 
-  felem_seq_as_nat x < prime /\ felem_seq_as_nat y < prime /\ felem_seq_as_nat z < prime} -> 
-  Tot (r: point_seq  {
+val point_double_seq: p: point_prime -> 
+  Tot (r: point_prime  {
     let x3 = Lib.Sequence.sub r 0 4 in let y3 = Lib.Sequence.sub r 4 4 in let z3 = Lib.Sequence.sub r 8 4 in 
     let x = Lib.Sequence.sub p 0 4 in let y = Lib.Sequence.sub p 4 4 in let z = Lib.Sequence.sub p 8 4 in 
-    
     let xD = fromDomain_ (felem_seq_as_nat x) in let yD = fromDomain_ (felem_seq_as_nat y) in let zD = fromDomain_(felem_seq_as_nat z) in 
- 
     let (xN, yN, zN) = _point_double (xD, yD, zD) in 
-    felem_seq_as_nat x3 = toDomain_ (xN) /\ felem_seq_as_nat y3 = toDomain_ (yN) /\ felem_seq_as_nat z3 = toDomain_ (zN) /\ felem_seq_as_nat x3 < prime /\ felem_seq_as_nat y3 < prime /\ felem_seq_as_nat z3 < prime
+    felem_seq_as_nat x3 = toDomain_ (xN) /\ felem_seq_as_nat y3 = toDomain_ (yN) /\ felem_seq_as_nat z3 = toDomain_ (zN)
     }) 
 
 let point_double_seq p =

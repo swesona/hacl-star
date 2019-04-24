@@ -324,8 +324,8 @@ let multByMinusThree a result  =
 
 
 val isZero_uint64:  f: felem -> Stack uint64
-  (requires fun h -> live h f)
-  (ensures fun h0 r h1 -> modifies0 h0 h1 /\ (if as_nat h0 f = 0 then uint_v r == pow2 64 - 1 else uint_v r == 0))
+  (requires fun h -> live h f /\ as_nat h f < prime)
+  (ensures fun h0 r h1 -> modifies0 h0 h1 /\ r == isZero_seq (as_seq h0 f))
 
 let isZero_uint64 f = 
   let a0 = index f (size 0) in 
@@ -411,6 +411,7 @@ let point_double_compute_x3 x3 s m tempBuffer =
     Hacl.Spec.P256.MontgomeryMultiplication.montgomery_multiplication_buffer m m mm;
     p256_sub mm twoS x3
 
+
 inline_for_extraction noextract 
 val point_double_compute_y3: p_y: felem ->  y3: felem ->  x3: felem -> 
   s: felem -> m: felem -> tempBuffer: lbuffer uint64 (size 16) -> Stack unit 
@@ -423,7 +424,6 @@ val point_double_compute_y3: p_y: felem ->  y3: felem ->  x3: felem ->
     as_seq h1 y3 == point_double_compute_y3_seq (as_seq h0 p_y) (as_seq h0 x3) (as_seq h0 s) (as_seq h0 m) /\
     as_nat h1 y3 < prime
    )
-
 
 let point_double_compute_y3 p_y y3 x3 s m tempBuffer = 
     let yyyy = sub tempBuffer (size 0) (size 4) in 
@@ -438,8 +438,6 @@ let point_double_compute_y3 p_y y3 x3 s m tempBuffer =
     p256_sub msx3 eightYyyy y3
     
 
-    
-
 let point_double p result tempBuffer = 
 	let h0 = ST.get() in  
     let s = sub tempBuffer (size 0) (size 4) in 
@@ -451,7 +449,7 @@ let point_double p result tempBuffer =
 
     let pypz = sub tempBuffer (size 56) (size 4) in 
 
-    let x3:lbuffer uint64 4= sub tempBuffer (size 60) (size 4) in 
+    let x3= sub tempBuffer (size 60) (size 4) in 
     let y3 = sub tempBuffer (size 64) (size 4) in 
     let z3 = sub tempBuffer (size 68) (size 4) in 
 
@@ -556,6 +554,7 @@ let copy_point_conditional x3_out y3_out z3_out p maskPoint =
   copy_conditional y3_out p_y mask;
   copy_conditional z3_out p_z mask
 
+
 val compare_felem: a: felem -> b: felem -> Stack uint64
   (requires fun h -> live h a /\ live h b /\ as_nat h a < prime /\ as_nat h b < prime ) 
   (ensures fun h0 r h1 -> modifies0 h0 h1 /\ r == compare_felem_seq (as_seq h0 a) (as_seq h0 b)) 
@@ -631,7 +630,6 @@ let move_from_jacobian_coordinates u1 u2 s1 s2 p q tempBuffer =
      assert(let u1_, u2_, s1_, s2_ = move_from_jacobian_coordinates_seq (as_seq h0 p) (as_seq h0 q) in 
       as_seq h3 u1 == u1_ /\ as_seq h3 u2 == u2_ /\ as_seq h3 s1 == s1_ /\ as_seq h3 s2 == s2_)
       
-(*previous: 90 ms *)
 
 val compute_common_params_point_add: h: felem -> r: felem -> uh: felem -> hCube: felem -> 
   u1: felem -> u2: felem -> s1: felem -> s2: felem -> tempBuffer: lbuffer uint64 (size 16) -> 
@@ -650,18 +648,16 @@ let compute_common_params_point_add h r uh hCube u1 u2 s1 s2 tempBuffer =
       montgomery_multiplication_buffer h h temp;
       montgomery_multiplication_buffer u1 temp uh;
       montgomery_multiplication_buffer h temp hCube
-      
+
+
 val computeX3_point_add: x3: felem -> hCube: felem -> uh: felem -> r: felem -> tempBuffer: lbuffer uint64 (size 16)->  Stack unit 
   (requires fun h0 -> live h0 x3 /\ live h0 hCube /\ live h0 uh /\ live h0 r /\ live h0 tempBuffer /\
     LowStar.Monotonic.Buffer.all_disjoint [loc x3; loc hCube; loc uh; loc r; loc tempBuffer] /\
-    as_nat h0 hCube < prime /\
-    as_nat h0 uh < prime /\
-    as_nat h0 r < prime
+    as_nat h0 hCube < prime /\as_nat h0 uh < prime /\ as_nat h0 r < prime
   )
   (ensures fun h0 _ h1 -> modifies2 x3 tempBuffer h0 h1 /\ as_nat h1 x3 < prime /\ 
     as_seq h1 x3 == computeX3_point_add_seq (as_seq h0 hCube) (as_seq h0 uh) (as_seq h0 r) 
   )
-
 
 let computeX3_point_add x3 hCube uh r tempBuffer = 
 
@@ -673,7 +669,8 @@ let computeX3_point_add x3 hCube uh r tempBuffer =
     p256_sub rSquare hCube r_h;
     multByTwo uh twouh;
     p256_sub r_h twouh x3
-  
+
+
 val computeY3_point_add:y3: felem -> s1: felem -> hCube: felem -> uh: felem -> x3_out: felem -> r: felem -> tempBuffer: lbuffer uint64 (size 16) -> 
   Stack unit (requires fun h -> live h y3 /\ live h s1 /\ live h hCube /\ live h uh /\ live h x3_out /\ live h r /\ live h tempBuffer /\
     LowStar.Monotonic.Buffer.all_disjoint [loc y3; loc s1; loc hCube; loc uh; loc x3_out; loc r; loc tempBuffer] /\
@@ -681,7 +678,6 @@ val computeY3_point_add:y3: felem -> s1: felem -> hCube: felem -> uh: felem -> x
     (ensures fun h0 _ h1 -> modifies2 y3 tempBuffer h0 h1 /\ as_nat h1 y3 < prime /\ 
     as_seq h1 y3 ==  computeY3_point_add_seq (as_seq h0 s1) (as_seq h0 hCube) (as_seq h0 uh) (as_seq h0 x3_out) (as_seq h0 r))
     
-
 let computeY3_point_add y3 s1 hCube uh x3_out r tempBuffer = 
     let s1hCube = sub tempBuffer (size 0) (size 4) in 
     let u1hx3 = sub tempBuffer (size 4) (size 4) in 
@@ -691,6 +687,7 @@ let computeY3_point_add y3 s1 hCube uh x3_out r tempBuffer =
     p256_sub uh x3_out u1hx3;
     montgomery_multiplication_buffer r u1hx3 ru1hx3;
     p256_sub ru1hx3 s1hCube y3
+
 
 val computeZ3_point_add: z3: felem ->  z1: felem -> z2: felem -> h: felem -> tempBuffer: lbuffer uint64 (size 16) -> 
   Stack unit (requires fun h0 -> live h0 z3 /\ live h0 z1 /\ live h0 z2 /\ live h0 h /\ live h0 tempBuffer /\ live h0 z3 /\
@@ -711,8 +708,7 @@ val point_double_condition: u1: felem -> u2: felem -> s1: felem -> s2: felem ->z
     as_nat h u1 < prime /\ as_nat h u2 < prime /\ as_nat h s1 < prime /\ as_nat h s2 < prime /\
     as_nat h z1 < prime /\ as_nat h z2 < prime /\ 
     LowStar.Monotonic.Buffer.all_disjoint [loc u1; loc u2; loc s1; loc s2; loc z1; loc z2])
-  (ensures fun h0 r h1 -> modifies0 h0 h1 /\ r == point_double_condition_seq (as_seq h0 u1) (as_seq h0 u2) (as_seq h0 s1) (as_seq h0 s2) (as_seq h0 z1) (as_seq h0 z2)
- )   
+  (ensures fun h0 r h1 -> modifies0 h0 h1 /\ r == point_double_condition_seq (as_seq h0 u1) (as_seq h0 u2) (as_seq h0 s1) (as_seq h0 s2) (as_seq h0 z1) (as_seq h0 z2))   
 
 let point_double_condition u1 u2 s1 s2 z1 z2 = 
   let one = compare_felem u1 u2 in (* if equal -> 1111, else 000 *) (*1111*)
@@ -723,6 +719,7 @@ let point_double_condition u1 u2 s1 s2 z1 z2 =
   let onetwo = logand one two in 
   let result = logand onetwo pointsInf in 
   eq_u64 result (u64 0xffffffffffffffff)
+
 
 val point_add_if_second_branch_impl: result: point -> p: point -> q: point -> u1: felem -> u2: felem -> s1: felem -> s2: felem -> r: felem -> h: felem -> uh: felem -> hCube: felem -> tempBuffer28 : lbuffer uint64 (size 28) -> 
   Stack unit (requires fun h0 -> live h0 result /\ live h0 p /\ live h0 q /\ live h0 u1 /\ live h0 u2 /\ live h0 s1 /\ live h0 s2 /\ live h0 r /\ live h0 h /\ live h0 uh /\ live h0 hCube /\ live h0 tempBuffer28 /\
@@ -737,12 +734,9 @@ val point_add_if_second_branch_impl: result: point -> p: point -> q: point -> u1
     as_nat h0 (gsub q (size 4) (size 4)) < prime /\
     (let u1_, u2_, s1_, s2_ = move_from_jacobian_coordinates_seq (as_seq h0 p) (as_seq h0 q) in 
     u1_ == (as_seq h0 u1) /\ u2_ == (as_seq h0 u2) /\ s1_ == (as_seq h0 s1) /\ s2_ == (as_seq h0 s2)) /\
-    (let h_, r_, uh_, hCube_ = compute_common_params_point_add_seq (as_seq h0 u1) (as_seq h0 u2) (as_seq h0 s1) (as_seq h0 s2) in h_ == (as_seq h0 h) /\ r_ == (as_seq h0 r) /\ uh_ == (as_seq h0 uh) /\ hCube_ == (as_seq h0 hCube))
-
-  )
+    (let h_, r_, uh_, hCube_ = compute_common_params_point_add_seq (as_seq h0 u1) (as_seq h0 u2) (as_seq h0 s1) (as_seq h0 s2) in h_ == (as_seq h0 h) /\ r_ == (as_seq h0 r) /\ uh_ == (as_seq h0 uh) /\ hCube_ == (as_seq h0 hCube)))
   (ensures fun h0 _ h1 -> modifies2 result tempBuffer28 h0 h1 /\ 
-    as_seq h1 result == point_add_if_second_branch_seq (as_seq h0 p) (as_seq h0 q) (as_seq h0 u1) (as_seq h0 u2) (as_seq h0 s1) (as_seq h0 s2) (as_seq h0 r) (as_seq h0 h) (as_seq h0 uh) (as_seq h0 hCube)
-    )
+    as_seq h1 result == point_add_if_second_branch_seq (as_seq h0 p) (as_seq h0 q) (as_seq h0 u1) (as_seq h0 u2) (as_seq h0 s1) (as_seq h0 s2) (as_seq h0 r) (as_seq h0 h) (as_seq h0 uh) (as_seq h0 hCube))
 
 let point_add_if_second_branch_impl result p q u1 u2 s1 s2 r h uh hCube tempBuffer28= 
     let h0 = ST.get() in 
@@ -754,7 +748,6 @@ let point_add_if_second_branch_impl result p q u1 u2 s1 s2 r h uh hCube tempBuff
   let x3_out = Lib.Buffer.sub tempBuffer28 (size 16) (size 4) in 
   let y3_out = Lib.Buffer.sub tempBuffer28 (size 20) (size 4) in 
   let z3_out = Lib.Buffer.sub tempBuffer28 (size 24) (size 4) in 
-
 
   computeX3_point_add x3_out hCube uh r tempBuffer16; 
   computeY3_point_add y3_out s1 hCube uh x3_out r tempBuffer16;
@@ -772,8 +765,8 @@ let point_add_if_second_branch_impl result p q u1 u2 s1 s2 r h uh hCube tempBuff
   let h3 = ST.get() in 
    assert(modifies1 result h2 h3)
 
-#reset-options "--z3rlimit 200"
 
+#reset-options "--z3rlimit 200"
 let point_add p q result tempBuffer = 
     let h0 = ST.get() in 
 
@@ -817,7 +810,6 @@ let point_add p q result tempBuffer =
 	      assert (modifies1 tempBuffer h3 h4);
 	 point_add_if_second_branch_impl result p q u1 u2 s1 s2 r h uh hCube tempBuffer28; 
 
-
 	      let h5 = ST.get() in  
 	      //assert(modifies (loc result tempBuffer28 h4 h5);
 	      assert(modifies2 result tempBuffer h4 h5)
@@ -825,7 +817,8 @@ let point_add p q result tempBuffer =
    let h1 = ST.get() in     
    assert(modifies2 result tempBuffer h0 h1);
    assert(Lib.Sequence.equal (as_seq h1 result) (point_add_seq (as_seq h0 p) (as_seq h0 q)))
-   
+
+
 val uploadOneImpl: f: felem -> Stack unit
   (requires fun h -> live h f)
   (ensures fun h0 _ h1 -> as_nat h1 f == 1 /\ modifies1 f h0 h1)
@@ -836,8 +829,8 @@ let uploadOneImpl f =
   upd f (size 2) (u64 0);
   upd f (size 3) (u64 0)
 
-#reset-options "--z3refresh --z3rlimit 500" 
 
+#reset-options "--z3refresh --z3rlimit 500" 
 let norm p resultPoint tempBuffer = 
   let xf = sub p (size 0) (size 4) in
   let yf = sub p (size 4) (size 4) in 
@@ -862,8 +855,6 @@ let norm p resultPoint tempBuffer =
   Hacl.Spec.P256.MontgomeryMultiplication.montgomery_multiplication_buffer yf z3f z3f;
      let h1 = ST.get() in 
     assert(modifies1 tempBuffer h0 h1);
-
-
   fromDomain z2f resultX;
   fromDomain z3f resultY;
     let h2 = ST.get() in 
@@ -876,8 +867,7 @@ let norm p resultPoint tempBuffer =
     lemmaEraseToDomainFromDomain (fromDomain_ (as_nat h0 zf));
     power_distributivity (fromDomain_ (as_nat h0 zf) * fromDomain_ (as_nat h0 zf)) (prime -2) prime;
     power_distributivity (fromDomain_ (as_nat h0 zf) * fromDomain_ (as_nat h0 zf) * fromDomain_ (as_nat h0 zf)) (prime -2) prime;
-
-   lemma_norm_as_specification (fromDomain_ (point_x_as_nat h0 p)) (fromDomain_ (point_y_as_nat h0 p)) (fromDomain_ (point_z_as_nat h0 p)) (point_x_as_nat h3 resultPoint) (point_y_as_nat h3 resultPoint) (point_z_as_nat h3 resultPoint);
+    lemma_norm_as_specification (fromDomain_ (point_x_as_nat h0 p)) (fromDomain_ (point_y_as_nat h0 p)) (fromDomain_ (point_z_as_nat h0 p)) (point_x_as_nat h3 resultPoint) (point_y_as_nat h3 resultPoint) (point_z_as_nat h3 resultPoint);
 
     assert(
        let zD = fromDomain_(point_z_as_nat h0 p) in 
