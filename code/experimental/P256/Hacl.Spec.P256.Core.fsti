@@ -33,11 +33,13 @@ val store_high_low_u: high: uint32 -> low: uint32 -> Tot (r: uint64 {uint_v r = 
 inline_for_extraction noextract
 val reduction_prime_2prime: a: felem4 -> Tot (r:felem4{as_nat4 r == as_nat4 a % prime})
 
+inline_for_extraction noextract 
 val shift_left_felem: input: felem4{as_nat4 input < prime} -> Tot (r: felem4 {as_nat4 r == (as_nat4 input * 2) % prime})
 
 inline_for_extraction noextract
 val upload_prime: unit -> Tot (r: felem4 {as_nat4 r = prime})
 
+inline_for_extraction noextract 
 val shift_256: c: felem4 -> Tot (r: felem8{wide_as_nat4 r = as_nat4 c * pow2 256})
  
 val montgomery_multiplication: a: felem4 {as_nat4 a < prime} -> b: felem4{as_nat4 b < prime}  -> 
@@ -64,8 +66,11 @@ val multByMinusThree_tuple: a: felem4 {as_nat4 a < prime} -> Tot (result: felem4
 inline_for_extraction noextract
 val isOne_tuple: a: felem4 -> Tot (r: bool {if as_nat4 a = 1 then r == true else r == false})
 
+inline_for_extraction noextract 
 val equalFelem: a: felem4 -> b: felem4 -> Tot (r: uint64 {if as_nat4 a = as_nat4 b then uint_v r == pow2 64 - 1 else uint_v r = 0})
 
+inline_for_extraction noextract 
 val isZero_tuple_u: a: felem4 -> Tot (r: uint64 {if as_nat4 a = 0 then uint_v r == pow2 64 - 1 else uint_v r = 0})
 
+inline_for_extraction noextract 
 val isZero_tuple_b: a: felem4 ->  Tot (r: bool {if as_nat4 a = 0 then r == true else r == false})

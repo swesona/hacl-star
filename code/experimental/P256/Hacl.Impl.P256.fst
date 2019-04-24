@@ -94,6 +94,7 @@ let p256_sub arg1 arg2 out =
 
 
 #set-options "--z3rlimit 100"
+inline_for_extraction noextract 
 val solinas_fast_reduction_partially_opened: c: felem8 ->result : felem ->   Stack unit   
   (requires (fun h ->  live h result)) 
   (ensures (fun h0 _ h1 -> modifies (loc result) h0 h1 /\ as_nat h1 result == D.wide_as_nat4 c % prime ))
@@ -105,7 +106,7 @@ let solinas_fast_reduction_partially_opened c result =
   upd result (size 2) r2;
   upd result (size 3) r3
 
-
+inline_for_extraction noextract 
 val toDomain: value: felem -> result: felem ->  Stack unit 
   (requires fun h ->  as_nat h value < prime /\ live h value /\live h result /\ disjoint result value)
   (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\ as_nat h1 result = toDomain_ (as_nat h0 value))
@@ -132,7 +133,7 @@ let pointToDomain p result =
     toDomain p_y r_y;
     toDomain p_z r_z
 
-
+inline_for_extraction noextract 
 val multiplication_partially_opened: a: felem4 -> b: felem -> result: felem ->Stack unit
   (requires fun h -> D.as_nat4 a < prime /\ as_nat h b < prime /\ live h b /\ live h result)
   (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\ as_nat h1 result = (D.as_nat4 a * as_nat h0 b * modp_inv2(pow2 256)) % prime)
@@ -151,7 +152,7 @@ let multiplication_partially_opened a b result =
   upd result (size 2) r2;
   upd result (size 3) r3
 
-
+inline_for_extraction noextract 
 val fromDomain: f: felem-> result: felem-> Stack unit
   (requires fun h -> live h f /\ live h result /\ as_nat h f < prime)
   (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\ as_nat h1 result = (as_nat h0 f * modp_inv2(pow2 256)) % prime/\ as_nat h1 result = fromDomain_ (as_nat h0 f))
@@ -322,7 +323,7 @@ let multByMinusThree a result  =
  let h1 = ST.get() in 
    assert(Lib.Sequence.equal (mm_byMinusThree_seq (as_seq h0 a)) (as_seq h1 result))
 
-
+inline_for_extraction noextract 
 val isZero_uint64:  f: felem -> Stack uint64
   (requires fun h -> live h f /\ as_nat h f < prime)
   (ensures fun h0 r h1 -> modifies0 h0 h1 /\ r == isZero_seq (as_seq h0 f))
@@ -818,7 +819,7 @@ let point_add p q result tempBuffer =
    assert(modifies2 result tempBuffer h0 h1);
    assert(Lib.Sequence.equal (as_seq h1 result) (point_add_seq (as_seq h0 p) (as_seq h0 q)))
 
-
+inline_for_extraction noextract 
 val uploadOneImpl: f: felem -> Stack unit
   (requires fun h -> live h f)
   (ensures fun h0 _ h1 -> as_nat h1 f == 1 /\ modifies1 f h0 h1)
