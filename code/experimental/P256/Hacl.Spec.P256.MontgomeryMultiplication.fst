@@ -1,43 +1,33 @@
 module Hacl.Spec.P256.MontgomeryMultiplication
 
-open Lib.IntTypes
 open FStar.Math.Lemmas
 open FStar.Math.Lib
-open Hacl.Spec.P256.Lemmas
-open Hacl.Spec.P256.Definitions
-
-open Hacl.Spec.Curve25519.Field64.Definition
-open Hacl.Spec.P256.Core
-
-
+open FStar.Mul
 
 open FStar.HyperStack.All
 open FStar.HyperStack
 open FStar.HyperStack.ST
-
 module ST = FStar.HyperStack.ST
-module HS = FStar.HyperStack
 
-open Lib.Buffer
-open Lib.Sequence
+open Hacl.Spec.P256.Lemmas
+open Hacl.Spec.P256.Definitions
+open Hacl.Spec.P256.Core
 
 open Hacl.Impl.Curve25519.Field64.Core
-module C =  Hacl.Spec.Curve25519.Field64.Core
 module D = Hacl.Spec.Curve25519.Field64.Definition
-open  Hacl.Spec.P256.Core
-module Loop = Lib.LoopCombinators
 
-
-open Lib.Loops
-
-open FStar.Mul
+open Lib.IntTypes
+open Lib.Buffer
+open Lib.Sequence
 
 #reset-options "--z3rlimit 300"
 
 
 let fromDomain_ a = (a * modp_inv2 (pow2 256)) % prime
 
+
 val fromDomain: a: felem4{as_nat4 a < prime} -> Tot (result: felem4 {as_nat4 result = fromDomain_ (as_nat4 a)})
+
 let fromDomain a =  
   let one = ((u64 1), (u64 0), u64 0, u64 0) in
     assert_norm (as_nat4 one = 1);
@@ -46,6 +36,7 @@ let fromDomain a =
 
 let toDomain_ a = (a * pow2 256) % prime
 
+
 val toDomain: a: felem4{as_nat4 a < prime} -> Tot (result: felem4 {as_nat4 result = toDomain_ (as_nat4 a)})
 
 let toDomain a = 
@@ -53,9 +44,12 @@ let toDomain a =
   let multiplied = Core.shift_256 a in 
   solinas_reduction multiplied
 
-let lemmaFromDomain a = admit()
 
-let lemmaToDomain a = admit()
+let lemmaFromDomain a = ()
+
+
+let lemmaToDomain a = ()
+
 
 let lemmaToDomainAndBackIsTheSame a = 
   let to = toDomain_ a in 
@@ -63,6 +57,7 @@ let lemmaToDomainAndBackIsTheSame a =
   lemma_mod_mul_distr_l (a * pow2 256) (modp_inv2 (pow2 256)) prime;
   assert_norm (pow2 256 * modp_inv2 (pow2 256) % prime = 1);
   modulo_distributivity_mult_last_two a 1 1 (pow2 256) (modp_inv2 (pow2 256)) prime
+
 
 let lemmaFromDomainToDomain a = 
   let from = fromDomain_ a in 
@@ -72,23 +67,21 @@ let lemmaFromDomainToDomain a =
   modulo_distributivity_mult_last_two a 1 1 (modp_inv2 (pow2 256)) (pow2 256) prime
 
 
-val lemma_from_to: a: int -> Lemma (a % prime == fromDomain_(toDomain_ a))
+val lemmaFromDomainToDomainModuloPrime: a: int -> Lemma (a % prime == fromDomain_(toDomain_ a))
 
-let lemma_from_to a = 
-
+let lemmaFromDomainToDomainModuloPrime a = 
   lemma_mod_mul_distr_l (a*pow2 256) (modp_inv2 (pow2 256)) prime;
   assert_norm (pow2 256 * modp_inv2 (pow2 256) % prime = 1);
   modulo_distributivity_mult_last_two a 1 1 (pow2 256) (modp_inv2 (pow2 256)) prime
 
-
-
+(* it is the key lemma of Montgomery Multiplication, showing that it's correct (i.e. mm(a, b) = a * b * 2^-256 *)
 val lemmaMontgomeryMultiplicationCorrect: a: felem4{as_nat4 a < prime} -> b: felem4{as_nat4 b < prime} -> Lemma (
   let aDomain = toDomain a in 
   let bDomain = toDomain b in 
   let multInDomain = Core.montgomery_multiplication aDomain bDomain in 
   let multResultFromDomain = fromDomain multInDomain in 
-  as_nat4 a * as_nat4 b % prime 
- == as_nat4 multResultFromDomain)
+  as_nat4 a * as_nat4 b % prime == as_nat4 multResultFromDomain)
+
 
 let lemmaMontgomeryMultiplicationCorrect a b = 
   let aDomain = toDomain a in 
@@ -107,18 +100,20 @@ let lemmaMontgomeryMultiplicationCorrect a b =
   modulo_distributivity_mult_last_two (as_nat4 a) (as_nat4 b) 1 (pow2 256) (modp_inv2 (pow2 256)) prime
 
 
+(* the lemma shows the equivalence between toDomain(a:nat) and toDomain(a % prime) *)
 val inDomain_mod_is_not_mod: a: int -> Lemma (toDomain_ a == toDomain_ (a % prime))
 
 let inDomain_mod_is_not_mod a = 
   lemma_mod_mul_distr_l a (pow2 256) prime
 
 
-val lemmaMontgomeryMultiplicationInDomain: #k: nat -> #l: nat -> 
+(* the lemma shows that the result of multiplication moved out of domain is the multiplication of the numbers moved out of domain *)
+val multiplicationInDomain: #k: nat -> #l: nat -> 
   a: felem4 {as_nat4 a == toDomain_ (k) /\ as_nat4 a < prime} -> 
   b: felem4 {as_nat4 b == toDomain_ (l) /\ as_nat4 b < prime} -> Lemma 
     (ensures (let multResult = Core.montgomery_multiplication a b in as_nat4 multResult == toDomain_ (k * l)))
     
-let lemmaMontgomeryMultiplicationInDomain #k #l a b = 
+let multiplicationInDomain #k #l a b = 
   let multResult = Core.montgomery_multiplication a b in 
   lemma_mul_nat2 k l;
   let secondBracket = toDomain_ (k * l) in 
@@ -135,7 +130,6 @@ val additionInDomain: #k: nat -> #l: nat ->
   b: felem4 {as_nat4 b == toDomain_ (l) /\ as_nat4 b < prime} -> Lemma 
   (ensures (let result = felem_add a b in as_nat4 result == toDomain_(k + l)))
 
-
 let additionInDomain #k #l a b = 
   let result = felem_add a b in 
   assert(as_nat4 result = (as_nat4 a + as_nat4 b) % prime);
@@ -144,6 +138,8 @@ let additionInDomain #k #l a b =
   modulo_distributivity (k * pow2 256) (l *pow2 256) prime;
   assert(as_nat4 result = toDomain_ (k + l))
 
+
+(* the lemma shows that the result of addition in domain (moved out of domain) is the same if the variables were out of domain *)
 val additionInDomain2: a: felem4{as_nat4 a < prime} -> b: felem4 {as_nat4 b < prime} -> Lemma (let result = felem_add a b in 
   as_nat4 result = toDomain_ (fromDomain_ (as_nat4 a) + fromDomain_ (as_nat4 b)))
 
@@ -155,23 +151,12 @@ let additionInDomain2 a b =
   additionInDomain #k #l a b
 
 
+(* the lemma shows the equivalence between fromDomain(a:nat) and fromDomain(a % prime) *)
 val fromDomain_mod_is_not_mod: a: nat -> Lemma (fromDomain_ a == fromDomain_ (a % prime))
 
 let fromDomain_mod_is_not_mod a = 
   lemma_mod_mul_distr_l a (modp_inv2(pow2 256)) prime
 
-val lemma_add: a: int -> b: int -> c: int -> Lemma (a * c + b * c = (a + b) * c)
-
-let lemma_add a b c = ()
-
-val lemmaFromDomainD: a: nat -> b: nat -> Lemma ((fromDomain_ a + fromDomain_ b) % prime = fromDomain_ (a + b))
-
-let lemmaFromDomainD a b = 
-  assert(fromDomain_ a + fromDomain_ b = a * modp_inv2 (pow2 256) % prime + b * modp_inv2 (pow2 256) % prime);
-  fromDomain_mod_is_not_mod (a + b);
-  assert(fromDomain_ (a + b) == fromDomain_ ((a + b) % prime));
-  modulo_distributivity (a * modp_inv2 (pow2 256)) (b * modp_inv2 (pow2 256)) prime;
-  assert(fromDomain_ (a + b) == (fromDomain_ (a) + fromDomain_(b)) % prime)
 
 val additionInDomainLemma2: a: felem4{as_nat4 a < prime} -> b: felem4{as_nat4 b < prime} -> 
   Lemma (ensures (as_nat4 (fromDomain (felem_add a b)) = (as_nat4(fromDomain (a)) + as_nat4(fromDomain (b))) % prime))
@@ -179,46 +164,18 @@ val additionInDomainLemma2: a: felem4{as_nat4 a < prime} -> b: felem4{as_nat4 b 
 let  additionInDomainLemma2 a b =  
   let k = (as_nat4 (fromDomain a) + as_nat4 (fromDomain b)) % prime in 
   modulo_distributivity (as_nat4 a * modp_inv2 (pow2 256)) (as_nat4 b * modp_inv2 (pow2 256)) prime;
-  lemma_add (as_nat4 a) (as_nat4 b) (modp_inv2 (pow2 256));
+  distributivity_add_left (as_nat4 a) (as_nat4 b) (modp_inv2 (pow2 256));
   fromDomain_mod_is_not_mod (as_nat4 a + as_nat4 b)
-
-
-
-private
-val lemma_mod_sub_distr (a:int) (b:int) (n:pos) : Lemma ((a - b % n) % n = (a - b) % n)
-let lemma_mod_sub_distr (a:int) (b:int) (n:pos) =
-  lemma_div_mod b n;
-  distributivity_sub_left 0 (b / n) n;
-  // (a - b) % n == (a - (b % n) - (b / n) * n) % n
-  lemma_mod_plus (a - (b % n)) (-(b / n)) n
-
-private
-val lemma_mod_add_distr (a:int) (b:int) (n:pos) : Lemma ((a + b % n) % n = (a + b) % n)
-let lemma_mod_add_distr (a:int) (b:int) (n:pos) =
-  lemma_div_mod b n;
-  // (a + b) % n == (a + (b % n) + (b / n) * n) % n
-  lemma_mod_plus (a + (b % n)) (b / n) n
 
 val subtractionInDomain: #k: nat -> #l: nat -> 
   a: felem4 {as_nat4 a == toDomain_ (k) /\ as_nat4 a < prime} -> 
   b: felem4 {as_nat4 b == toDomain_ (l) /\ as_nat4 b < prime} -> Lemma 
   (ensures (let result = felem_sub a b in as_nat4 result == toDomain_(k - l)))
 
-
 let subtractionInDomain #k #l a b = 
   let result = felem_sub a b in 
-  assert(as_nat4 result = (as_nat4 a - as_nat4 b) % prime);
-  assert(as_nat4 result = (as_nat4 a - (l * pow2 256 % prime)) % prime);
-  assert(as_nat4 result = (as_nat4 a - (l * pow2 256) % prime) % prime);
   lemma_mod_sub_distr (as_nat4 a) (l * pow2 256) prime;
-  assert(as_nat4 result = (as_nat4 a - (l * pow2 256)) % prime);
-  assert(as_nat4 result = ((k * pow2 256 % prime) - l * pow2 256) % prime);
-  assert(as_nat4 result = ((k * pow2 256 % prime) + (- l * pow2 256)) % prime);
-  assert(as_nat4 result = ((- l * pow2 256) + (k * pow2 256) % prime) % prime);
-  lemma_mod_add_distr (-l * pow2 256) (k * pow2 256) prime;
-  assert(as_nat4 result = (-l * pow2 256 + k * pow2 256) % prime);
-  assert(as_nat4 result = ((k - l) * pow2 256) % prime);
-  assert(as_nat4 result = toDomain_ (k - l))
+  lemma_mod_add_distr (-l * pow2 256) (k * pow2 256) prime
 
 
 val substractionInDomain2: a: felem4{as_nat4 a < prime} -> b: felem4{as_nat4 b < prime} -> Lemma (let result = felem_sub a b in 
@@ -231,8 +188,6 @@ let substractionInDomain2 a b =
   lemmaFromDomainToDomain (as_nat4 b);
   subtractionInDomain #k #l a b
 
-
-#reset-options "--z3rlimit 200" 
 
 let rec pow a b =
   if b = 0 then 1
@@ -248,10 +203,6 @@ let rec pow_plus a b c =
   | _ -> pow_plus a (b -1) c; 
     assert_norm(pow a (b - 1) * a = pow a b)
 
-
-
-private val lemma_mod_twice : a:int -> p:pos -> Lemma ((a % p) % p == a % p)
-private let lemma_mod_twice a p = lemma_mod_mod (a % p) a p
 
 let rec power_distributivity a b c =
    match b with 
@@ -340,9 +291,8 @@ let montgomery_multiplication_seq a b  =
   let (r0, r1, r2, r3) = montgomery_multiplication (a0, a1, a2, a3) (b0, b1, b2, b3) in 
   lemmaFromDomainToDomain (as_nat4 a_tuple);
   lemmaFromDomainToDomain (as_nat4 b_tuple);
-  lemmaMontgomeryMultiplicationInDomain #(fromDomain_ (as_nat4 a_tuple)) #(fromDomain_ (as_nat4 b_tuple)) a_tuple b_tuple;
+  multiplicationInDomain #(fromDomain_ (as_nat4 a_tuple)) #(fromDomain_ (as_nat4 b_tuple)) a_tuple b_tuple;
   inDomain_mod_is_not_mod (fromDomain_ (felem_seq_as_nat a) * fromDomain_ (felem_seq_as_nat b));
-
 
   let r = create 4 (u64 0)  in 
   let r = upd r 0 r0 in
@@ -364,28 +314,70 @@ let montgomery_multiplication_buffer a b r=
   let b2 = Lib.Buffer.index b (size 2) in 
   let b3 = Lib.Buffer.index b (size 3) in 
 
-  let h0 = ST.get() in 
+    let h0 = ST.get() in 
 
-  [@inline_let]
-  let a_tuple = a0, a1, a2, a3 in 
-  [@inline_let]
-  let b_tuple = b0, b1, b2, b3 in 
+    [@inline_let]
+    let a_tuple = a0, a1, a2, a3 in 
+    [@inline_let]
+    let b_tuple = b0, b1, b2, b3 in 
   let (r0, r1, r2, r3) = montgomery_multiplication (a0, a1, a2, a3) (b0, b1, b2, b3) in 
   Lib.Buffer.upd r (size 0) r0;
   Lib.Buffer.upd r (size 1) r1;
   Lib.Buffer.upd r (size 2) r2;
   Lib.Buffer.upd r (size 3) r3;
 
-  let h1 = ST.get() in 
+    let h1 = ST.get() in 
 
   lemmaFromDomainToDomain (as_nat4 a_tuple);
   lemmaFromDomainToDomain (as_nat4 b_tuple);
-  lemmaMontgomeryMultiplicationInDomain #(fromDomain_ (as_nat4 a_tuple)) #(fromDomain_ (as_nat4 b_tuple)) a_tuple b_tuple;
+  multiplicationInDomain #(fromDomain_ (as_nat4 a_tuple)) #(fromDomain_ (as_nat4 b_tuple)) a_tuple b_tuple;
   assert(Lib.Sequence.equal  (montgomery_multiplication_seq (as_seq h0 a) (as_seq h0 b))  (as_seq h1 r))
 
-assume val lemma_toDomain_reduce_prime3: a: int -> b: int -> c: int -> Lemma (toDomain_ (( a % prime) * (b % prime) * (c % prime)) = toDomain_ (a * b * c))
+#reset-options "--z3refresh --z3rlimit 100" 
 
-assume val lemma_toDomain_reduce_prime4: a: int -> b: int -> c: int -> d: nat -> Lemma (toDomain_ (( a % prime) * (b % prime) * (c % prime) * (d % prime)) = toDomain_ (a * b * c * d))
+val lemma_toDomain_reduce_prime3: a: int -> b: int -> c: int -> Lemma (toDomain_ ((a % prime) * (b % prime) * (c % prime)) = toDomain_ (a * b * c))
+
+let lemma_toDomain_reduce_prime3 a b c = 
+  inDomain_mod_is_not_mod ((a % prime) * (b % prime) * (c % prime));
+  assert(a % prime * ((b % prime) * (c % prime)) % prime == (a % prime) * (b % prime) * (c % prime) % prime);
+  lemma_mod_mul_distr_l a ((b % prime) * (c % prime)) prime;
+  assert( (a % prime) * (b % prime) * (c % prime) % prime == (b % prime) * ((c % prime) * a) % prime);
+  lemma_mod_mul_distr_l b ((c % prime) * a) prime;
+  assert((a % prime) * (b % prime) * (c % prime) % prime == (a * b * (c % prime)) % prime);
+  lemma_mod_mul_distr_r (a * b) c prime;
+  assert((a % prime) * (b % prime) * (c % prime) % prime == (a * b * c) % prime);
+  inDomain_mod_is_not_mod (a * b * c);
+  assert(toDomain_ ((a % prime) * (b % prime) * (c % prime) % prime) = toDomain_ (a * b * c))
+
+
+#reset-options "--z3refresh --z3rlimit 300" 
+val lemma_toDomain_reduce_prime4: a: int -> b: int -> c: int -> d: nat -> Lemma (toDomain_ ((a % prime) * (b % prime) * (c % prime) * (d % prime)) = toDomain_ (a * b * c * d))
+
+let lemma_toDomain_reduce_prime4 a b c d = 
+  let open FStar.Tactics in 
+  let open FStar.Tactics.Canon in 
+  let ap = a % prime in 
+  let bp = b % prime in 
+  let cp = c % prime in 
+  let dp = d % prime in 
+  inDomain_mod_is_not_mod (ap * bp * cp * dp);
+    assert(toDomain_ (ap * bp * cp * dp) == toDomain_ ((ap * bp * cp * dp) % prime));
+    assert_by_tactic (((ap * bp * cp * dp) % prime) == (ap * (bp * cp * dp)) % prime) canon;
+    assert(((ap * bp * cp) * dp) % prime == (ap * (bp * cp * dp)) % prime);
+    lemma_mod_mul_distr_l a (bp * cp * dp) prime;
+    assert(((ap * bp * cp) * dp) % prime == (a * bp * cp * dp) % prime);
+    assert_by_tactic (a * bp * cp * dp == (bp * (a * cp * dp))) canon;
+    lemma_mod_mul_distr_l b (a * cp * dp) prime;
+    assert(bp * (a * cp * dp) % prime == b * (a * cp * dp) % prime);
+    assert_by_tactic (b * (a * cp * dp) == cp * (a * b * dp)) canon;
+    assert((ap * bp * cp * dp) % prime == (cp * (a * b * dp)) % prime);
+    lemma_mod_mul_distr_l c (a * b * dp) prime;
+    assert((ap * bp * cp * dp) % prime == (c * (a * b * dp)) % prime);
+    assert_by_tactic (c * (a * b * dp) == dp * (a * b * c)) canon;
+    lemma_mod_mul_distr_l d (a * b * c) prime;
+    assert((ap * bp * cp * dp) % prime == (d * (a * b * c)) % prime);
+    assert_by_tactic (d * (a * b * c) == (a * b * c * d)) canon;
+    inDomain_mod_is_not_mod (a * b * c * d)
 
 
 let mm_cube_seq a= 
@@ -403,16 +395,16 @@ let mm_cube_seq a=
     let r = upd r 2 r2 in 
     let r = upd r 3 r3 in 
     let r_tuple = (r0, r1, r2, r3) in 
-
-    (*let k = as_nat4 a_tuple * modp_inv2 (pow2 256) in 
+    
     lemma_brackets5_twice (as_nat4 a_tuple) (as_nat4 a_tuple) (as_nat4 a_tuple) (modp_inv2 (pow2 256)) (modp_inv2 (pow2 256));
-    lemma_mod_mul_distr_l (k * k * as_nat4 a_tuple) (modp_inv2 (pow2 256)) prime;
-    lemma_brackets5 k k 1 (as_nat4 a_tuple) (modp_inv2 (pow2 256));
+    lemma_mod_mul_distr_l ((as_nat4 a_tuple * modp_inv2 (pow2 256))  * (as_nat4 a_tuple * modp_inv2 (pow2 256))  * as_nat4 a_tuple) (modp_inv2 (pow2 256)) prime;
+    lemma_brackets5 (as_nat4 a_tuple * modp_inv2 (pow2 256)) (as_nat4 a_tuple * modp_inv2 (pow2 256))  1 (as_nat4 a_tuple) (modp_inv2 (pow2 256));
     lemmaFromDomainToDomain (as_nat4 r_tuple);
-    inDomain_mod_is_not_mod (k * k * k) ;
+    inDomain_mod_is_not_mod ((as_nat4 a_tuple * modp_inv2 (pow2 256))  * (as_nat4 a_tuple * modp_inv2 (pow2 256))  * (as_nat4 a_tuple * modp_inv2 (pow2 256)) ) ;
     lemma_toDomain_reduce_prime3 (as_nat4 a_tuple * modp_inv2 (pow2 256)) (as_nat4 a_tuple * modp_inv2 (pow2 256)) (as_nat4 a_tuple * modp_inv2 (pow2 256));
-    inDomain_mod_is_not_mod (fromDomain_ (felem_seq_as_nat a) * fromDomain_ (felem_seq_as_nat a) * fromDomain_ (felem_seq_as_nat a));*)
+    inDomain_mod_is_not_mod (fromDomain_ (felem_seq_as_nat a) * fromDomain_ (felem_seq_as_nat a) * fromDomain_ (felem_seq_as_nat a));
     r
+
 
 let mm_quatre_seq a= 
     let a0 = index a 0 in 
@@ -430,15 +422,15 @@ let mm_quatre_seq a=
     let r = upd r 3 r3 in 
     let r_tuple = (r0, r1, r2, r3) in 
 
-    (*let k = as_nat4 a_tuple * modp_inv2 (pow2 256) in 
     lemma_brackets7_twice (as_nat4 a_tuple) (as_nat4 a_tuple) (as_nat4 a_tuple) (as_nat4 a_tuple) (modp_inv2 (pow2 256)) (modp_inv2 (pow2 256)) (modp_inv2 (pow2 256));
-    lemma_mod_mul_distr_l (k * k * k * as_nat4 a_tuple) (modp_inv2 (pow2 256)) prime;
-    lemma_brackets5 k k k (as_nat4 a_tuple) (modp_inv2 (pow2 256));
+    lemma_mod_mul_distr_l ((as_nat4 a_tuple * modp_inv2 (pow2 256))  *  (as_nat4 a_tuple * modp_inv2 (pow2 256))  *  (as_nat4 a_tuple * modp_inv2 (pow2 256))  * as_nat4 a_tuple) (modp_inv2 (pow2 256)) prime;
+    lemma_brackets5  (as_nat4 a_tuple * modp_inv2 (pow2 256))  (as_nat4 a_tuple * modp_inv2 (pow2 256))  (as_nat4 a_tuple * modp_inv2 (pow2 256))  (as_nat4 a_tuple) (modp_inv2 (pow2 256));
     lemmaFromDomainToDomain (as_nat4 r_tuple);
-    inDomain_mod_is_not_mod (k * k * k * k);
+    inDomain_mod_is_not_mod ( (as_nat4 a_tuple * modp_inv2 (pow2 256))  *  (as_nat4 a_tuple * modp_inv2 (pow2 256))  *  (as_nat4 a_tuple * modp_inv2 (pow2 256))  *  (as_nat4 a_tuple * modp_inv2 (pow2 256)) );
     lemma_toDomain_reduce_prime4  (as_nat4 a_tuple * modp_inv2 (pow2 256)) (as_nat4 a_tuple * modp_inv2 (pow2 256)) (as_nat4 a_tuple * modp_inv2 (pow2 256)) (as_nat4 a_tuple * modp_inv2 (pow2 256));
-    inDomain_mod_is_not_mod ((fromDomain_ (felem_seq_as_nat a) * fromDomain_ (felem_seq_as_nat a) * fromDomain_ (felem_seq_as_nat a) * fromDomain_ (felem_seq_as_nat a)));*)
+    inDomain_mod_is_not_mod ((fromDomain_ (felem_seq_as_nat a) * fromDomain_ (felem_seq_as_nat a) * fromDomain_ (felem_seq_as_nat a) * fromDomain_ (felem_seq_as_nat a)));
     r
+
 
 val lemma_multiplicationInDomainByNumber: a: felem4 -> b: int -> Lemma (fromDomain_ (as_nat4 a * b % prime) = b * fromDomain_ (as_nat4 a) % prime)
 
@@ -469,6 +461,7 @@ let mm_byTwo_seq a =
     lemmaFromDomainToDomain (as_nat4 r_tuple);
     inDomain_mod_is_not_mod (2 * fromDomain_ (as_nat4 a_tuple));
     r
+
 
 let mm_byThree_seq a = 
     let a0 = index a 0 in 
@@ -553,8 +546,11 @@ let mm_byMinusThree_seq a =
     inDomain_mod_is_not_mod (-3 * fromDomain_ (as_nat4 a_tuple));
     r
 
-assume val lemma_rrr: a: int -> b: int -> Lemma (toDomain_ (a * (b % prime) % prime) = toDomain_ (a * b % prime))
+val lemma_rrr: a: int -> b: int -> Lemma (toDomain_ (a * (b % prime) % prime) = toDomain_ (a * b % prime))
   [SMTPat (toDomain_ (a * (b % prime) % prime))]
+
+let lemma_rrr a b = 
+  lemma_mod_mul_distr_r a b prime
 
 val fsquare_n_test: n: size_t -> a: felem -> Stack unit 
   (requires (fun h -> live h a /\ as_nat h a < prime)) 
@@ -572,7 +568,7 @@ let fsquare_n_test n a =
      montgomery_multiplication_buffer a a a; 
      let k = fromDomain_ (as_nat h0 a) in  
      inDomain_mod_is_not_mod (fromDomain_ (as_nat h0_ a) * fromDomain_ (as_nat h0_ a));
-     lemma_from_to (let k = fromDomain_ (as_nat h0 a) in pow k (pow2 (v x)));
+     lemmaFromDomainToDomainModuloPrime (let k = fromDomain_ (as_nat h0 a) in pow k (pow2 (v x)));
      modulo_distributivity_mult (pow k (pow2 (v x))) (pow k (pow2 (v x))) prime;
      pow_plus k  (pow2 (v x)) (pow2 (v x )); 
      pow2_double_sum (v x);
@@ -609,8 +605,8 @@ let fsquare_minus_one_buffer n a b =
     inDomain_mod_is_not_mod (fromDomain_ (as_nat h0_ b) * fromDomain_ (as_nat h0_ a));
     inDomain_mod_is_not_mod (fromDomain_ (as_nat h0_ a) * fromDomain_ (as_nat h0_ a));
 
-    lemma_from_to (pow k (pow2 (v x) -1 ));
-    lemma_from_to (pow k (pow2 (v x)));
+    lemmaFromDomainToDomainModuloPrime (pow k (pow2 (v x) -1 ));
+    lemmaFromDomainToDomainModuloPrime (pow k (pow2 (v x)));
     modulo_distributivity_mult (pow k (pow2 (v x) - 1)) (pow k (pow2 (v x))) prime;
     modulo_distributivity_mult (pow k (pow2 (v x))) (pow k (pow2 (v x))) prime;
     
@@ -641,7 +637,7 @@ let norm_part_one a tempBuffer =
   fsquare_n_test (size 224) buffer_b;
 
   let k = fromDomain_ (as_nat h0 a) in 
-  lemma_from_to (pow k (pow2 32 - 1));
+  lemmaFromDomainToDomainModuloPrime (pow k (pow2 32 - 1));
   let k_powers = pow k (pow2 32 - 1) in 
   let k_prime = k_powers % prime in 
   inDomain_mod_is_not_mod (pow k_prime (pow2 224));
@@ -680,14 +676,14 @@ let norm_part_three a tempBuffer =
   fsquare_n_test (size 2) buffer_b;
 
   let k = fromDomain_ (as_nat h0 a) in 
-  lemma_from_to (pow k (pow2 94 - 1));
+  lemmaFromDomainToDomainModuloPrime (pow k (pow2 94 - 1));
   let k_powers = pow k (pow2 94 - 1) in 
   let k_prime = k_powers % prime in 
   inDomain_mod_is_not_mod (pow k_prime (pow2 2));
   power_distributivity k_powers (pow2 2) prime;
   power_mult k (pow2 94 - 1) (pow2 2)
 
-assume val lemma_inDomainModulo: a: nat -> b: nat -> Lemma ((toDomain_ ((a % prime) * (b % prime)) = toDomain_ (a * b % prime)))
+assume val lemma_inDomainModulo: a: nat -> b: nat -> Lemma ((toDomain_ ((a % prime) * (b % prime) % prime) = toDomain_ (a * b % prime)))
 
 val big_power: a: nat -> b: nat -> c: nat -> d: nat -> e: nat -> Lemma (pow a b * pow a c * pow a d * pow a e = pow a (b + c + d + e))
 
@@ -697,7 +693,7 @@ let big_power a b c d e =
   pow_plus a (b + c) (d + e)
 
 
-#reset-options "--z3rlimit 300" 
+#reset-options "--z3refresh --z3rlimit 200"
 
 let exponent a result tempBuffer = 
   let h0 = ST.get () in 
@@ -711,12 +707,16 @@ let exponent a result tempBuffer =
   norm_part_one a buffer_norm_1;
   norm_part_two a buffer_result2;
   norm_part_three a buffer_norm_3;
-
-  let h1 = ST.get() in 
+  
+    let h1 = ST.get() in 
   montgomery_multiplication_buffer buffer_result1 buffer_result2 buffer_result1;
+    let h2 = ST.get() in 
   montgomery_multiplication_buffer buffer_result1 buffer_result3 buffer_result1;
+    let h3 = ST.get() in 
   montgomery_multiplication_buffer buffer_result1 a buffer_result1;
+    let h4 = ST.get() in 
   copy result buffer_result1; 
+    let h5 = ST.get() in 
   
   let k = fromDomain_ (as_nat h0 a) in 
   let power1 = pow k ((pow2 32 - 1) * pow2 224) in 
@@ -725,21 +725,10 @@ let exponent a result tempBuffer =
   let power4 = pow k 1 in 
 
   lemma_inDomainModulo power1 power2;
- (* assert(as_nat h2 buffer_result1  = toDomain_ ((power1 * power2) % prime));*)
   lemma_inDomainModulo (power1 * power2) power3;
-  (*assert(as_nat h3 buffer_result1 = toDomain_ (power1 * power2 * power3 % prime));
-  assert(as_nat h4 buffer_result1 = toDomain_ ((power1 * power2 * power3) % prime * power4));*)
   inDomain_mod_is_not_mod (((power1 * power2 * power3) % prime * power4));
-  (*assert(as_nat h4 buffer_result1 = toDomain_ (((power1 * power2 * power3) % prime * power4) % prime));*)
   lemma_mod_mul_distr_l (power1 * power2 * power3) power4 prime;
-  
-  (*assert(as_nat h4 buffer_result1 = toDomain_ ((power1 * power2 * power3 * power4) % prime));*)
-  
   big_power k ((pow2 32 - 1) * pow2 224) (pow2 192) ((pow2 94 -1 ) * pow2 2) 1;
   assert_norm(((pow2 32 - 1) * pow2 224 + pow2 192 + (pow2 94 -1 ) * pow2 2 + 1) = prime - 2)
-
-  (*assert(as_nat h4 buffer_result1 = toDomain_ ((pow k (prime-2)) % prime)); *)
-
-
 
     
