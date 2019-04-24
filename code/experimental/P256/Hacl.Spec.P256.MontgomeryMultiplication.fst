@@ -546,17 +546,18 @@ let mm_byMinusThree_seq a =
     inDomain_mod_is_not_mod (-3 * fromDomain_ (as_nat4 a_tuple));
     r
 
-val lemma_rrr: a: int -> b: int -> Lemma (toDomain_ (a * (b % prime) % prime) = toDomain_ (a * b % prime))
+val lemmaDistributivityInDomain: a: int -> b: int -> Lemma (toDomain_ (a * (b % prime) % prime) = toDomain_ (a * b % prime))
   [SMTPat (toDomain_ (a * (b % prime) % prime))]
 
-let lemma_rrr a b = 
+let lemmaDistributivityInDomain a b = 
   lemma_mod_mul_distr_r a b prime
 
-val fsquare_n_test: n: size_t -> a: felem -> Stack unit 
+
+val fsquarePowN: n: size_t -> a: felem -> Stack unit 
   (requires (fun h -> live h a /\ as_nat h a < prime)) 
   (ensures (fun h0 _ h1 -> modifies1 a h0 h1 /\  as_nat h1 a < prime /\ (let k = fromDomain_(as_nat h0 a) in as_nat h1 a = toDomain_ (pow k (pow2 (v n))))))
-
-let fsquare_n_test n a = 
+  
+let fsquarePowN n a = 
   let h0 = ST.get() in  
   lemmaFromDomainToDomain (as_nat h0 a);
   let inv (h0: HyperStack.mem) (h1: HyperStack.mem) (i: nat) : Type0 =
@@ -575,14 +576,15 @@ let fsquare_n_test n a =
      inDomain_mod_is_not_mod (pow k (pow2 (v x + 1)))
   )
 
-val fsquare_minus_one_buffer: n: size_t -> a: felem -> tempBuffer: felem -> Stack unit 
+
+val fsquarePowNminusOne: n: size_t -> a: felem -> tempBuffer: felem -> Stack unit 
   (requires (fun h -> live h a /\ live h tempBuffer /\ as_nat h a < prime /\ disjoint a tempBuffer)) 
   (ensures (fun h0 _ h1 -> as_nat h1 a < prime /\ as_nat h1 tempBuffer < prime /\ modifies2 a tempBuffer h0 h1 
 /\ (let k = fromDomain_ (as_nat h0 a) in  as_nat h1 a = toDomain_ (pow k (pow2 (v n))) /\ as_nat h1 tempBuffer = toDomain_ (pow
         k (pow2 (v n) -1 )))))
 
-let fsquare_minus_one_buffer n a b = 
-  let h0 = ST.get() in 
+let fsquarePowNminusOne n a b = 
+  let h0 = ST.get() in
   Lib.Buffer.upd b (size 0) (u64 1);
   Lib.Buffer.upd b (size 1) (u64 18446744069414584320);
   Lib.Buffer.upd b (size 2) (u64 18446744073709551615);
@@ -620,21 +622,19 @@ let fsquare_minus_one_buffer n a b =
 
 
 val norm_part_one: a: felem -> tempBuffer: lbuffer uint64 (size 8) -> 
-  Stack unit (requires fun h -> live h a /\ live h tempBuffer /\ disjoint a tempBuffer /\  
-   as_nat h a < prime)
-  (ensures fun h0 _ h1 -> modifies1 tempBuffer h0 h1 /\ (let buffer_result = gsub tempBuffer (size 4) (size 4) in as_nat h1 buffer_result < prime
-    /\ (let k = fromDomain_ (as_nat h0 a) in as_nat h1 buffer_result = toDomain_(pow k ((pow2 32 - 1) * pow2 224) % prime))))
+  Stack unit (requires fun h -> live h a /\ live h tempBuffer /\ disjoint a tempBuffer /\  as_nat h a < prime)
+  (ensures fun h0 _ h1 -> modifies1 tempBuffer h0 h1 /\ (let buffer_result = gsub tempBuffer (size 4) (size 4) in as_nat h1 buffer_result < prime /\ 
+  (let k = fromDomain_ (as_nat h0 a) in as_nat h1 buffer_result = toDomain_(pow k ((pow2 32 - 1) * pow2 224) % prime))))
     
-
 let norm_part_one a tempBuffer = 
-  let h0 = ST.get() in 
+    let h0 = ST.get() in 
   Lib.Buffer.update_sub tempBuffer (size 0) (size 4) a;
 
   let buffer_a = Lib.Buffer.sub tempBuffer (size 0) (size 4) in 
   let buffer_b = Lib.Buffer.sub tempBuffer (size 4) (size 4) in 
 
-  fsquare_minus_one_buffer (size 32) buffer_a buffer_b;
-  fsquare_n_test (size 224) buffer_b;
+  fsquarePowNminusOne (size 32) buffer_a buffer_b;
+  fsquarePowN (size 224) buffer_b;
 
   let k = fromDomain_ (as_nat h0 a) in 
   lemmaFromDomainToDomainModuloPrime (pow k (pow2 32 - 1));
@@ -653,10 +653,9 @@ val norm_part_two: a: felem -> tempBuffer: lbuffer uint64 (size 4) ->
 let norm_part_two a tempBuffer = 
   let h0 = ST.get() in 
   Lib.Buffer.copy tempBuffer a;
-  fsquare_n_test (size 192) tempBuffer;
+  fsquarePowN (size 192) tempBuffer;
   let k = fromDomain_ (as_nat h0 a) in 
   inDomain_mod_is_not_mod (pow k (pow2 192))
-
 
 
 val norm_part_three:a: felem -> tempBuffer: lbuffer uint64 (size 8) -> 
@@ -672,8 +671,8 @@ let norm_part_three a tempBuffer =
   let buffer_a = Lib.Buffer.sub tempBuffer (size 0) (size 4) in 
   let buffer_b = Lib.Buffer.sub tempBuffer (size 4) (size 4) in 
 
-  fsquare_minus_one_buffer (size 94) buffer_a buffer_b;
-  fsquare_n_test (size 2) buffer_b;
+  fsquarePowNminusOne (size 94) buffer_a buffer_b;
+  fsquarePowN (size 2) buffer_b;
 
   let k = fromDomain_ (as_nat h0 a) in 
   lemmaFromDomainToDomainModuloPrime (pow k (pow2 94 - 1));
@@ -683,18 +682,24 @@ let norm_part_three a tempBuffer =
   power_distributivity k_powers (pow2 2) prime;
   power_mult k (pow2 94 - 1) (pow2 2)
 
-assume val lemma_inDomainModulo: a: nat -> b: nat -> Lemma ((toDomain_ ((a % prime) * (b % prime) % prime) = toDomain_ (a * b % prime)))
+
+val lemma_inDomainModulo: a: nat -> b: nat -> Lemma ((toDomain_ ((a % prime) * (b % prime) % prime) = toDomain_ (a * b % prime)))
+
+let lemma_inDomainModulo a b = 
+  lemma_mod_mul_distr_l a (b % prime) prime;
+  lemma_mod_mul_distr_r a b prime
+
 
 val big_power: a: nat -> b: nat -> c: nat -> d: nat -> e: nat -> Lemma (pow a b * pow a c * pow a d * pow a e = pow a (b + c + d + e))
 
 let big_power a b c d e = 
+  assert(pow a b * pow a c * pow a d * pow a e = (pow a b * pow a c) * (pow a d * pow a e));
   pow_plus a b c;
   pow_plus a d e;
   pow_plus a (b + c) (d + e)
 
 
 #reset-options "--z3refresh --z3rlimit 200"
-
 let exponent a result tempBuffer = 
   let h0 = ST.get () in 
 
