@@ -621,7 +621,7 @@ let fsquarePowNminusOne n a b =
     inDomain_mod_is_not_mod (pow k (pow2 (v x + 1) - 1))
 )
 
-
+inline_for_extraction noextract   
 val norm_part_one: a: felem -> tempBuffer: lbuffer uint64 (size 8) -> 
   Stack unit (requires fun h -> live h a /\ live h tempBuffer /\ disjoint a tempBuffer /\  as_nat h a < prime)
   (ensures fun h0 _ h1 -> modifies1 tempBuffer h0 h1 /\ (let buffer_result = gsub tempBuffer (size 4) (size 4) in as_nat h1 buffer_result < prime /\ 
@@ -645,7 +645,7 @@ let norm_part_one a tempBuffer =
   power_distributivity k_powers (pow2 224) prime;
   power_mult k (pow2 32 - 1) (pow2 224)
  
-
+inline_for_extraction noextract   
 val norm_part_two: a: felem -> tempBuffer: lbuffer uint64 (size 4) -> 
   Stack unit (requires fun h -> live h a /\ live h tempBuffer /\ disjoint a tempBuffer /\  as_nat h a < prime)
   (ensures fun h0 _ h1 -> as_nat h1 tempBuffer < prime /\ modifies1 tempBuffer h0 h1 /\
@@ -658,7 +658,7 @@ let norm_part_two a tempBuffer =
   let k = fromDomain_ (as_nat h0 a) in 
   inDomain_mod_is_not_mod (pow k (pow2 192))
 
-
+inline_for_extraction noextract   
 val norm_part_three:a: felem -> tempBuffer: lbuffer uint64 (size 8) -> 
   Stack unit (requires fun h -> live h a /\ live h tempBuffer /\ disjoint a tempBuffer /\  
    as_nat h a < prime)

@@ -36,7 +36,7 @@ let eq_0_u64 a =
   let b = u64 0 in 
   eq_u64 a b
 
-
+inline_for_extraction noextract
 val cmovznz: cin : uint64{uint_v cin <=1} ->  x: uint64 -> y: uint64   -> 
   Pure uint64
   (requires True)
@@ -66,23 +66,24 @@ let cmovznz4 cin (x0, x1, x2, x3) (y0, y1, y2, y3) =
   (r0, r1, r2, r3)
 
 
+inline_for_extraction noextract
 #set-options "--z3rlimit 100"
-let felem_add arg1 arg2 = 
-  let (x8, c) = add4 arg1 arg2 in 
+let felem_add (a0, a1, a2, a3) (b0, b1, b2, b3) = 
+  let (x8, c) = add4 (a0, a1, a2, a3) (b0, b1, b2, b3)  in 
   let (x1, x3, x5, x7) = c in 
    lemma_nat_4 c;
   let p256 =  (u64 0xffffffffffffffff, u64 0xffffffff, u64 0, u64 0xffffffff00000001) in 
   assert_norm (as_nat4 p256 == prime);
   let (x16, r) = sub4 c p256 in 
-  lemma_for_multiplication_1 arg1 arg2;
+  lemma_for_multiplication_1 (a0, a1, a2, a3) (b0, b1, b2, b3);
   let (x9, x11, x13, x15) = r in   
     lemma_nat_4 r; 
   let (x17, x18) = subborrow x8 (u64 0) x16  in 
-    prime_lemma (as_nat4 arg1 + as_nat4 arg2);
+    prime_lemma (as_nat4 (a0, a1, a2, a3)  + as_nat4 (b0, b1, b2, b3));
     small_modulo_lemma_extended (as_nat4 c) prime; 
-  let result = cmovznz4 x18 r c in 
-  assert(as_nat4 result = (as_nat4 arg1 + as_nat4 arg2) % prime);
-  result
+  let (r0, r1, r2, r3) = cmovznz4 x18 r c in 
+  assert(as_nat4 (r0, r1, r2, r3) = (as_nat4 (a0, a1, a2, a3)  + as_nat4 (b0, b1, b2, b3)) % prime);
+  (r0, r1, r2, r3)
 
 
 #reset-options "--z3rlimit 400"
@@ -513,8 +514,7 @@ let montgomery_multiplication (a0, a1, a2, a3) (b0, b1, b2, b3) =
     assert(wide_as_nat4 t_state3 < 2 * prime);
   let (t0, t1, t2, t3, t4, t5, t6, t7) = t_state3 in 
     lemma_prime_as_wild_nat t_state3;
-  let r = reduction_prime_2prime_with_carry t4 (t0, t1, t2, t3) in 
-  r
+  reduction_prime_2prime_with_carry t4 (t0, t1, t2, t3)
 
 
 let cube_tuple a = 

@@ -16,8 +16,10 @@ val eq_u64:a:uint64 -> b:uint64 -> Tot (r: bool {if uint_v a = uint_v b then r =
 inline_for_extraction noextract
 val eq_0_u64: a: uint64 -> Tot (r: bool {if uint_v a = 0 then r == true else r == false})
 
+inline_for_extraction noextract
 val felem_add: arg1: felem4 {as_nat4 arg1 < prime} -> arg2: felem4{as_nat4 arg2 < prime} -> Tot (r : felem4 {as_nat4 r == (as_nat4 arg1 + as_nat4 arg2) % prime})
 
+inline_for_extraction noextract
 val felem_sub: arg1: felem4 {as_nat4 arg1 < prime} -> arg2: felem4 {as_nat4 arg2 < prime} -> Tot (r : felem4 {as_nat4 r < prime /\ as_nat4 r == (as_nat4 arg1 - as_nat4 arg2) % prime})
 
 inline_for_extraction noextract

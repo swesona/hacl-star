@@ -378,6 +378,7 @@ let point_double_condition_seq u1 u2 s1 s2 z1 z2 =
     lemmaFromDomain (felem_seq_as_nat z2);
     eq_u64 result (u64 0xffffffffffffffff)     
 
+inline_for_extraction noextract
 val copy_conditional_tuple: out: felem4{as_nat4 out < prime} -> x: felem4 {as_nat4 x < prime} -> 
   mask: uint64 {uint_v mask = 0 \/ uint_v mask = pow2 64 - 1} -> 
   Tot (result: felem4 {as_nat4 result < prime /\ (
