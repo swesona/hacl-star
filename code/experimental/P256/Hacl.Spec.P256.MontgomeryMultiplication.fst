@@ -14,11 +14,12 @@ open Hacl.Spec.P256.Definitions
 open Hacl.Spec.P256.Core
 
 open Hacl.Impl.Curve25519.Field64.Core
-module D = Hacl.Spec.Curve25519.Field64.Definition
+open Hacl.Spec.Curve25519.Field64.Definition
 
 open Lib.IntTypes
 open Lib.Buffer
 open Lib.Sequence
+open Lib.Loops
 
 #reset-options "--z3rlimit 300"
 

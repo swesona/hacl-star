@@ -966,7 +966,7 @@ let norm p resultPoint tempBuffer =
     assert(modifies1 resultPoint h2 h3);
     assert(modifies2 tempBuffer resultPoint h0 h3); 
 
-    lemma_erase_norm (fromDomain_ (as_nat h0 zf));
+    lemmaEraseToDomainFromDomain (fromDomain_ (as_nat h0 zf));
     power_distributivity (fromDomain_ (as_nat h0 zf) * fromDomain_ (as_nat h0 zf)) (prime -2) prime;
     power_distributivity (fromDomain_ (as_nat h0 zf) * fromDomain_ (as_nat h0 zf) * fromDomain_ (as_nat h0 zf)) (prime -2) prime;
 
