@@ -2,18 +2,13 @@ module Hacl.Impl.P256
 
 open FStar.HyperStack.All
 open FStar.HyperStack
-open FStar.HyperStack.ST
-
 module ST = FStar.HyperStack.ST
-module HS = FStar.HyperStack
 
 open Lib.IntTypes
 open Lib.Buffer
 
 open Hacl.Impl.Curve25519.Field64.Core
-module C =  Hacl.Spec.Curve25519.Field64.Core
-module D = Hacl.Spec.Curve25519.Field64.Definition
-open  Hacl.Spec.P256.Core
+open Hacl.Spec.P256.Core
 open Hacl.Spec.P256.Lemmas
 open Hacl.Spec.P256.Definitions
 open Hacl.Spec.P256.SolinasReduction
@@ -22,33 +17,23 @@ open Hacl.Spec.P256.MontgomeryMultiplication.PointDouble
 open Hacl.Spec.P256.MontgomeryMultiplication.PointAdd
 open Hacl.Spec.P256.Normalisation 
 
-open Lib.Loops
 open FStar.Math.Lemmas
-
-module B = LowStar.Buffer
 
 friend Hacl.Spec.P256.MontgomeryMultiplication
 open FStar.Mul
 
+
 #set-options "--z3rlimit 500" 
-
-val p256_add: arg1: felem -> arg2: felem ->  out: felem -> 
-Stack unit 
-(requires (fun h0 ->  
-  (let arg1_as_seq = as_seq h0 arg1 in 
-  let arg2_as_seq = as_seq h0 arg2 in 
-  felem_seq_as_nat arg1_as_seq < prime /\
-  felem_seq_as_nat arg2_as_seq < prime /\
-  live h0 out /\ live h0 arg1 /\ live h0 arg2)))
-(ensures (fun h0 _ h1 -> modifies1 out h0 h1 /\ 
-  (*as_nat h1 out == (as_nat h0 arg1 + as_nat h0 arg2) % prime /\ *)
-  (let arg1_as_seq = as_seq h0 arg1 in 
-  let arg2_as_seq = as_seq h0 arg2 in 
-  as_nat h1 out < prime /\
-  as_seq h1 out == felem_add_seq arg1_as_seq arg2_as_seq
-)))
-
-
+val p256_add: arg1: felem -> arg2: felem ->  out: felem -> Stack unit 
+  (requires (fun h0 ->  
+    (let arg1_as_seq = as_seq h0 arg1 in let arg2_as_seq = as_seq h0 arg2 in 
+    felem_seq_as_nat arg1_as_seq < prime /\ felem_seq_as_nat arg2_as_seq < prime /\
+    live h0 out /\ live h0 arg1 /\ live h0 arg2))
+  )
+  (ensures (fun h0 _ h1 -> modifies1 out h0 h1 /\ 
+    (let arg1_as_seq = as_seq h0 arg1 in let arg2_as_seq = as_seq h0 arg2 in 
+    as_nat h1 out < prime /\ as_seq h1 out == felem_add_seq arg1_as_seq arg2_as_seq))
+  )
 
 let p256_add arg1 arg2 out = 
   let h0 = ST.get() in 
@@ -74,15 +59,12 @@ let p256_add arg1 arg2 out =
   assert(Lib.Sequence.equal (as_seq h1 out) (felem_add_seq (as_seq h0 arg1) (as_seq h0 arg2)));
   ()
 
-val p256_sub: arg1: felem -> arg2: felem -> out: felem -> 
-  Stack unit 
-  (requires (fun h0 -> live h0 out /\ live h0 arg1 /\ live h0 arg2 /\ as_nat h0 arg1 < prime /\
-as_nat h0 arg2 < prime))
-  (ensures (fun h0 _ h1 ->modifies1 out h0 h1 /\  
-  (*as_nat h1 out == (as_nat h0 arg1 - as_nat h0 arg2) % prime /\ *)
-  as_nat h1 out < prime /\
-  as_seq h1 out == felem_sub_seq (as_seq h0 arg1) (as_seq h0 arg2)))
 
+val p256_sub: arg1: felem -> arg2: felem -> out: felem -> Stack unit 
+  (requires 
+    (fun h0 -> live h0 out /\ live h0 arg1 /\ live h0 arg2 /\ as_nat h0 arg1 < prime /\ as_nat h0 arg2 < prime))
+  (ensures 
+    (fun h0 _ h1 ->modifies1 out h0 h1 /\  as_nat h1 out < prime /\ as_seq h1 out == felem_sub_seq (as_seq h0 arg1) (as_seq h0 arg2)))
 
 let p256_sub arg1 arg2 out = 
   let h0 = ST.get() in 
@@ -112,11 +94,9 @@ let p256_sub arg1 arg2 out =
 
 
 #set-options "--z3rlimit 100"
-
 val solinas_fast_reduction_partially_opened: c: felem8 ->result : felem ->   Stack unit   
   (requires (fun h ->  live h result)) 
   (ensures (fun h0 _ h1 -> modifies (loc result) h0 h1 /\ as_nat h1 result == D.wide_as_nat4 c % prime ))
-
 
 let solinas_fast_reduction_partially_opened c result = 
   let (r0, r1, r2, r3) = solinas_reduction c in 
@@ -139,7 +119,6 @@ let toDomain value result =
   solinas_fast_reduction_partially_opened multipliedByPow256 result 
 
 
-
 let pointToDomain p result = 
     let p_x = sub p (size 0) (size 4) in 
     let p_y = sub p (size 4) (size 4) in 
@@ -153,19 +132,6 @@ let pointToDomain p result =
     toDomain p_y r_y;
     toDomain p_z r_z
 
-(*)
-val load_prime: out: felem -> Stack unit 
-  (requires (fun h -> live h out)) 
-  (ensures (fun h0 _ h1 -> modifies (loc out) h0 h1 /\ as_nat h1 out == prime))
-
-
-let load_prime out = 
-  let (r0, r1, r2, r3) = upload_prime() in 
-  upd out (size 0) r0;
-  upd out (size 1) r1;
-  upd out (size 2) r2;
-  upd out (size 3) r3
-*)
 
 val multiplication_partially_opened: a: felem4 -> b: felem -> result: felem ->Stack unit
   (requires fun h -> D.as_nat4 a < prime /\ as_nat h b < prime /\ live h b /\ live h result)
@@ -188,8 +154,7 @@ let multiplication_partially_opened a b result =
 
 val fromDomain: f: felem-> result: felem-> Stack unit
   (requires fun h -> live h f /\ live h result /\ as_nat h f < prime)
-  (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\ as_nat h1 result = (as_nat h0 f * modp_inv2(pow2 256)) % prime
-  /\ as_nat h1 result = fromDomain_ (as_nat h0 f))
+  (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\ as_nat h1 result = (as_nat h0 f * modp_inv2(pow2 256)) % prime/\ as_nat h1 result = fromDomain_ (as_nat h0 f))
 
 let fromDomain f result = 
   let one = ((u64 1), (u64 0), u64 0, u64 0) in 
@@ -212,12 +177,7 @@ let pointFromDomain p result =
 
 val cube: a: felem -> result: felem -> Stack unit
   (requires fun h -> live h a /\ live h result  /\ disjoint a result /\ as_nat h a < prime)
-  (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\
-  as_nat h1 result < prime /\
-  (*as_nat h1 result == (as_nat h0 a * as_nat h0 a * as_nat h0 a * modp_inv2 (pow2 256) * modp_inv2(pow2 256)) % prime*)
-  as_nat h1 result == felem_seq_as_nat (mm_cube_seq (as_seq h0 a)) /\
-  as_seq h1 result == mm_cube_seq (as_seq h0 a)  
-  )
+  (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\as_nat h1 result < prime /\  as_nat h1 result == felem_seq_as_nat (mm_cube_seq (as_seq h0 a)) /\ as_seq h1 result == mm_cube_seq (as_seq h0 a))
 
 let cube a result = 
     let h0 = ST.get() in 
@@ -238,12 +198,7 @@ let cube a result =
 
 val quatre: a: felem -> result: felem -> Stack unit
   (requires fun h -> live h a /\ live h result /\ disjoint a result /\ as_nat h a < prime)
-  (ensures fun h0 _ h1 -> modifies1 result h0 h1 /\ 
-   (*as_nat h1 result = (as_nat h0 a * as_nat h0 a * as_nat h0 a * as_nat h0 a * modp_inv2 (pow2 256) * modp_inv2 (pow2 256) * modp_inv2 (pow2 256)) % prime /\ *)
-   as_nat h1 result = felem_seq_as_nat (mm_quatre_seq (as_seq h0 a)) /\
-   as_nat h1 result < prime /\
-   as_seq h1 result == mm_quatre_seq (as_seq h0 a) 
-   )
+  (ensures fun h0 _ h1 -> modifies1 result h0 h1 /\ as_nat h1 result = felem_seq_as_nat (mm_quatre_seq (as_seq h0 a)) /\ as_nat h1 result < prime /\ as_seq h1 result == mm_quatre_seq (as_seq h0 a))
 
 let quatre a result = 
     let h0 = ST.get() in 
@@ -265,11 +220,7 @@ let quatre a result =
 
 val multByTwo: a: felem -> result: felem -> Stack unit 
   (requires fun h -> live h a /\ live h result /\ disjoint a result /\ as_nat h a < prime )
-  (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\  
-    (*as_nat h1 result = (as_nat h0 a  * 2) % prime /\*)
-    as_seq h1 result == mm_byTwo_seq (as_seq h0 a) /\
-    as_nat h1 result < prime  
-  )
+  (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\ as_seq h1 result == mm_byTwo_seq (as_seq h0 a) /\ as_nat h1 result < prime)
 
 let multByTwo a result = 
   let h0 = ST.get() in 
@@ -288,13 +239,9 @@ let multByTwo a result =
     assert(Lib.Sequence.equal (mm_byTwo_seq (as_seq h0 a)) (as_seq h1 result))
 
 
-
 val multByThree: a: felem -> result: felem -> Stack unit 
   (requires fun h -> live h a /\ live h result /\ disjoint a result /\ as_nat h a < prime )
-  (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\  
-    (*as_nat h1 result = (as_nat h0 a  * 3) % prime /\ *)
-    as_nat h1 result < prime /\
-    as_seq h1 result == mm_byThree_seq (as_seq h0 a))
+  (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\ as_nat h1 result < prime /\as_seq h1 result == mm_byThree_seq (as_seq h0 a))
 
 let multByThree a result = 
   let h0 = ST.get() in 
@@ -312,13 +259,10 @@ let multByThree a result =
   let h1 = ST.get() in 
     assert(Lib.Sequence.equal (mm_byThree_seq (as_seq h0 a)) (as_seq h1 result))
 
+
 val multByFour: a: felem -> result: felem -> Stack unit 
   (requires fun h -> live h a /\ live h result /\ disjoint a result /\ as_nat h a < prime )
-  (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\  
-    (*as_nat h1 result = (as_nat h0 a  * 4) % prime /\ *)
-    as_nat h1 result < prime /\ 
-    as_seq h1 result == mm_byFour_seq (as_seq h0 a)
-  )
+  (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\ as_nat h1 result < prime /\ as_seq h1 result == mm_byFour_seq (as_seq h0 a))
 
 let multByFour a result  = 
   let h0 = ST.get() in 
@@ -339,11 +283,7 @@ let multByFour a result  =
 
 val multByEight: a: felem -> result: felem -> Stack unit 
   (requires fun h -> live h a /\ live h result /\ disjoint a result /\ as_nat h a < prime )
-  (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\  
-   (* as_nat h1 result = (as_nat h0 a  * 8) % prime /\ *)
-    as_nat h1 result < prime /\
-    as_seq h1 result == mm_byEight_seq (as_seq h0 a)
-  )
+  (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\ as_nat h1 result < prime /\ as_seq h1 result == mm_byEight_seq (as_seq h0 a))
 
 let multByEight a result  = 
   let h0 = ST.get() in 
@@ -361,13 +301,10 @@ let multByEight a result  =
   let h1 = ST.get() in 
     assert(Lib.Sequence.equal (mm_byEight_seq (as_seq h0 a)) (as_seq h1 result))
 
+
 val multByMinusThree: a: felem -> result: felem -> Stack unit 
   (requires fun h -> live h a /\ live h result /\ disjoint a result /\ as_nat h a < prime )
-  (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\  
-    as_nat h1 result < prime /\ (*
-    as_nat h1 result = (as_nat h0 a  * (-3)) % prime /\ *)
-    as_seq h1 result == mm_byMinusThree_seq (as_seq h0 a)
-  )
+  (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\ as_nat h1 result < prime /\ as_seq h1 result == mm_byMinusThree_seq (as_seq h0 a))
 
 let multByMinusThree a result  = 
   let h0 = ST.get() in 
@@ -385,6 +322,7 @@ let multByMinusThree a result  =
  let h1 = ST.get() in 
    assert(Lib.Sequence.equal (mm_byMinusThree_seq (as_seq h0 a)) (as_seq h1 result))
 
+
 val isZero_uint64:  f: felem -> Stack uint64
   (requires fun h -> live h f)
   (ensures fun h0 r h1 -> modifies0 h0 h1 /\ (if as_nat h0 f = 0 then uint_v r == pow2 64 - 1 else uint_v r == 0))
@@ -397,36 +335,16 @@ let isZero_uint64 f =
   isZero_tuple_u (a0, a1, a2, a3)
 
 
-val isPointAtInfinity: p: point -> Stack bool 
-  (requires fun h -> live h p /\     
-    as_nat h (gsub p (size 8) (size 4)) < prime /\ 
-    as_nat h (gsub p (size 0) (size 4)) < prime /\ 
-    as_nat h (gsub p (size 4) (size 4)) < prime
-  )
-  (ensures fun h0 r h1 -> modifies0 h0 h1 /\  
-  (if point_z_as_nat h0 p = 0  then r == true else r == false) /\ r == isPointAtInfinitySeq (as_seq h0 p))
-
-
-let isPointAtInfinity p = 
-    let a0 = index p (size 8) in 
-    let a1 = index p (size 9) in 
-    let a2 = index p (size 10) in 
-    let a3 = index p (size 11) in 
-    isZero_tuple_b (a0, a1, a2, a3)
-
 val copy_point: p: point -> result: point -> Stack unit 
   (requires fun h -> live h p /\ live h result /\ disjoint p result) 
   (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\
     as_seq h1 result == copy_point_seq (as_seq h0 p))
 
-let copy_point p result = 
-  copy result p
+let copy_point p result = copy result p
  
 
 (* https://crypto.stackexchange.com/questions/43869/point-at-infinity-and-error-handling*)
-
 #reset-options "--z3rlimit 500" 
-
 inline_for_extraction noextract 
 val point_double_compute_s_m: p: point -> s: felem -> m: felem -> tempBuffer:lbuffer uint64 (size 24) -> Stack unit
   (requires fun h -> live h p /\ live h s /\ live h m /\ live h tempBuffer /\
@@ -443,9 +361,8 @@ val point_double_compute_s_m: p: point -> s: felem -> m: felem -> tempBuffer:lbu
      felem_seq_as_nat y_sequence < prime /\
      felem_seq_as_nat z_sequence < prime /\  
   modifies (loc tempBuffer |+| loc s |+| loc m) h0 h1 /\ as_nat h1 s < prime  /\ as_nat h1 m < prime /\
-   (let (s_, m_) = point_double_compute_s_m_seq (as_seq h0 p) in 
-   as_seq h1 s == s_ /\ as_seq h1 m == m_))
-  
+   (let (s_, m_) = point_double_compute_s_m_seq (as_seq h0 p) in as_seq h1 s == s_ /\ as_seq h1 m == m_))
+
 
 let point_double_compute_s_m p s m tempBuffer =
   let h0 = ST.get() in 
@@ -460,7 +377,6 @@ let point_double_compute_s_m p s m tempBuffer =
     let xx = sub tempBuffer (size 16) (size 4) in 
     let threeXx = sub tempBuffer (size 20) (size 4) in 
 
-    
     montgomery_multiplication_buffer py py yy; 
     montgomery_multiplication_buffer px yy xyy;
     multByFour xyy s;
@@ -473,6 +389,7 @@ let point_double_compute_s_m p s m tempBuffer =
   let h1 = ST.get() in 
   assert(let s_, m_ = point_double_compute_s_m_seq (as_seq h0 p) in Lib.Sequence.equal (s_) (as_seq h1 s)
     /\ Lib.Sequence.equal m_ (as_seq h1 m))
+
 
 inline_for_extraction noextract 
 val point_double_compute_x3: x3: felem -> 
@@ -524,15 +441,7 @@ let point_double_compute_y3 p_y y3 x3 s m tempBuffer =
     
 
 let point_double p result tempBuffer = 
-  let h0 = ST.get() in  
-  
-  let p_infinity = isPointAtInfinity p in 
-  if p_infinity then 
-    begin      
-      copy_point p result
-    end
-  else begin  
-
+	let h0 = ST.get() in  
     let s = sub tempBuffer (size 0) (size 4) in 
     let m = sub tempBuffer (size 4) (size 4) in 
     let buffer_for_s_m = sub tempBuffer (size 8) (size 24) in 
@@ -568,11 +477,9 @@ let point_double p result tempBuffer =
      let h5 = ST.get() in 
      
      assert(modifies1 tempBuffer h4 h5);
-     concat3 #MUT #MUT #MUT  (size 4) x3 (size 4) y3 (size 4) z3 result
-     
- end;  
- let hend = ST.get() in 
- assert(as_seq hend result == point_double_seq (as_seq h0 p))
+     concat3 #MUT #MUT #MUT  (size 4) x3 (size 4) y3 (size 4) z3 result;
+   let hend = ST.get() in 
+   assert(as_seq hend result == point_double_seq (as_seq h0 p))
 
 
 val inverse_mod_prime: value: felem -> result: felem -> tempBuffer: lbuffer uint64 (size 24) ->

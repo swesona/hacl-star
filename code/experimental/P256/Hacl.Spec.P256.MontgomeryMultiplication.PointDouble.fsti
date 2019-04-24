@@ -35,7 +35,7 @@ val isPointAtInfinitySeq : p: point_seq {let z = Lib.Sequence.sub p 8 4 in felem
 
 
 noextract
-val copy_point_seq: p: point_seq -> Tot (r: point_seq)
+val copy_point_seq: p: point_seq -> Tot (r: point_seq{p == r})
 
 
 noextract
