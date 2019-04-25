@@ -7,8 +7,6 @@ open Lib.Sequence
 open Lib.ByteSequence
 open Lib.NatMod
 
-
-
 #reset-options "--max_fuel 0 --z3rlimit 20"
 
 
@@ -127,6 +125,21 @@ let rec montgomery_ladder_ r0 r1 k counter =
   in
   if counter > 0 then montgomery_ladder_ r0 r1 k (counter - 1)
   else r0
+
+
+let montgomery_ladder_step (k:scalar) (i:nat{i < 256}) (r0, r1)= 
+  if uint_to_nat #U8 (ith_bit k i) = 1 then 
+    (point_add r0 r1, point_double r1)
+  else 
+    (point_double r0, point_add r0 r1)
+
+val montgomery_ladder_2: r1: jacobian -> k: scalar -> Tot jacobian 
+
+let montgomery_ladder_2 r1 k= 
+  let r0 = Jacobian (0x1) (0x1) (0x0) in
+  let r0, r1 = Lib.LoopCombinators.repeati 255 (montgomery_ladder_step k) (r0, r1) in 
+  r0
+  
 
 
 val montgomery_ladder: point: jacobian -> k: scalar -> Tot jacobian

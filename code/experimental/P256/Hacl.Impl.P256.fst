@@ -138,28 +138,27 @@ val multiplication_partially_opened: a: felem4 -> b: felem -> result: felem ->St
   (requires fun h -> D.as_nat4 a < prime /\ as_nat h b < prime /\ live h b /\ live h result)
   (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\ as_nat h1 result = (D.as_nat4 a * as_nat h0 b * modp_inv2(pow2 256)) % prime)
 
-let multiplication_partially_opened a b result = 
+let multiplication_partially_opened (a0, a1, a2, a3) b result = 
   let b0 = index b (size 0) in 
   let b1 = index b (size 1) in 
   let b2 = index b (size 2) in 
   let b3 = index b (size 3) in 
 
-  let (r0, r1, r2, r3) = montgomery_multiplication a (b0, b1, b2, b3) in 
-  assert(D.as_nat4 (r0, r1, r2, r3) = D.as_nat4 a * D.as_nat4 (b0, b1, b2, b3) * modp_inv2(pow2 256) % prime);
+  let (r0, r1, r2, r3) = montgomery_multiplication (a0, a1, a2, a3) (b0, b1, b2, b3) in 
+  assert(D.as_nat4 (r0, r1, r2, r3) = D.as_nat4 (a0, a1, a2, a3) * D.as_nat4 (b0, b1, b2, b3) * modp_inv2(pow2 256) % prime);
  
   upd result (size 0) r0;
   upd result (size 1) r1;
   upd result (size 2) r2;
   upd result (size 3) r3
 
-inline_for_extraction noextract 
+
 val fromDomain: f: felem-> result: felem-> Stack unit
   (requires fun h -> live h f /\ live h result /\ as_nat h f < prime)
   (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\ as_nat h1 result = (as_nat h0 f * modp_inv2(pow2 256)) % prime/\ as_nat h1 result = fromDomain_ (as_nat h0 f))
 
 let fromDomain f result = 
-  let one = ((u64 1), (u64 0), u64 0, u64 0) in 
-  multiplication_partially_opened one f result
+  multiplication_partially_opened ((u64 1), (u64 0), u64 0, u64 0) f result
     
 
 let pointFromDomain p result = 
@@ -323,7 +322,7 @@ let multByMinusThree a result  =
  let h1 = ST.get() in 
    assert(Lib.Sequence.equal (mm_byMinusThree_seq (as_seq h0 a)) (as_seq h1 result))
 
-inline_for_extraction noextract 
+
 val isZero_uint64:  f: felem -> Stack uint64
   (requires fun h -> live h f /\ as_nat h f < prime)
   (ensures fun h0 r h1 -> modifies0 h0 h1 /\ r == isZero_seq (as_seq h0 f))
@@ -521,7 +520,7 @@ let copy_conditional out x mask =
     let h1 = ST.get() in 
     assert(Lib.Sequence.equal (as_seq h1 out) (copy_conditional_seq (as_seq h0 out) (as_seq h0 x) mask))
 
-inline_for_extraction noextract 
+
 val copy_point_conditional: x3_out: felem -> y3_out: felem -> z3_out: felem -> p: point -> maskPoint: point -> Stack unit
   (requires fun h -> live h x3_out /\ live h y3_out /\ live h z3_out /\ live h p /\ live h maskPoint /\ 
     LowStar.Monotonic.Buffer.all_disjoint[loc x3_out; loc y3_out; loc z3_out; loc p; loc maskPoint] /\
@@ -555,7 +554,7 @@ let copy_point_conditional x3_out y3_out z3_out p maskPoint =
   copy_conditional y3_out p_y mask;
   copy_conditional z3_out p_z mask
 
-inline_for_extraction noextract 
+ 
 val compare_felem: a: felem -> b: felem -> Stack uint64
   (requires fun h -> live h a /\ live h b /\ as_nat h a < prime /\ as_nat h b < prime ) 
   (ensures fun h0 r h1 -> modifies0 h0 h1 /\ r == compare_felem_seq (as_seq h0 a) (as_seq h0 b)) 

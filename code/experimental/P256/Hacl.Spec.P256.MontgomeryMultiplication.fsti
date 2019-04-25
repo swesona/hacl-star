@@ -55,8 +55,7 @@ noextract
 val montgomery_multiplication_seq: a: felem_seq {felem_seq_as_nat a < prime} -> b: felem_seq {felem_seq_as_nat b < prime} -> Tot (r: felem_seq {felem_seq_as_nat r < prime /\ 
   felem_seq_as_nat r = toDomain_ (fromDomain_ (felem_seq_as_nat a) * fromDomain_(felem_seq_as_nat b) % prime)
   }) 
-
-inline_for_extraction noextract    
+   
 val montgomery_multiplication_buffer: a: felem -> b: felem -> r: felem ->  Stack unit
   (requires (fun h -> live h a /\ as_nat h a < prime /\ live h b /\ live h r /\ as_nat h b < prime)) 
   (ensures (fun h0 _ h1 -> modifies1 r h0 h1 /\ 
