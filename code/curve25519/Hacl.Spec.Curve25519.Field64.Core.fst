@@ -62,6 +62,7 @@ let subborrow x y cin =
       (if lt_u64 x y then u64 1 else u64 0) in
   res, c
 
+inline_for_extraction noextract
 val mul64:
     x:uint64
   -> y:uint64
@@ -234,6 +235,7 @@ let carry_wide f =
   lemma_feval_wide f;
   out1
 
+inline_for_extraction noextract
 val add4:
     f1:felem4
   -> f2:felem4
@@ -241,9 +243,7 @@ val add4:
     (requires True)
     (ensures fun (c, r) -> v c <= 1 /\
       as_nat4 r + v c * pow2 256 == as_nat4 f1 + as_nat4 f2)
-let add4 f1 f2 =
-  let (f10, f11, f12, f13) = f1 in
-  let (f20, f21, f22, f23) = f2 in
+let add4 (f10, f11, f12, f13) (f20, f21, f22, f23) =
   let o0, c0 = addcarry f10 f20 (u64 0) in
   let o1, c1 = addcarry f11 f21 c0 in
   let o2, c2 = addcarry f12 f22 c1 in
@@ -251,7 +251,7 @@ let add4 f1 f2 =
   let out = (o0, o1, o2, o3) in
   lemma_mul_assos_5 (v c3) (pow2 64) (pow2 64) (pow2 64) (pow2 64);
   assert_norm (pow2 64 * pow2 64 * pow2 64 * pow2 64 = pow2 256);
-  c3, out
+  c3, (o0, o1, o2, o3)
 
 val fadd4:
     f1:felem4
