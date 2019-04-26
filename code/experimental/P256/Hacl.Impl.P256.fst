@@ -175,47 +175,18 @@ let pointFromDomain p result =
     fromDomain p_z r_z
 
 
-val cube: a: felem -> result: felem -> Stack unit
-  (requires fun h -> live h a /\ live h result  /\ disjoint a result /\ as_nat h a < prime)
-  (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\as_nat h1 result < prime /\  as_nat h1 result == felem_seq_as_nat (mm_cube_seq (as_seq h0 a)) /\ as_seq h1 result == mm_cube_seq (as_seq h0 a))
-
-let cube a result = 
-    let h0 = ST.get() in 
-    let a0 = index a (size 0) in 
-    let a1 = index a (size 1) in 
-    let a2 = index a (size 2) in 
-    let a3 = index a (size 3) in 
-
-    let (r0, r1, r2, r3) = cube_tuple (a0, a1, a2, a3) in 
- 
-    upd result (size 0) r0;
-    upd result (size 1) r1;
-    upd result (size 2) r2;
-    upd result (size 3) r3;
-    let h1 = ST.get() in
-    assert(Lib.Sequence.equal (mm_cube_seq (as_seq h0 a))  (as_seq h1 result))
-
-
 val quatre: a: felem -> result: felem -> Stack unit
   (requires fun h -> live h a /\ live h result /\ disjoint a result /\ as_nat h a < prime)
   (ensures fun h0 _ h1 -> modifies1 result h0 h1 /\ as_nat h1 result = felem_seq_as_nat (mm_quatre_seq (as_seq h0 a)) /\ as_nat h1 result < prime /\ as_seq h1 result == mm_quatre_seq (as_seq h0 a))
 
+#reset-options "--z3refresh --z3rlimit 500" 
+
 let quatre a result = 
     let h0 = ST.get() in 
-    let a0 = index a (size 0) in 
-    let a1 = index a (size 1) in 
-    let a2 = index a (size 2) in 
-    let a3 = index a (size 3) in 
-
-    let (r0, r1, r2, r3) = quatre_tuple (a0, a1, a2, a3) in 
- 
-    upd result (size 0) r0;
-    upd result (size 1) r1;
-    upd result (size 2) r2;
-    upd result (size 3) r3;
-    
-    let h1 = ST.get() in
-    assert(Lib.Sequence.equal (mm_quatre_seq (as_seq h0 a))  (as_seq h1 result))
+  montgomery_multiplication_buffer a a result;
+  montgomery_multiplication_buffer result result result;
+    let h1 = ST.get() in 
+  assert(Lib.Sequence.equal (mm_quatre_seq (as_seq h0 a))  (as_seq h1 result))
 
 
 val multByTwo: a: felem -> result: felem -> Stack unit 

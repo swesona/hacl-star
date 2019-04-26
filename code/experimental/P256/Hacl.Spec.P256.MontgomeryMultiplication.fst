@@ -408,29 +408,13 @@ let mm_cube_seq a=
 
 
 let mm_quatre_seq a= 
-    let a0 = index a 0 in 
-    let a1 = index a 1 in 
-    let a2 = index a 2 in 
-    let a3 = index a 3 in 
-    let a_tuple = (a0, a1, a2, a3) in  
-    
-    let (r0, r1, r2, r3) = quatre_tuple (a0, a1, a2, a3) in 
-
-    let r = create 4 (u64 0)  in 
-    let r = upd r 0 r0 in
-    let r = upd r 1 r1 in 
-    let r = upd r 2 r2 in 
-    let r = upd r 3 r3 in 
-    let r_tuple = (r0, r1, r2, r3) in 
-
-    lemma_brackets7_twice (as_nat4 a_tuple) (as_nat4 a_tuple) (as_nat4 a_tuple) (as_nat4 a_tuple) (modp_inv2 (pow2 256)) (modp_inv2 (pow2 256)) (modp_inv2 (pow2 256));
-    lemma_mod_mul_distr_l ((as_nat4 a_tuple * modp_inv2 (pow2 256))  *  (as_nat4 a_tuple * modp_inv2 (pow2 256))  *  (as_nat4 a_tuple * modp_inv2 (pow2 256))  * as_nat4 a_tuple) (modp_inv2 (pow2 256)) prime;
-    lemma_brackets5  (as_nat4 a_tuple * modp_inv2 (pow2 256))  (as_nat4 a_tuple * modp_inv2 (pow2 256))  (as_nat4 a_tuple * modp_inv2 (pow2 256))  (as_nat4 a_tuple) (modp_inv2 (pow2 256));
-    lemmaFromDomainToDomain (as_nat4 r_tuple);
-    inDomain_mod_is_not_mod ( (as_nat4 a_tuple * modp_inv2 (pow2 256))  *  (as_nat4 a_tuple * modp_inv2 (pow2 256))  *  (as_nat4 a_tuple * modp_inv2 (pow2 256))  *  (as_nat4 a_tuple * modp_inv2 (pow2 256)) );
-    lemma_toDomain_reduce_prime4  (as_nat4 a_tuple * modp_inv2 (pow2 256)) (as_nat4 a_tuple * modp_inv2 (pow2 256)) (as_nat4 a_tuple * modp_inv2 (pow2 256)) (as_nat4 a_tuple * modp_inv2 (pow2 256));
-    inDomain_mod_is_not_mod ((fromDomain_ (felem_seq_as_nat a) * fromDomain_ (felem_seq_as_nat a) * fromDomain_ (felem_seq_as_nat a) * fromDomain_ (felem_seq_as_nat a)));
-    r
+  let open FStar.Tactics in 
+  let open FStar.Tactics.Canon in 
+  let result = montgomery_multiplication_seq a a in 
+  let resultFinal = montgomery_multiplication_seq result result in 
+      modulo_distributivity_mult ((fromDomain_ (felem_seq_as_nat a)) * (fromDomain_ (felem_seq_as_nat a))) ((fromDomain_ (felem_seq_as_nat a)) * (fromDomain_ (felem_seq_as_nat a))) prime;
+      assert_by_tactic (((fromDomain_ (felem_seq_as_nat a)) * (fromDomain_ (felem_seq_as_nat a))) * ((fromDomain_ (felem_seq_as_nat a)) * (fromDomain_ (felem_seq_as_nat a))) == (fromDomain_ (felem_seq_as_nat a)) * (fromDomain_ (felem_seq_as_nat a)) * (fromDomain_ (felem_seq_as_nat a)) * (fromDomain_ (felem_seq_as_nat a))) canon;
+  resultFinal
 
 
 val lemma_multiplicationInDomainByNumber: a: felem4 -> b: int -> Lemma (fromDomain_ (as_nat4 a * b % prime) = b * fromDomain_ (as_nat4 a) % prime)

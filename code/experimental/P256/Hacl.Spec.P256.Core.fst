@@ -526,6 +526,7 @@ let cube_tuple a =
 
 
 let quatre_tuple a = 
+  [@inline_let]
   let squared = montgomery_multiplication a a in 
   let power4 = montgomery_multiplication squared squared in 
     lemma_brackets ((as_nat4 a * as_nat4 a * modp_inv2 (pow2 256)) % prime) ((as_nat4 a * as_nat4 a * modp_inv2 (pow2 256)) % prime) (modp_inv2 (pow2 256));
