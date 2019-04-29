@@ -69,23 +69,21 @@ let cmovznz4 cin (x0, x1, x2, x3) (y0, y1, y2, y3) =
 inline_for_extraction noextract
 #set-options "--z3rlimit 100"
 let felem_add (a0, a1, a2, a3) (b0, b1, b2, b3) = 
-  let (x8, c) = add4 (a0, a1, a2, a3) (b0, b1, b2, b3)  in 
-  let (x1, x3, x5, x7) = c in 
-   lemma_nat_4 c;
-  let p256 =  (u64 0xffffffffffffffff, u64 0xffffffff, u64 0, u64 0xffffffff00000001) in 
-  assert_norm (as_nat4 p256 == prime);
-  let (x16, r) = sub4 c p256 in 
+  let (x8, (x1, x3, x5, x7)) = add4 (a0, a1, a2, a3) (b0, b1, b2, b3)  in 
+   lemma_nat_4 (x1, x3, x5, x7);
+  assert_norm (as_nat4  (u64 0xffffffffffffffff, u64 0xffffffff, u64 0, u64 0xffffffff00000001) == prime);
+  let (x16, (x9, x11, x13, x15)) = sub4 (x1, x3, x5, x7)  (u64 0xffffffffffffffff, u64 0xffffffff, u64 0, u64 0xffffffff00000001) in 
   lemma_for_multiplication_1 (a0, a1, a2, a3) (b0, b1, b2, b3);
-  let (x9, x11, x13, x15) = r in   
-    lemma_nat_4 r; 
+    lemma_nat_4 (x9, x11, x13, x15); 
   let (x17, x18) = subborrow x8 (u64 0) x16  in 
     prime_lemma (as_nat4 (a0, a1, a2, a3)  + as_nat4 (b0, b1, b2, b3));
-    small_modulo_lemma_extended (as_nat4 c) prime; 
-  let (r0, r1, r2, r3) = cmovznz4 x18 r c in 
+    small_modulo_lemma_extended (as_nat4 (x1, x3, x5, x7)) prime; 
+  let (r0, r1, r2, r3) = cmovznz4 x18 (x9, x11, x13, x15) (x1, x3, x5, x7) in 
   assert(as_nat4 (r0, r1, r2, r3) = (as_nat4 (a0, a1, a2, a3)  + as_nat4 (b0, b1, b2, b3)) % prime);
   (r0, r1, r2, r3)
 
 
+(*  opening anything calls growing up the code*)
 #reset-options "--z3rlimit 400"
 let felem_sub arg1 arg2 = 
   let (c, r) = sub4 arg1 arg2 in 
@@ -137,7 +135,7 @@ let store_high_low_u high low =
 let reduction_prime_2prime a = 
   let p256 =  (u64 0xffffffffffffffff, u64 0xffffffff, u64 0, u64 0xffffffff00000001) in 
   assert_norm (as_nat4 p256 == prime);
-  let (x16, reduced_result) = sub4 a p256 in 
+  let (x16, reduced_result) = sub4 a (u64 0xffffffffffffffff, u64 0xffffffff, u64 0, u64 0xffffffff00000001) in 
   cmovznz4 x16 reduced_result a
 
 
@@ -165,7 +163,7 @@ let reduction_prime_2prime_with_carry carry a =
     assert(if uint_v carry = 0 && uint_v x16 = 1 then as_nat4  (r0, r1, r2, r3) = (as_nat4 a + uint_v carry * pow2 256) % prime else True);
    (r0, r1, r2, r3)
 
-
+inline_for_extraction noextract
 val shift_carry: x: uint64 -> cin: uint64{uint_v cin <=1} -> Tot (r: uint64 {uint_v r = (uint_v x * 2) % pow2 64 + uint_v cin})
 
 let shift_carry x cin = 
@@ -344,7 +342,7 @@ let add8_without_carry a b =
   assert(uint_v carry = 0);
   r
 
-
+inline_for_extraction noextract
 val shortened_mul: a: felem4 -> b: uint64 -> Tot (r: felem8 {as_nat4 a * uint_v b = wide_as_nat4 r /\ wide_as_nat4 r < pow2 320})
 
 let shortened_mul a b = 
@@ -359,20 +357,19 @@ let shortened_mul a b =
   f0, f1, f2, f3, c, (u64 0), (u64 0), u64(0)  
 
 
+inline_for_extraction noextract
 val mod_64: a: felem8 -> Tot (r: uint64 {wide_as_nat4 a % pow2 64 = uint_v r})
 
-let mod_64 a = 
-  let (a0, a1, a2, a3, a4, a5, a6, a7) = a in 
-  a0
+let mod_64 (a0, a1, a2, a3, a4, a5, a6, a7) =  a0
 
-
+inline_for_extraction noextract
 val shift_9: a: felem9 -> Tot (r: felem8 {as_nat9 a / pow2 64 = wide_as_nat4 r})
 
 let shift_9 a = 
   let (a0, a1, a2, a3, a4, a5, a6, a7, a8) = a in 
   (a1, a2, a3, a4, a5, a6, a7, a8)
 
-
+inline_for_extraction noextract
 val shift_8: a: felem8 -> Tot (r: felem8 {wide_as_nat4 a / pow2 64 = wide_as_nat4 r})
 
 let shift_8 a = 
