@@ -87,7 +87,7 @@ let state_theta0 s _C =
   let h0 = ST.get () in
   loop1 h0 5ul _C spec
   (fun x ->
-    Loop.unfold_repeati 5 (spec h0) (as_seq h0 _C) (v x);
+    Loop.unfold_repeati 5 5 (spec h0) (as_seq h0 _C) (v x);
     _C.(x) <-
       readLane s x 0ul ^.
       readLane s x 1ul ^.
@@ -113,7 +113,7 @@ let state_theta_inner_s _C x s =
   let h0 = ST.get () in
   loop1 h0 5ul s spec
   (fun y ->
-    Loop.unfold_repeati 5 (spec h0) (as_seq h0 s) (v y);
+    Loop.unfold_repeati 5 5 (spec h0) (as_seq h0 s) (v y);
     writeLane s x y (readLane s x y ^. _D)
   )
 
@@ -132,7 +132,7 @@ let state_theta1 s _C =
   let h0 = ST.get () in
   loop1 h0 5ul s spec
   (fun x ->
-    Loop.unfold_repeati 5 (spec h0) (as_seq h0 s) (v x);
+    Loop.unfold_repeati 5 5 (spec h0) (as_seq h0 s) (v x);
     state_theta_inner_s _C x s
   )
 
@@ -214,7 +214,7 @@ let state_pi_rho s =
          let h0 = ST.get () in
          loop h0 24ul S.state_pi_rho_s refl footprint spec
          (fun i ->
-           Loop.unfold_repeat_gen 24 S.state_pi_rho_s (spec h0) (refl h0 0) (v i);
+           Loop.unfold_repeat_gen 24 24 S.state_pi_rho_s (spec h0) (refl h0 0) (v i);
            state_pi_rho_inner i current s
          )
      )
@@ -252,7 +252,7 @@ let state_chi_inner1 s_pi_rho y s =
   let h0 = ST.get () in
   loop1 h0 5ul s spec
   (fun x ->
-    Loop.unfold_repeati 5 (spec h0) (as_seq h0 s) (v x);
+    Loop.unfold_repeati 5 5 (spec h0) (as_seq h0 s) (v x);
     state_chi_inner s_pi_rho y x s
   )
 
@@ -275,7 +275,7 @@ let state_chi s =
       let h0 = ST.get () in
       loop1 h0 5ul s spec
       (fun y ->
-        Loop.unfold_repeati 5 (spec h0) (as_seq h0 s) (v y);
+        Loop.unfold_repeati 5 5 (spec h0) (as_seq h0 s) (v y);
         state_chi_inner1 s_pi_rho y s
       )
     )
@@ -307,7 +307,7 @@ let state_permute s =
   let h0 = ST.get () in
   loop1 h0 24ul s spec
   (fun round ->
-    Loop.unfold_repeati 24 (spec h0) (as_seq h0 s) (v round);
+    Loop.unfold_repeati 24 24 (spec h0) (as_seq h0 s) (v round);
     state_theta s;
     state_pi_rho s;
     state_chi s;
@@ -334,7 +334,7 @@ let loadState rateInBytes input s =
       let h0 = ST.get () in
       loop1 h0 25ul s spec
       (fun j ->
-        Loop.unfold_repeati 25 (spec h0) (as_seq h0 s) (v j);
+        Loop.unfold_repeati 25 25 (spec h0) (as_seq h0 s) (v j);
         s.(j) <- s.(j) ^. uint_from_bytes_le #U64 (sub block (j *! 8ul) 8ul)
       ))
 
@@ -374,7 +374,7 @@ let storeState rateInBytes s res =
       let h0 = ST.get () in
       loop1 h0 25ul block spec
       (fun j ->
-        Loop.unfold_repeati 25 (spec h0) (as_seq h0 block) (v j);
+        Loop.unfold_repeati 25 25 (spec h0) (as_seq h0 block) (v j);
         storeState_inner s j block
       );
       copy res (sub block 0ul rateInBytes)

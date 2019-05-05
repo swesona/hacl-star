@@ -469,7 +469,7 @@ let loop_inv
   Type0
 =
   modifies (footprint i) h0 h /\
-  refl h i == Loop.repeat_gen i a_spec (spec h0) (refl h0 0)
+  refl h i == Loop.repeat_gen (v n) i a_spec (spec h0) (refl h0 0)
 
 (**
 * A generalized loop combinator paremetrized by its state (e.g. an accumulator)
@@ -510,7 +510,7 @@ let loop1_inv
     Type0
 =
   modifies1 write h0 h /\
-  as_seq h write == Loop.repeati i (spec h0) (as_seq h0 write)
+  as_seq h write == Loop.repeati (v n) i (spec h0) (as_seq h0 write)
 
 (** Loop combinator specialized to modifying a single buffer [write] *)
 inline_for_extraction noextract
@@ -545,7 +545,7 @@ let loop2_inv
   Type0
 =
   modifies2 write0 write1 h0 h /\
-  (let s0, s1 = Loop.repeati i (spec h0) (as_seq h0 write0, as_seq h0 write1) in
+  (let s0, s1 = Loop.repeati (v n) i (spec h0) (as_seq h0 write0, as_seq h0 write1) in
    as_seq h write0 == s0 /\ as_seq h write1 == s1)
 
 (** Loop combinator specialized to modifying two buffers [write0] and [write1] *)

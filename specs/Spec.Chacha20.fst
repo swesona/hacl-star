@@ -63,7 +63,7 @@ let double_round : shuffle =
   column_round @ diagonal_round (* 2 rounds *)
 
 let rounds : shuffle =
-  repeat 10 double_round (* 20 rounds *)
+  repeat 10 10 double_round (* 20 rounds *)
 
 let sum_state (s0:state) (s1:state) : Tot state = 
   map2 (+.) s0 s1 

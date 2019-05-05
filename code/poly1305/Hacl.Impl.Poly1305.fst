@@ -329,16 +329,17 @@ let poly1305_update_multi_loop #s bs len text pre acc =
     disjoint acc pre /\ disjoint acc text /\
     felem_fits h acc (2, 3, 2, 2, 2) /\
     F32xN.load_precompute_r_post #(width s) h pre /\
-    feval h acc == Lib.LoopCombinators.repeati i (spec_fh h0) (feval h0 acc) in
+    feval h acc == Lib.LoopCombinators.repeati (v nb) i (spec_fh h0) (feval h0 acc) in
 
   Lib.Loops.for (size 0) nb inv
     (fun i ->
-      Lib.LoopCombinators.unfold_repeati (v nb) (spec_fh h0) (feval h0 acc) (v i);
+      Lib.LoopCombinators.unfold_repeati (v nb) (v nb) (spec_fh h0) (feval h0 acc) (v i);
       poly1305_update_multi_f #s pre bs nb len text i acc);
   fmul_rn_normalize acc pre
 #pop-options
 
 #push-options "--z3rlimit 150"
+#push-options "--max_ifuel 1"
 inline_for_extraction noextract
 val poly1305_update_multi:
     #s:field_spec
@@ -463,15 +464,15 @@ let poly1305_update1 #s len text pre acc =
     disjoint acc pre /\ disjoint acc text /\
     F32xN.acc_inv_t #(width s) (F32xN.as_tup5 h acc) /\
     F32xN.fmul_precomp_r_pre #(width s) h pre /\
-    (feval h acc).[0] == Lib.LoopCombinators.repeati i (spec_fh h0) (feval h0 acc).[0] in
+    (feval h acc).[0] == Lib.LoopCombinators.repeati (v nb) i (spec_fh h0) (feval h0 acc).[0] in
 
   Lib.Loops.for (size 0) nb inv
     (fun i ->
-      Lib.LoopCombinators.unfold_repeati (v nb) (spec_fh h0) (feval h0 acc).[0] (v i);
+      Lib.LoopCombinators.unfold_repeati (v nb) (v nb) (spec_fh h0) (feval h0 acc).[0] (v i);
       poly1305_update1_f #s pre nb len text i acc);
 
   let h1 = ST.get () in
-  assert ((feval h1 acc).[0] == Lib.LoopCombinators.repeati (v nb) (spec_fh h0) (feval h0 acc).[0]);
+  assert ((feval h1 acc).[0] == Lib.LoopCombinators.repeati (v nb) (v nb) (spec_fh h0) (feval h0 acc).[0]);
   let b = sub text (nb *! 16ul) rem in
   as_seq_gsub h1 text (nb *! 16ul) rem;
   assert (as_seq h1 b == LSeq.sub (as_seq h1 text) (v nb * 16) (v rem));

@@ -27,13 +27,16 @@ unfold let to_felem = S.to_felem
 unfold let modp = V.modp
 unfold let mod2_128 = V.mod2_128
 
+#set-options "--z3rlimit 150 --max_fuel 1 --max_ifuel 1"
+
 let rec lemma_poly1305_equiv_rec (text:bytes) (acc0:felem) (r:felem) (k:nat) : Lemma
   (requires k <= length text / size_block)
   (ensures (
+    let nb = length text / size_block in
     let f = S.update1 r size_block in
     let repeat_f = repeat_blocks_f size_block text f (length text / size_block) in
     let pad = pow2 (8 * size_block) in
-    V.poly1305_hash_blocks acc0 pad r (block_fun text) k == repeati k repeat_f acc0
+    V.poly1305_hash_blocks acc0 pad r (block_fun text) k == repeati nb k repeat_f acc0
   ))
   (decreases k)
   =
@@ -50,7 +53,7 @@ let rec lemma_poly1305_equiv_rec (text:bytes) (acc0:felem) (r:felem) (k:nat) : L
   (
     let kk = k - 1 in
     let hh = V.poly1305_hash_blocks acc0 pad r inp kk in
-    let r0:felem = repeati kk repeat_f acc0 in
+    let r0:felem = repeati nb kk repeat_f acc0 in
     let block = Seq.slice text (kk * size_block) (kk * size_block + size_block) in
     calc (==) {
       V.poly1305_hash_blocks acc0 pad r inp k;
@@ -65,16 +68,16 @@ let rec lemma_poly1305_equiv_rec (text:bytes) (acc0:felem) (r:felem) (k:nat) : L
       == {assert_norm (fmul (fadd (pad + inp kk) r0) r == ((pad + inp kk + r0) % prime) * r % prime)}
       fmul (fadd (pad + inp kk) r0) r;
       == {}
-      S.update1 r size_block block (repeati kk repeat_f acc0);
+      S.update1 r size_block block (repeati nb kk repeat_f acc0);
     };
     calc (==) {
-      S.update1 r size_block block (repeati kk repeat_f acc0);
+      S.update1 r size_block block (repeati nb kk repeat_f acc0);
       == {}
-      f block (repeati kk repeat_f acc0);
+      f block (repeati nb kk repeat_f acc0);
       == {}
-      repeat_f kk (repeati kk repeat_f acc0);
-      == {Lib.LoopCombinators.unfold_repeati nb repeat_f acc0 kk}
-      repeati k repeat_f acc0;
+      repeat_f kk (repeati nb kk repeat_f acc0);
+      == {Lib.LoopCombinators.unfold_repeati nb k repeat_f acc0 kk}
+      repeati nb k repeat_f acc0;
     }
   )
 
@@ -179,7 +182,7 @@ let lemma_poly1305_equiv text k =
   let f = S.update1 r size_block in
   let len = length text in
   let nb = len / size_block in
-  let acc1 = repeati nb (repeat_blocks_f size_block text f nb) acc0 in
+  let acc1 = repeati nb nb (repeat_blocks_f size_block text f nb) acc0 in
   let last = Seq.slice text (nb * size_block) len in
   let nExtra = len % size_block in
   let l = S.poly_update1_rem r in
@@ -199,10 +202,10 @@ let lemma_poly1305_equiv text k =
     calc (==) {
       hBlocks <: int;
       == {lemma_poly1305_equiv_rec text acc0 r nb}
-      repeati nb repeat_f acc0 <: felem;
+      repeati nb nb repeat_f acc0 <: felem;
     };
     calc (==) {
-      repeati nb repeat_f acc0;
+      repeati nb nb repeat_f acc0;
       == {}
       l nExtra last acc1;
       == {Lib.Sequence.lemma_repeat_blocks size_block text f l acc0}
@@ -235,10 +238,10 @@ let lemma_poly1305_equiv text k =
     calc (==) {
       hBlocks <: int;
       == {lemma_poly1305_equiv_rec text acc0 r nb}
-      repeati nb repeat_f acc0 <: felem;
+      repeati nb nb repeat_f acc0 <: felem;
     };
     calc (==) {
-      S.update1 r nExtra last (repeati nb repeat_f acc0);
+      S.update1 r nExtra last (repeati nb nb repeat_f acc0);
       == {}
       l nExtra last acc1;
       == {Lib.Sequence.lemma_repeat_blocks size_block text f l acc0}

@@ -166,6 +166,8 @@ let smul_felem5_eval_lemma_i #w #m1 #m2 u1 f2 i =
   smul_lemma vu1 (v tf20) (v tf21) (v tf22) (v tf23) (v tf24)
 #pop-options
 
+#push-options "--z3rlimit 150"
+#push-options "--max_fuel 1"
 val smul_add_felem5_fits_lemma_i:
     #w:lanes
   -> #m1:scale32
@@ -191,6 +193,7 @@ let smul_add_felem5_fits_lemma_i #w #m1 #m2 #m3 u1 f2 acc1 i =
   assert ((uint64xN_v o).[i] == ((uint64xN_v acc1).[i] + (uint64xN_v f2).[i] * (uint64xN_v u1).[i]) % pow2 64);
   assert ((uint64xN_v acc1).[i] + (uint64xN_v f2).[i] * (uint64xN_v u1).[i] <= m3 * max26 * max26 + m1 * m2 * max26 * max26);
   assert ((uint64xN_v acc1).[i] + (uint64xN_v f2).[i] * (uint64xN_v u1).[i] <= (m3 + m1 * m2) * max26 * max26)
+#pop-options
 
 val smul_add_mod_lemma:
     #m1:scale32

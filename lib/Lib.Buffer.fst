@@ -248,7 +248,7 @@ let loopi_blocks #a #b #blen bs inpLen inp spec_f spec_l f l w =
   let h0 = ST.get () in
   loop1 #b #blen h0 nb w spec_fh
   (fun i ->
-    Loop.unfold_repeati (v nb) (spec_fh h0) (as_seq h0 w) (v i);
+    Loop.unfold_repeati (v nb) (v nb) (spec_fh h0) (as_seq h0 w) (v i);
     loopi_blocks_f #a #b #blen bs inpLen inp spec_f f nb i w);
   let last = sub #_ #_ #inpLen  inp (nb *. bs) rem in
   l nb rem last w
@@ -303,7 +303,7 @@ let loop_blocks #a #b #blen bs inpLen inp spec_f spec_l f l w =
   let h0 = ST.get () in
   loop1 #b #blen h0 nb w spec_fh
   (fun i ->
-    Loop.unfold_repeati (v nb) (spec_fh h0) (as_seq h0 w) (v i);
+    Loop.unfold_repeati (v nb) (v nb) (spec_fh h0) (as_seq h0 w) (v i);
     loop_blocks_f #a #b #blen bs inpLen inp spec_f f nb i w);
   let last = sub #_ #_ #inpLen inp (nb *. bs) rem in
   l rem last w
@@ -323,7 +323,7 @@ let fill_blocks #t h0 len n output a_spec refl footprint spec impl =
   let h0 = ST.get () in
   loop h0 n (Sequence.generate_blocks_a t (v len) (v n) a_spec) refl' footprint' spec'
   (fun i ->
-    Loop.unfold_repeat_gen (v n) (Sequence.generate_blocks_a t (v len) (v n) a_spec)
+    Loop.unfold_repeat_gen (v n) (v n) (Sequence.generate_blocks_a t (v len) (v n) a_spec)
       (Sequence.generate_blocks_inner t (v len) (v n) a_spec (spec h0)) (refl' h0 0) (v i);
     assert ((v i + 1) * v len == v i * v len + v len);
     assert (v i * v len <= max_size_t);
@@ -349,7 +349,7 @@ let fill_blocks #t h0 len n output a_spec refl footprint spec impl =
     Seq.generate_blocks (v len) (v n) (v n) a_spec (spec h0) (refl h0 0) ==
     norm [delta] Seq.generate_blocks (v len) (v n) (v n) a_spec (spec h0) (refl h0 0));
   let h1 = ST.get() in
-  assert(refl' h1 (v n) == Loop.repeat_gen (v n)
+  assert(refl' h1 (v n) == Loop.repeat_gen (v n) (v n)
            (Sequence.generate_blocks_a t (v len) (v n) a_spec)
            (Sequence.generate_blocks_inner t (v len) (v n) a_spec (spec h0))
            (refl' h0 0));
@@ -376,7 +376,7 @@ let fillT #a clen o spec_f f =
   eq_intro (of_list []) (refl h0 0);
   loop h0 clen a_spec refl footprint spec
     (fun i ->
-      Loop.unfold_repeat_gen (v clen) a_spec (spec h0) (refl h0 0) (v i);
+      Loop.unfold_repeat_gen (v clen) (v clen) a_spec (spec h0) (refl h0 0) (v i);
       o.(i) <- f i;
       let h' = ST.get () in
       FStar.Seq.lemma_split (as_seq h' o) (v i)
@@ -395,7 +395,7 @@ let fill #a h0 clen out spec impl =
   Seq.eq_intro (Seq.of_list []) (refl h0 0);
   loop h0 clen a_spec refl footprint spec
   (fun i ->
-    Loop.unfold_repeat_gen (v clen) a_spec (spec h0) (refl h0 0) (v i);
+    Loop.unfold_repeat_gen (v clen) (v clen) a_spec (spec h0) (refl h0 0) (v i);
     let os = sub out 0ul (i +! 1ul) in
     let h = ST.get() in
     let x = impl i in

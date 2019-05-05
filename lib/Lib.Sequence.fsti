@@ -303,7 +303,7 @@ val lemma_repeat_blocks:
     let len = length inp in
     let nb = len / bs in
     let rem = len % bs in
-    let acc = Lib.LoopCombinators.repeati nb (repeat_blocks_f bs inp f nb) init in
+    let acc = Lib.LoopCombinators.repeati nb nb (repeat_blocks_f bs inp f nb) init in
     let last = Seq.slice inp (nb * bs) len in
     let acc = l rem last acc in
     repeat_blocks #a #b bs inp f l init == acc)
@@ -328,7 +328,7 @@ val lemma_repeat_blocks_multi:
     let len = length inp in
     let nb = len / bs in
     repeat_blocks_multi #a #b bs inp f init ==
-    Lib.LoopCombinators.repeati nb (repeat_blocks_f bs inp f nb) init)
+    Lib.LoopCombinators.repeati nb nb (repeat_blocks_f bs inp f nb) init)
 
 (** Generates `n` blocks of length `len` by iteratively applying a function with an accumulator *)
 val generate_blocks:

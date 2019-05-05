@@ -50,7 +50,7 @@ let montgomery_ladder1_0 (k:scalar) (q:proj_point) (nq:proj_point) (nqp1:proj_po
   let nq,nqp1 = cswap2 (u64 1) nq nqp1 in
   let nq,nqp1 = add_and_double q nq nqp1 in
   let swap = u64 1 in
-  let nq,nqp1,swap = Lib.LoopCombinators.repeati 251 (ladder_step k q) (nq, nqp1, swap) in
+  let nq,nqp1,swap = Lib.LoopCombinators.repeati 251 251 (ladder_step k q) (nq, nqp1, swap) in
   let nq,nqp1 = cswap2 swap nq nqp1 in
   nq
 

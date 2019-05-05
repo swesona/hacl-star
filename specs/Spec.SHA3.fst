@@ -46,17 +46,17 @@ let state_theta_inner_C (s:state) (i:size_nat{i < 5}) (_C:lseq uint64 5) : Tot (
   _C.[i] <- readLane s i 0 ^. readLane s i 1 ^. readLane s i 2 ^. readLane s i 3 ^. readLane s i 4
 
 let state_theta0 (s:state) (_C:lseq uint64 5) =
-  repeati 5 (state_theta_inner_C s) _C
+  repeati 5 5 (state_theta_inner_C s) _C
 
 let state_theta_inner_s_inner (x:index) (_D:uint64) (y:index) (s:state) : Tot state =
   writeLane s x y (readLane s x y ^. _D)
 
 let state_theta_inner_s (_C:lseq uint64 5) (x:index) (s:state) : Tot state =
   let _D = _C.[(x + 4) % 5] ^. (rotl _C.[(x + 1) % 5] (size 1)) in
-  repeati 5 (state_theta_inner_s_inner x _D) s
+  repeati 5 5 (state_theta_inner_s_inner x _D) s
 
 let state_theta1 (s:state) (_C:lseq uint64 5) : Tot state =
-  repeati 5 (state_theta_inner_s _C) s
+  repeati 5 5 (state_theta_inner_s _C) s
 
 let state_theta (s:state) : Tot state =
   let _C = create 5 (u64 0) in
@@ -76,7 +76,7 @@ let state_pi_rho_s i = uint64 & state
 
 let state_pi_rho (s_theta:state) : Tot state =
   let current = readLane s_theta 1 0 in
-  let _, s_pi_rho = repeat_gen 24 state_pi_rho_s
+  let _, s_pi_rho = repeat_gen 24 24 state_pi_rho_s
     state_pi_rho_inner (current, s_theta) in
   s_pi_rho
 
@@ -87,10 +87,10 @@ let state_chi_inner (s_pi_rho:state) (y:index) (x:index) (s:state) : Tot state =
       readLane s_pi_rho ((x + 2) % 5) y))
 
 let state_chi_inner1 (s_pi_rho:state) (y:index) (s:state) : Tot state =
-  repeati 5 (state_chi_inner s_pi_rho y) s
+  repeati 5 5 (state_chi_inner s_pi_rho y) s
 
 let state_chi (s_pi_rho:state) : Tot state  =
-  repeati 5 (state_chi_inner1 s_pi_rho) s_pi_rho
+  repeati 5 5 (state_chi_inner1 s_pi_rho) s_pi_rho
 
 let state_iota (s:state) (round:size_nat{round < 24}) : Tot state =
   writeLane s 0 0 (readLane s 0 0 ^. secret keccak_rndc.[round])
@@ -103,7 +103,7 @@ let state_permute1 (round:size_nat{round < 24}) (s:state) : Tot state =
   s_iota
 
 let state_permute (s:state) : Tot state =
-  repeati 24 state_permute1 s
+  repeati 24 24 state_permute1 s
 
 let loadState_inner (block:lbytes 200) (j:size_nat{j < 25}) (s:state) : Tot state =
   s.[j] <- s.[j] ^. uint_from_bytes_le #U64 (sub block (j * 8) 8)
@@ -116,14 +116,14 @@ let loadState
 
   let block = create 200 (u8 0) in
   let block = update_sub block 0 rateInBytes input in
-  repeati 25 (loadState_inner block) s
+  repeati 25 25 (loadState_inner block) s
 
 let storeState_inner (s:state) (j:size_nat{j < 25}) (block:lbytes 200) : Tot (lbytes 200) =
   update_sub block (j * 8) 8 (uint_to_bytes_le #U64 s.[j])
 
 let storeState (rateInBytes:size_nat{rateInBytes <= 200}) (s:state) : Tot (lbytes rateInBytes) =
   let block = create 200 (u8 0) in
-  let block = repeati 25 (storeState_inner s) block in
+  let block = repeati 25 25 (storeState_inner s) block in
   sub block 0 rateInBytes
 
 let absorb_next (s:state) (rateInBytes:size_nat{rateInBytes > 0 /\ rateInBytes <= 200}) : Tot state =

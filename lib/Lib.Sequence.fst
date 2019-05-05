@@ -168,7 +168,7 @@ let repeati_blocks #a #b bs inp f g init =
   let len = length inp in
   let nb = len / bs in
   let rem = len % bs in
-  let acc = repeati nb (repeati_blocks_f bs inp f nb) init in
+  let acc = repeati nb nb (repeati_blocks_f bs inp f nb) init in
   let last = seq_sub inp (nb * bs) rem in
   g nb rem last acc
 
@@ -176,7 +176,7 @@ let repeat_blocks #a #b bs inp f l init =
   let len = length inp in
   let nb = len / bs in
   let rem = len % bs in
-  let acc = repeati nb (repeat_blocks_f bs inp f nb) init in
+  let acc = repeati nb nb (repeat_blocks_f bs inp f nb) init in
   let last = seq_sub inp (nb * bs) rem in
   l rem last acc
 
@@ -185,7 +185,7 @@ let lemma_repeat_blocks #a #b bs inp f l init = ()
 let repeat_blocks_multi #a #b bs inp f init =
   let len = length inp in
   let nb = len / bs in
-  repeati nb (repeat_blocks_f bs inp f nb) init
+  repeati nb nb (repeat_blocks_f bs inp f nb) init
 
 let lemma_repeat_blocks_multi #a #b bs inp f init = ()
 
@@ -199,14 +199,14 @@ let generate_blocks_inner (t:Type) (blocklen:size_nat) (max:nat) (a:(i:nat{i <= 
 
 let generate_blocks #t len max n a f acc0 =
   let a0  = (acc0, (Seq.empty <: s:seq t{length s == 0 * len}))  in
-  repeat_gen n (generate_blocks_a t len max a) (generate_blocks_inner t len max a f) a0
+  repeat_gen max n (generate_blocks_a t len max a) (generate_blocks_inner t len max a f) a0
 
 val fixed_a: t:Type0 -> i:nat -> Type0
 let fixed_a t i = t
 
-let map_blocks_inner #a (bs:size_nat{bs > 0}) (nb:nat) 
-			(inp:seq a{length inp = nb * bs}) 
-			(f:(i:nat{i < nb} -> lseq a bs -> lseq a bs)) 
+let map_blocks_inner #a (bs:size_nat{bs > 0}) (nb:nat)
+			(inp:seq a{length inp = nb * bs})
+			(f:(i:nat{i < nb} -> lseq a bs -> lseq a bs))
 			(i:nat{i < nb}) () =
   (), f i (Seq.slice inp (i*bs) ((i+1)*bs))
 
@@ -219,7 +219,7 @@ let map_blocks_multi #a blocksize nb inp f =
 
 
 let map_blocks #a blocksize inp f g =
-  let len = length inp in 
+  let len = length inp in
   let nb = len / blocksize in
   let rem = len % blocksize in
   let blocks = Seq.slice inp 0 (nb * blocksize) in
@@ -232,15 +232,15 @@ let map_blocks #a blocksize inp f g =
 let eq_generate_blocks0 #t len n a f acc0 =
   let a0  = (acc0, (Seq.empty <: s:seq t{length s == 0 * len}))  in
   assert (generate_blocks #t len n 0 a f acc0 ==
-	  repeat_gen 0 (generate_blocks_a t len n a) (generate_blocks_inner t len n a f) a0);
-  eq_repeat_gen0 0 (generate_blocks_a t len n a) (generate_blocks_inner t len n a f) a0;
+	  repeat_gen n 0 (generate_blocks_a t len n a) (generate_blocks_inner t len n a f) a0);
+  eq_repeat_gen0 n (generate_blocks_a t len n a) (generate_blocks_inner t len n a f) a0;
   ()
 
 let unfold_generate_blocks #t len n a f acc0 i =
   let a0  = (acc0, (Seq.empty <: s:seq t{length s == 0 * len}))  in
   assert (generate_blocks #t len n (i+1) a f acc0 ==
-	  repeat_gen (i+1) (generate_blocks_a t len n a) (generate_blocks_inner t len n a f) a0);
-  unfold_repeat_gen (i+1) (generate_blocks_a t len n a) (generate_blocks_inner t len n a f) a0 i;
+	  repeat_gen n (i+1) (generate_blocks_a t len n a) (generate_blocks_inner t len n a f) a0);
+  unfold_repeat_gen n (i+1) (generate_blocks_a t len n a) (generate_blocks_inner t len n a f) a0 i;
   ()
 
 private

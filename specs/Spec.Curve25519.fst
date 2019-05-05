@@ -105,7 +105,7 @@ let montgomery_ladder (init:elem) (k:scalar) : Tot proj_point =
   let nq,nqp1 = add_and_double q nq nqp1 in
   let swap = u64 1 in
   // bits 253-3 depend on scalar
-  let nq,nqp1,swap = Lib.LoopCombinators.repeati 251 (ladder_step k q) (nq, nqp1, swap) in
+  let nq,nqp1,swap = Lib.LoopCombinators.repeati 251 251 (ladder_step k q) (nq, nqp1, swap) in
   let nq,nqp1 = cswap2 swap nq nqp1 in
   // bits 2-0 are 0
   let nq = double nq in

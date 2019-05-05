@@ -267,7 +267,7 @@ val ladder_step_loop:
       let nq_p1 = gsub p01_tmp1_swap (2ul *! nlimb s) (2ul *! nlimb s) in
       let bit : lbuffer uint64 1ul = gsub p01_tmp1_swap (8ul *! nlimb s) 1ul in
       let (p0, p1, b) =
-	Lib.LoopCombinators.repeati 251
+	Lib.LoopCombinators.repeati 251 251
 	(S.ladder_step (as_seq h0 k) (fget_xz h0 q))
 	(fget_xz h0 nq, fget_xz h0 nq_p1, LSeq.index (as_seq h0 bit) 0) in
       p0 == fget_xz h1 nq /\ p1 == fget_xz h1 nq_p1 /\ b == LSeq.index (as_seq h1 bit) 0 /\
@@ -298,11 +298,11 @@ let ladder_step_loop #s k q p01_tmp1_swap tmp2 =
     state_inv_t h (get_x q) /\ state_inv_t h (get_z q) /\
     state_inv_t h (get_x nq) /\ state_inv_t h (get_z nq) /\
     state_inv_t h (get_x nq_p1) /\ state_inv_t h (get_z nq_p1) /\
-    acc h == Lib.LoopCombinators.repeati i (spec_fh h0) (acc h0) in
+    acc h == Lib.LoopCombinators.repeati 251 i (spec_fh h0) (acc h0) in
 
   Lib.Loops.for 0ul 251ul inv
     (fun i ->
-      Lib.LoopCombinators.unfold_repeati 251 (spec_fh h0) (acc h0) (v i);
+      Lib.LoopCombinators.unfold_repeati 251 251 (spec_fh h0) (acc h0) (v i);
       ladder_step #s k q i p01_tmp1_swap tmp2)
 
 #set-options "--max_fuel 0 --z3rlimit 150"
