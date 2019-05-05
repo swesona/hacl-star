@@ -33,7 +33,7 @@
         "typing_Lib.Sequence.length", "typing_tok_Lib.IntTypes.SEC@tok"
       ],
       0,
-      "1e58707729c06882a6fb9689482213b3"
+      "de61a393be2cee332d2ca15382ad6b8f"
     ],
     [
       "Poly1305.Equiv.lemma_poly1305_equiv",
@@ -76,7 +76,7 @@
         "typing_Spec.Poly1305.size_key", "typing_tok_Lib.IntTypes.SEC@tok"
       ],
       0,
-      "1e2e2b9d320eb2c04570d60d3290e059"
+      "717d95295305d5fe89bd549b60281687"
     ]
   ]
 ]
