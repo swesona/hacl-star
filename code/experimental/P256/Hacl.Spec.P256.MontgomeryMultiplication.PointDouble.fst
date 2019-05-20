@@ -15,7 +15,7 @@ open Lib.Loops
 open FStar.Mul
 
 #set-options "--z3rlimit 300" 
-let _point_double p =
+let _point_double  (p:point_nat) :  (p:point_nat) =
   let x, y, z = p in 
   let s = (4 * x * y * y) % prime in 
   let m = ((-3) * z * z * z * z + 3 * x * x) % prime in 
