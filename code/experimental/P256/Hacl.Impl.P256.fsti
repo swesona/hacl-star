@@ -78,24 +78,52 @@ val pointFromDomain: p: point -> result: point-> Stack unit
     point_y_as_nat h1 result == fromDomain_ (point_y_as_nat h0 p) /\
     point_z_as_nat h1 result == fromDomain_ (point_z_as_nat h0 p))
 
-
-val point_double: p: point -> result: point ->  tempBuffer: lbuffer uint64 (size 88) -> Stack unit
-  (requires fun h -> live h p /\ live h result /\ live h tempBuffer /\ 
-    disjoint p result /\ disjoint tempBuffer result /\ disjoint p tempBuffer /\ 
+(*
+val point_double: p: point -> tempBuffer: lbuffer uint64 (size 88) -> Stack unit
+  (requires fun h -> live h p /\ live h tempBuffer /\ disjoint p tempBuffer /\ 
     as_nat h (gsub p (size 8) (size 4)) < prime /\ 
     as_nat h (gsub p (size 0) (size 4)) < prime /\ 
     as_nat h (gsub p (size 4) (size 4)) < prime)
-  (ensures fun h0 _ h1 -> modifies2 tempBuffer result h0 h1 /\  
-    as_seq h1 result == point_double_seq (as_seq h0 p) /\
+  (ensures fun h0 _ h1 -> modifies2 tempBuffer p h0 h1 /\  
+    as_seq h1 p == point_double_seq (as_seq h0 p) /\
     as_nat h1 (gsub p (size 8) (size 4)) < prime /\ 
     as_nat h1 (gsub p (size 0) (size 4)) < prime /\ 
     as_nat h1 (gsub p (size 4) (size 4)) < prime
   )
+*)
+
+val point_double: p: point -> result: point -> tempBuffer: lbuffer uint64 (size 88) -> Stack unit
+  (requires fun h -> live h p /\ live h tempBuffer /\ live h result /\
+    disjoint p tempBuffer /\ disjoint result tempBuffer /\
+    eq_or_disjoint p result /\
+    as_nat h (gsub p (size 8) (size 4)) < prime /\ 
+    as_nat h (gsub p (size 0) (size 4)) < prime /\ 
+    as_nat h (gsub p (size 4) (size 4)) < prime)
+  (ensures fun h0 _ h1 -> modifies2 tempBuffer result  h0 h1 /\  
+    as_seq h1 result == point_double_seq (as_seq h0 p) /\
+    as_nat h1 (gsub result (size 8) (size 4)) < prime /\ 
+    as_nat h1 (gsub result (size 0) (size 4)) < prime /\ 
+    as_nat h1 (gsub result (size 4) (size 4)) < prime 
+  ) 
 
 
-val point_add: p: point -> q: point -> result: point -> tempBuffer: lbuffer uint64 (size 88) -> 
+val point_add_external_result: p: point -> q: point -> result: point -> tempBuffer: lbuffer uint64 (size 88) -> 
    Stack unit (requires fun h -> live h p /\ live h q /\ live h result /\ live h tempBuffer /\ 
-   LowStar.Monotonic.Buffer.all_disjoint [loc p; loc q; loc result; loc tempBuffer] /\
+   disjoint p q /\ disjoint p tempBuffer /\ disjoint q tempBuffer /\ disjoint q result /\ 
+   disjoint result tempBuffer /\ 
+    as_nat h (gsub p (size 8) (size 4)) < prime /\ 
+    as_nat h (gsub p (size 0) (size 4)) < prime /\ 
+    as_nat h (gsub p (size 4) (size 4)) < prime /\
+    as_nat h (gsub q (size 8) (size 4)) < prime /\ 
+    as_nat h (gsub q (size 0) (size 4)) < prime /\  
+    as_nat h (gsub q (size 4) (size 4)) < prime 
+    ) 
+   (ensures fun h0 _ h1 -> modifies3 tempBuffer p result h0 h1 /\ as_seq h1 result == point_add_seq (as_seq h0 p) (as_seq h0 q))
+
+
+val point_add: p: point -> q: point -> tempBuffer: lbuffer uint64 (size 88) -> 
+   Stack unit (requires fun h -> live h p /\ live h q /\ live h tempBuffer /\ 
+   disjoint p q /\ disjoint p tempBuffer /\ disjoint q tempBuffer /\ 
     as_nat h (gsub p (size 8) (size 4)) < prime /\ 
     as_nat h (gsub p (size 0) (size 4)) < prime /\ 
     as_nat h (gsub p (size 4) (size 4)) < prime /\
@@ -103,7 +131,7 @@ val point_add: p: point -> q: point -> result: point -> tempBuffer: lbuffer uint
     as_nat h (gsub q (size 0) (size 4)) < prime /\  
     as_nat h (gsub q (size 4) (size 4)) < prime 
     )
-   (ensures fun h0 _ h1 -> modifies2 tempBuffer result h0 h1 /\ as_seq h1 result == point_add_seq (as_seq h0 p) (as_seq h0 q))
+   (ensures fun h0 _ h1 -> modifies2 tempBuffer p h0 h1 /\ as_seq h1 p == point_add_seq (as_seq h0 p) (as_seq h0 q))
 
 
 val norm: p: point -> resultPoint: point -> tempBuffer: lbuffer uint64 (size 32) -> Stack unit
@@ -127,3 +155,10 @@ val norm: p: point -> resultPoint: point -> tempBuffer: lbuffer uint64 (size 32)
    )   
   )
 
+
+val scalar_bit:
+    s:scalar
+  -> n:size_t{v n < 256}
+  -> Stack uint64
+    (requires fun h0 -> live h0 s)
+    (ensures  fun h0 r h1 -> h0 == h1)

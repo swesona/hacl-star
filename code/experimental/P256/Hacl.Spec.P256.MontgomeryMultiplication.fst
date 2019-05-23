@@ -48,7 +48,6 @@ let toDomain a =
 
 let lemmaFromDomain a = ()
 
-
 let lemmaToDomain a = ()
 
 

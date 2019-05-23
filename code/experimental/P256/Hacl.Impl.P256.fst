@@ -407,9 +407,9 @@ let point_double_compute_y3 p_y y3 x3 s m tempBuffer =
     p256_sub s x3 sx3;
     Hacl.Spec.P256.MontgomeryMultiplication.montgomery_multiplication_buffer m sx3 msx3; 
     p256_sub msx3 eightYyyy y3
-    
 
-let point_double p result tempBuffer = 
+(*
+let point_double p tempBuffer = 
 	let h0 = ST.get() in  
     let s = sub tempBuffer (size 0) (size 4) in 
     let m = sub tempBuffer (size 4) (size 4) in 
@@ -446,9 +446,57 @@ let point_double p result tempBuffer =
      let h5 = ST.get() in 
      
      assert(modifies1 tempBuffer h4 h5);
-     concat3 #MUT #MUT #MUT  (size 4) x3 (size 4) y3 (size 4) z3 result;
+     concat3 #MUT #MUT #MUT  (size 4) x3 (size 4) y3 (size 4) z3 p;
    let hend = ST.get() in 
-   assert(as_seq hend result == point_double_seq (as_seq h0 p))
+   assert(as_seq hend p == point_double_seq (as_seq h0 p))
+*)
+
+#reset-options "--z3refresh --z3rlimit 500"
+
+
+val lemma_twelve: unit -> Lemma ((size 12) == (size 4) +! (size 4) +! (size 4))
+
+let lemma_twelve () = 
+  assert(uint_v ((size 4) +! (size 4) +! (size 4)) == 12)
+
+
+let point_double p result tempBuffer = 
+	let h0 = ST.get() in   
+    let s = sub tempBuffer (size 0) (size 4) in 
+    let m = sub tempBuffer (size 4) (size 4) in 
+    let buffer_for_s_m = sub tempBuffer (size 8) (size 24) in 
+
+    let buffer_for_x3 = sub tempBuffer (size 32) (size 8) in 
+    let buffer_for_y3 = sub tempBuffer (size 40) (size 16) in 
+
+    let pypz = sub tempBuffer (size 56) (size 4) in 
+
+    let x3 : lbuffer_t MUT uint64 (size 4) = sub tempBuffer (size 60) (size 4) in 
+    let y3 : lbuffer_t MUT uint64 (size 4) = sub tempBuffer (size 64) (size 4) in 
+    let z3 : lbuffer_t MUT uint64 (size 4) = sub tempBuffer (size 68) (size 4) in 
+
+    let p_x = sub p (size 0) (size 4) in 
+    let p_y = sub p (size 4) (size 4) in 
+    let p_z = sub p (size 8) (size 4) in 
+
+   point_double_compute_s_m p s m buffer_for_s_m; 
+     let h2 = ST.get() in 
+     assert(modifies1 tempBuffer h0 h2);
+   point_double_compute_x3 x3 s m buffer_for_x3;
+   point_double_compute_y3 p_y y3 x3 s m buffer_for_y3;
+     let h4 = ST.get() in 
+     assert(modifies1 tempBuffer h2 h4);
+   Hacl.Spec.P256.MontgomeryMultiplication.montgomery_multiplication_buffer p_y p_z pypz;
+   multByTwo pypz z3;
+     let h5 = ST.get() in  
+     lemma_twelve();
+     concat3 (size 4) x3 (size 4) y3 (size 4) z3 result ; 
+
+   let hend = ST.get() in 
+   assert(as_seq hend result == point_double_seq (as_seq h0 p));
+   assert(modifies1 tempBuffer h0 h5);
+   assert(modifies2 tempBuffer result h0 hend)
+
 
 
 val inverse_mod_prime: value: felem -> result: felem -> tempBuffer: lbuffer uint64 (size 24) ->
@@ -709,7 +757,7 @@ val point_add_if_second_branch_impl: result: point -> p: point -> q: point -> u1
   (ensures fun h0 _ h1 -> modifies2 result tempBuffer28 h0 h1 /\ 
     as_seq h1 result == point_add_if_second_branch_seq (as_seq h0 p) (as_seq h0 q) (as_seq h0 u1) (as_seq h0 u2) (as_seq h0 s1) (as_seq h0 s2) (as_seq h0 r) (as_seq h0 h) (as_seq h0 uh) (as_seq h0 hCube))
 
-let point_add_if_second_branch_impl result p q u1 u2 s1 s2 r h uh hCube tempBuffer28= 
+let point_add_if_second_branch_impl result p q u1 u2 s1 s2 r h uh hCube tempBuffer28 = 
     let h0 = ST.get() in 
 
   let z1 = sub p (size 8) (size 4) in 
@@ -738,7 +786,7 @@ let point_add_if_second_branch_impl result p q u1 u2 s1 s2 r h uh hCube tempBuff
 
 
 #reset-options "--z3rlimit 200"
-let point_add p q result tempBuffer = 
+let point_add_external_result p q result tempBuffer = 
     let h0 = ST.get() in 
 
    let z1 = sub p (size 8) (size 4) in 
@@ -770,6 +818,7 @@ let point_add p q result tempBuffer =
       begin
 	let h2 = ST.get() in 
 	assert(modifies1 tempBuffer h0 h2);
+	  (*point_double_external_result p result tempBuffer*)
 	   point_double p result tempBuffer
      end	   
    else
@@ -783,11 +832,66 @@ let point_add p q result tempBuffer =
 
 	      let h5 = ST.get() in  
 	      //assert(modifies (loc result tempBuffer28 h4 h5);
-	      assert(modifies2 result tempBuffer h4 h5)
+	      assert(modifies3 p result tempBuffer h4 h5)
      end;
    let h1 = ST.get() in     
-   assert(modifies2 result tempBuffer h0 h1);
+   assert(modifies3 p result tempBuffer h0 h1);
    assert(Lib.Sequence.equal (as_seq h1 result) (point_add_seq (as_seq h0 p) (as_seq h0 q)))
+
+
+#reset-options "--z3rlimit 200"
+let point_add p q tempBuffer = 
+    let h0 = ST.get() in 
+
+   let z1 = sub p (size 8) (size 4) in 
+   let z2 = sub q (size 8) (size 4) in 
+
+   let tempBuffer16 = sub tempBuffer (size 0) (size 16) in 
+   
+   let u1 = sub tempBuffer (size 16) (size 4) in 
+   let u2 = sub tempBuffer (size 20) (size 4) in 
+   let s1 = sub tempBuffer (size 24) (size 4) in 
+   let s2 = sub tempBuffer (size 28) (size 4) in 
+
+   let h = sub tempBuffer (size 32) (size 4) in 
+   let r = sub tempBuffer (size 36) (size 4) in 
+   let uh = sub tempBuffer (size 40) (size 4) in 
+
+   let hCube = sub tempBuffer (size 44) (size 4) in 
+
+   let x3_out = sub tempBuffer (size 48) (size 4) in 
+   let y3_out = sub tempBuffer (size 52) (size 4) in 
+   let z3_out = sub tempBuffer (size 56) (size 4) in 
+
+   let tempBuffer28 = sub tempBuffer (size 60) (size 28) in 
+
+   move_from_jacobian_coordinates u1 u2 s1 s2 p q tempBuffer16;
+   let flag = point_double_condition u1 u2 s1 s2 z1 z2 in 
+
+   if flag then
+      begin
+	let h2 = ST.get() in 
+	assert(modifies1 tempBuffer h0 h2);
+	   point_double p p tempBuffer
+     end	   
+   else
+     begin  
+              let h3 = ST.get() in 
+	      assert(modifies1 tempBuffer h0 h3);
+	 compute_common_params_point_add h r uh hCube u1 u2 s1 s2 tempBuffer16;
+	      let h4 = ST.get() in 
+	      assert (modifies1 tempBuffer h3 h4);
+	 point_add_if_second_branch_impl p p q u1 u2 s1 s2 r h uh hCube tempBuffer28; 
+
+	      let h5 = ST.get() in  
+	      //assert(modifies (loc result tempBuffer28 h4 h5);
+	      assert(modifies2 p tempBuffer h4 h5)
+     end;
+   let h1 = ST.get() in     
+   assert(modifies2 p tempBuffer h0 h1);
+   assert(Lib.Sequence.equal (as_seq h1 p) (point_add_seq (as_seq h0 p) (as_seq h0 q)))
+
+
 
 inline_for_extraction noextract 
 val uploadOneImpl: f: felem -> Stack unit
@@ -848,4 +952,19 @@ let norm p resultPoint tempBuffer =
        point_x_as_nat h3 resultPoint == xN /\ point_y_as_nat h3 resultPoint == yN /\ point_z_as_nat h3 resultPoint == zN)
     (**)
 
- 
+
+let scalar_bit s n =
+  let h0 = ST.get () in
+  (*mod_mask_lemma ((LSeq.index (as_seq h0 s) (v n / 8)) >>. (n %. 8ul)) 1ul;*)
+  assert_norm (1 = pow2 1 - 1);
+  (*uintv_extensionality (mod_mask #U8 1ul) (u8 1);*)
+  to_u64 ((s.(n /. 8ul) >>. (n %. 8ul)) &. u8 1)
+
+(*
+val montgomery_ladder_step0: p: point -> q: point ->tempBuffer: lbuffer uint64 (size 88) -> Stack unit
+  (requires fun h -> live h p /\ live h q)
+  (ensures fun h0 _ h1 -> True)
+
+let montgomery_ladder_step0 r0 r1 tempB = 
+    point_add r0 r1 tempBuffer;
+    point_double r1 tempBuffer*)

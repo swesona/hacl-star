@@ -127,7 +127,7 @@ void pointAddTest(uint64_t * pointA, uint64_t * pointB)
    
    pointToDomain(pointA, pointA);
    pointToDomain(pointB, pointB);
-   point_add(pointA, pointB, resultPoint, tempBuffer);
+   point_add_external_result(pointA, pointB, resultPoint, tempBuffer);
    norm(resultPoint, resultPoint, tempBuffer);
 
    bool flag = true;
@@ -200,7 +200,7 @@ void pointDoubleTest2(uint64_t * pointA)
    uint64_t* resultPoint = (uint64_t *) malloc (sizeof (uint64_t) * 12);
    uint64_t* tempBuffer = (uint64_t *) malloc (sizeof (uint64_t) * 117);
    pointToDomain(pointA, pointA);
-   point_add(pointA, pointA, resultPoint, tempBuffer);
+   point_add_external_result(pointA, pointA, resultPoint, tempBuffer);
    norm(resultPoint, resultPoint, tempBuffer);
 
    uint64_t * expectedResult = (uint64_t *) malloc (sizeof (uint64_t) * 12);

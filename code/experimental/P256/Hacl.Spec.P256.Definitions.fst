@@ -68,29 +68,12 @@ let s = 64ul
 inline_for_extraction
 let long = lbuffer uint64 (size 9)
 
-(*noextract
-val as_nat4: f:felem4 -> Tot nat
-let as_nat4 f =
-  let (s0, s1, s2, s3) = f in
-  v s0 + v s1 * pow2 64 + v s2 * pow2 64 * pow2 64 +
-  v s3 * pow2 64 * pow2 64 * pow2 64
-
-*)
+type scalar = lbuffer uint8 32
 
 val border_felem4: f: felem4 -> Lemma (as_nat4 f < pow2 256)
 let border_felem4 f = admit()
 
-(*noextract
-val wide_as_nat4: f:felem8 -> Tot nat
-let wide_as_nat4 f =
-  let (s0, s1, s2, s3, s4, s5, s6, s7) = f in
-  v s0 + v s1 * pow2 64 + v s2 * pow2 64 * pow2 64 +
-  v s3 * pow2 64 * pow2 64 * pow2 64 +
-  v s4 * pow2 64 * pow2 64 * pow2 64 * pow2 64 +
-  v s5 * pow2 64 * pow2 64 * pow2 64 * pow2 64 * pow2 64 +
-  v s6 * pow2 64 * pow2 64 * pow2 64 * pow2 64 * pow2 64 * pow2 64 +
-  v s7 * pow2 64 * pow2 64 * pow2 64 * pow2 64 * pow2 64 * pow2 64 * pow2 64
-*)
+
 noextract
 val as_nat9: f: felem9 -> Tot nat 
 let as_nat9 f = 
