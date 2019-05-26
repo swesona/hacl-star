@@ -739,12 +739,14 @@ let point_double_condition u1 u2 s1 s2 z1 z2 =
   let result = logand onetwo pointsInf in 
   eq_u64 result (u64 0xffffffffffffffff)
 
+
 inline_for_extraction noextract 
 val point_add_if_second_branch_impl: result: point -> p: point -> q: point -> u1: felem -> u2: felem -> s1: felem -> s2: felem -> r: felem -> h: felem -> uh: felem -> hCube: felem -> tempBuffer28 : lbuffer uint64 (size 28) -> 
   Stack unit (requires fun h0 -> live h0 result /\ live h0 p /\ live h0 q /\ live h0 u1 /\ live h0 u2 /\ live h0 s1 /\ live h0 s2 /\ live h0 r /\ live h0 h /\ live h0 uh /\ live h0 hCube /\ live h0 tempBuffer28 /\
   as_nat h0 u1 < prime  /\ as_nat h0 u2 < prime  /\ as_nat h0 s1 < prime /\ as_nat h0 s2 < prime /\ as_nat h0 r < prime /\
   as_nat h0 h < prime /\ as_nat h0 uh < prime /\ as_nat h0 hCube < prime /\
-  LowStar.Monotonic.Buffer.all_disjoint [loc result; loc p; loc q; loc u1; loc u2; loc s1; loc s2; loc r; loc h; loc uh; loc hCube; loc tempBuffer28] /\
+  eq_or_disjoint p result /\
+  LowStar.Monotonic.Buffer.all_disjoint [loc p; loc q; loc u1; loc u2; loc s1; loc s2; loc r; loc h; loc uh; loc hCube; loc tempBuffer28] /\ disjoint result tempBuffer28 /\
     as_nat h0 (gsub p (size 8) (size 4)) < prime /\ 
     as_nat h0 (gsub p (size 0) (size 4)) < prime /\ 
     as_nat h0 (gsub p (size 4) (size 4)) < prime /\
@@ -754,7 +756,7 @@ val point_add_if_second_branch_impl: result: point -> p: point -> q: point -> u1
     (let u1_, u2_, s1_, s2_ = move_from_jacobian_coordinates_seq (as_seq h0 p) (as_seq h0 q) in 
     u1_ == (as_seq h0 u1) /\ u2_ == (as_seq h0 u2) /\ s1_ == (as_seq h0 s1) /\ s2_ == (as_seq h0 s2)) /\
     (let h_, r_, uh_, hCube_ = compute_common_params_point_add_seq (as_seq h0 u1) (as_seq h0 u2) (as_seq h0 s1) (as_seq h0 s2) in h_ == (as_seq h0 h) /\ r_ == (as_seq h0 r) /\ uh_ == (as_seq h0 uh) /\ hCube_ == (as_seq h0 hCube)))
-  (ensures fun h0 _ h1 -> modifies2 result tempBuffer28 h0 h1 /\ 
+  (ensures fun h0 _ h1 -> modifies2 tempBuffer28 result h0 h1 /\ 
     as_seq h1 result == point_add_if_second_branch_seq (as_seq h0 p) (as_seq h0 q) (as_seq h0 u1) (as_seq h0 u2) (as_seq h0 s1) (as_seq h0 s2) (as_seq h0 r) (as_seq h0 h) (as_seq h0 uh) (as_seq h0 hCube))
 
 let point_add_if_second_branch_impl result p q u1 u2 s1 s2 r h uh hCube tempBuffer28 = 
@@ -769,26 +771,36 @@ let point_add_if_second_branch_impl result p q u1 u2 s1 s2 r h uh hCube tempBuff
   let z3_out = Lib.Buffer.sub tempBuffer28 (size 24) (size 4) in 
 
   computeX3_point_add x3_out hCube uh r tempBuffer16; 
-  computeY3_point_add y3_out s1 hCube uh x3_out r tempBuffer16;
-  computeZ3_point_add z3_out z1 z2 h tempBuffer16;
-
     let h1 = ST.get() in 
     assert(modifies1 tempBuffer28 h0 h1);
-  
-  copy_point_conditional x3_out y3_out z3_out q p;
-  copy_point_conditional x3_out y3_out z3_out p q;
+  computeY3_point_add y3_out s1 hCube uh x3_out r tempBuffer16; 
     let h2 = ST.get() in 
     assert(modifies1 tempBuffer28 h1 h2);
+  computeZ3_point_add z3_out z1 z2 h tempBuffer16;
+    let h3 = ST.get() in 
+    assert(modifies1 tempBuffer28 h2 h3);
+
+  copy_point_conditional x3_out y3_out z3_out q p;
+    let h4 = ST.get() in 
+    assert(modifies1 tempBuffer28 h3 h4);
+  copy_point_conditional x3_out y3_out z3_out p q;
+    let h5 = ST.get() in 
+    assert(modifies1 tempBuffer28 h4 h5);
+    assert(modifies1 tempBuffer28 h0 h5);
+
+  lemma_twelve();
+  concat3 (size 4) x3_out (size 4) y3_out (size 4) z3_out result; 
+    let h6 = ST.get() in 
+    assert(modifies1 result h5 h6);
+    assert(modifies2 tempBuffer28 result h0 h6);
+    assert(Lib.Sequence.equal (as_seq h6 result) (point_add_if_second_branch_seq (as_seq h0 p) (as_seq h0 q) (as_seq h0 u1) (as_seq h0 u2) (as_seq h0 s1) (as_seq h0 s2) (as_seq h0 r) (as_seq h0 h) (as_seq h0 uh) (as_seq h0 hCube)))
     
-  concat3 (size 4) x3_out (size 4) y3_out (size 4) z3_out result;
-  let h3 = ST.get() in 
-   assert(modifies1 result h2 h3)
-
-
+ 
 #reset-options "--z3rlimit 200"
-let point_add_external_result p q result tempBuffer = 
-    let h0 = ST.get() in 
 
+let point_add p q result tempBuffer = 
+    let h0 = ST.get() in 
+    
    let z1 = sub p (size 8) (size 4) in 
    let z2 = sub q (size 8) (size 4) in 
 
@@ -816,82 +828,30 @@ let point_add_external_result p q result tempBuffer =
 
    if flag then
       begin
-	let h2 = ST.get() in 
-	assert(modifies1 tempBuffer h0 h2);
-	  (*point_double_external_result p result tempBuffer*)
-	   point_double p result tempBuffer
+	let h0_1 = ST.get() in 
+	assert(modifies1 tempBuffer h0 h0_1);
+	point_double p result tempBuffer;
+	let h0_2 = ST.get() in 
+	  assert(modifies2 tempBuffer result h0_1 h0_2);
+	  assert(modifies2 tempBuffer result h0 h0_2);
+	  assert(Lib.Sequence.equal (as_seq h0_2 result) (point_add_seq (as_seq h0 p) (as_seq h0 q)))
      end	   
    else
-     begin  
-              let h3 = ST.get() in 
-	      assert(modifies1 tempBuffer h0 h3);
+     begin
+       let h1_1 = ST.get() in 
+	   assert(modifies1 tempBuffer h0 h1_1);
 	 compute_common_params_point_add h r uh hCube u1 u2 s1 s2 tempBuffer16;
-	      let h4 = ST.get() in 
-	      assert (modifies1 tempBuffer h3 h4);
+	   let h1_2 = ST.get() in 
+	   assert (modifies1 tempBuffer h1_1 h1_2);  
 	 point_add_if_second_branch_impl result p q u1 u2 s1 s2 r h uh hCube tempBuffer28; 
+	   let h1_3 = ST.get() in  
+	   assert(modifies2 tempBuffer result h1_2 h1_3)
+     end; 
+   let hend = ST.get() in   
+   assert(modifies2 tempBuffer result h0 hend);
+   assert(Lib.Sequence.equal (as_seq hend result) (point_add_seq (as_seq h0 p) (as_seq h0 q)))
 
-	      let h5 = ST.get() in  
-	      //assert(modifies (loc result tempBuffer28 h4 h5);
-	      assert(modifies3 p result tempBuffer h4 h5)
-     end;
-   let h1 = ST.get() in     
-   assert(modifies3 p result tempBuffer h0 h1);
-   assert(Lib.Sequence.equal (as_seq h1 result) (point_add_seq (as_seq h0 p) (as_seq h0 q)))
-
-
-#reset-options "--z3rlimit 200"
-let point_add p q tempBuffer = 
-    let h0 = ST.get() in 
-
-   let z1 = sub p (size 8) (size 4) in 
-   let z2 = sub q (size 8) (size 4) in 
-
-   let tempBuffer16 = sub tempBuffer (size 0) (size 16) in 
-   
-   let u1 = sub tempBuffer (size 16) (size 4) in 
-   let u2 = sub tempBuffer (size 20) (size 4) in 
-   let s1 = sub tempBuffer (size 24) (size 4) in 
-   let s2 = sub tempBuffer (size 28) (size 4) in 
-
-   let h = sub tempBuffer (size 32) (size 4) in 
-   let r = sub tempBuffer (size 36) (size 4) in 
-   let uh = sub tempBuffer (size 40) (size 4) in 
-
-   let hCube = sub tempBuffer (size 44) (size 4) in 
-
-   let x3_out = sub tempBuffer (size 48) (size 4) in 
-   let y3_out = sub tempBuffer (size 52) (size 4) in 
-   let z3_out = sub tempBuffer (size 56) (size 4) in 
-
-   let tempBuffer28 = sub tempBuffer (size 60) (size 28) in 
-
-   move_from_jacobian_coordinates u1 u2 s1 s2 p q tempBuffer16;
-   let flag = point_double_condition u1 u2 s1 s2 z1 z2 in 
-
-   if flag then
-      begin
-	let h2 = ST.get() in 
-	assert(modifies1 tempBuffer h0 h2);
-	   point_double p p tempBuffer
-     end	   
-   else
-     begin  
-              let h3 = ST.get() in 
-	      assert(modifies1 tempBuffer h0 h3);
-	 compute_common_params_point_add h r uh hCube u1 u2 s1 s2 tempBuffer16;
-	      let h4 = ST.get() in 
-	      assert (modifies1 tempBuffer h3 h4);
-	 point_add_if_second_branch_impl p p q u1 u2 s1 s2 r h uh hCube tempBuffer28; 
-
-	      let h5 = ST.get() in  
-	      //assert(modifies (loc result tempBuffer28 h4 h5);
-	      assert(modifies2 p tempBuffer h4 h5)
-     end;
-   let h1 = ST.get() in     
-   assert(modifies2 p tempBuffer h0 h1);
-   assert(Lib.Sequence.equal (as_seq h1 p) (point_add_seq (as_seq h0 p) (as_seq h0 q)))
-
-
+(* 4 minutes *)
 
 inline_for_extraction noextract 
 val uploadOneImpl: f: felem -> Stack unit

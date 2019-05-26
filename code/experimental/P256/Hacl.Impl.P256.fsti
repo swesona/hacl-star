@@ -107,10 +107,11 @@ val point_double: p: point -> result: point -> tempBuffer: lbuffer uint64 (size 
   ) 
 
 
-val point_add_external_result: p: point -> q: point -> result: point -> tempBuffer: lbuffer uint64 (size 88) -> 
+(* < prime is post condition? *)
+val point_add: p: point -> q: point -> result: point -> tempBuffer: lbuffer uint64 (size 88) -> 
    Stack unit (requires fun h -> live h p /\ live h q /\ live h result /\ live h tempBuffer /\ 
-   disjoint p q /\ disjoint p tempBuffer /\ disjoint q tempBuffer /\ disjoint q result /\ 
-   disjoint result tempBuffer /\ 
+   eq_or_disjoint p result /\
+   disjoint p q /\ disjoint p tempBuffer /\ disjoint q tempBuffer /\ disjoint q result /\ disjoint result tempBuffer /\  
     as_nat h (gsub p (size 8) (size 4)) < prime /\ 
     as_nat h (gsub p (size 0) (size 4)) < prime /\ 
     as_nat h (gsub p (size 4) (size 4)) < prime /\
@@ -118,20 +119,13 @@ val point_add_external_result: p: point -> q: point -> result: point -> tempBuff
     as_nat h (gsub q (size 0) (size 4)) < prime /\  
     as_nat h (gsub q (size 4) (size 4)) < prime 
     ) 
-   (ensures fun h0 _ h1 -> modifies3 tempBuffer p result h0 h1 /\ as_seq h1 result == point_add_seq (as_seq h0 p) (as_seq h0 q))
-
-
-val point_add: p: point -> q: point -> tempBuffer: lbuffer uint64 (size 88) -> 
-   Stack unit (requires fun h -> live h p /\ live h q /\ live h tempBuffer /\ 
-   disjoint p q /\ disjoint p tempBuffer /\ disjoint q tempBuffer /\ 
-    as_nat h (gsub p (size 8) (size 4)) < prime /\ 
-    as_nat h (gsub p (size 0) (size 4)) < prime /\ 
-    as_nat h (gsub p (size 4) (size 4)) < prime /\
-    as_nat h (gsub q (size 8) (size 4)) < prime /\ 
-    as_nat h (gsub q (size 0) (size 4)) < prime /\  
-    as_nat h (gsub q (size 4) (size 4)) < prime 
-    )
-   (ensures fun h0 _ h1 -> modifies2 tempBuffer p h0 h1 /\ as_seq h1 p == point_add_seq (as_seq h0 p) (as_seq h0 q))
+   (ensures fun h0 _ h1 -> 
+     modifies2 tempBuffer result h0 h1 /\ 
+     as_seq h1 result == point_add_seq (as_seq h0 p) (as_seq h0 q) /\
+     as_nat h1 (gsub result (size 8) (size 4)) < prime /\ 
+     as_nat h1 (gsub result (size 0) (size 4)) < prime /\ 
+     as_nat h1 (gsub result (size 4) (size 4)) < prime 
+  )
 
 
 val norm: p: point -> resultPoint: point -> tempBuffer: lbuffer uint64 (size 32) -> Stack unit

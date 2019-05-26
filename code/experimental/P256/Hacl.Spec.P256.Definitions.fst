@@ -9,6 +9,14 @@ open FStar.HyperStack.All
 open Lib.Sequence
 open Lib.Buffer
 
+
+noextract
+let prime:pos =
+  assert_norm (pow2 256 - pow2 224 + pow2 192 + pow2 96 -1 > 0);
+  pow2 256 - pow2 224 + pow2 192 + pow2 96 -1
+
+
+
 open Hacl.Spec.Curve25519.Field64.Definition
 
 inline_for_extraction noextract
@@ -45,11 +53,6 @@ let felem_seq_as_nat (a: felem_seq) : Tot nat  =
 
 
 open FStar.Mul
-
-noextract
-let prime:pos =
-  assert_norm (pow2 256 - pow2 224 + pow2 192 + pow2 96 -1 > 0);
-  pow2 256 - pow2 224 + pow2 192 + pow2 96 -1
 
 noextract
 let felem_seq_prime = a: felem_seq {felem_seq_as_nat a < prime}
