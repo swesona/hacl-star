@@ -920,11 +920,56 @@ let scalar_bit s n =
   (*uintv_extensionality (mod_mask #U8 1ul) (u8 1);*)
   to_u64 ((s.(n /. 8ul) >>. (n %. 8ul)) &. u8 1)
 
-(*
-val montgomery_ladder_step0: p: point -> q: point ->tempBuffer: lbuffer uint64 (size 88) -> Stack unit
-  (requires fun h -> live h p /\ live h q)
-  (ensures fun h0 _ h1 -> True)
+val lemma_modifies3: a: LowStar.Monotonic.Buffer.loc -> b: LowStar.Monotonic.Buffer.loc -> c: LowStar.Monotonic.Buffer.loc -> 
+  Lemma (ensures ((a |+| b |+| c) == (c |+| b |+| a)))
 
-let montgomery_ladder_step0 r0 r1 tempB = 
-    point_add r0 r1 tempBuffer;
-    point_double r1 tempBuffer*)
+let lemma_modifies3 a b c = 
+  LowStar.Monotonic.Buffer.loc_union_comm a b;
+  LowStar.Monotonic.Buffer.loc_union_assoc b a c;
+  LowStar.Monotonic.Buffer.loc_union_comm a c;
+  LowStar.Monotonic.Buffer.loc_union_assoc b c a;
+  LowStar.Monotonic.Buffer.loc_union_comm b c
+
+
+val lemma_modifies3_1: a: LowStar.Monotonic.Buffer.loc -> b: LowStar.Monotonic.Buffer.loc -> c: LowStar.Monotonic.Buffer.loc -> 
+  Lemma (ensures ((a |+| b |+| c) == (a |+| c |+| b)))
+
+let lemma_modifies3_1 a b c = 
+  LowStar.Monotonic.Buffer.loc_union_assoc a b c;
+  LowStar.Monotonic.Buffer.loc_union_comm b c;
+  LowStar.Monotonic.Buffer.loc_union_assoc a c b
+
+
+let montgomery_ladder_step0 r0 r1 tempBuffer = 
+    let h0 = ST.get() in 
+  point_add r0 r1 r0 tempBuffer;
+    let h1 = ST.get() in 
+    assert(modifies (loc (r0) |+|  loc tempBuffer) h0 h1);
+    modifies2_is_modifies3 r0 tempBuffer r1 h0 h1;
+    lemma_modifies3_1 (loc r0) (loc tempBuffer) (loc r1);
+  point_double r1 r1 tempBuffer;
+    let h2 = ST.get() in 
+    modifies2_is_modifies3 r1 tempBuffer r0 h1 h2;
+    lemma_modifies3 (loc r1) (loc tempBuffer) (loc r0);
+    lemma_modifies3_1 (loc r0) (loc tempBuffer) (loc r1);
+    assert(modifies (loc r0 |+| loc r1 |+|  loc tempBuffer) h0 h2)
+
+
+let montgomery_ladder_step1 r0 r1 tempBuffer = 
+    let h0 = ST.get() in 
+  point_add r1 r0 r1 tempBuffer;
+    let h1 = ST.get() in 
+  point_double r0 r0 tempBuffer; 
+    let h2 = ST.get() in 
+    modifies2_is_modifies3 r1 tempBuffer r0 h0 h1; 
+    lemma_modifies3 (loc r1) (loc tempBuffer) (loc r0); 
+    lemma_modifies3_1 (loc r0) (loc tempBuffer) (loc r0); 
+    assert(modifies (loc r0 |+| loc r1 |+| loc tempBuffer) h0 h1);
+    
+    modifies2_is_modifies3 r0 tempBuffer r1 h1 h2;
+    assert(modifies (loc r0 |+| loc tempBuffer |+| loc r1) h1 h2);
+    lemma_modifies3_1 (loc r0) (loc tempBuffer) (loc r1);
+    assert(modifies (loc r0 |+| loc r1 |+|  loc tempBuffer) h1 h2);
+    assert(modifies (loc r0 |+| loc r1 |+|  loc tempBuffer) h0 h2)
+
+(* 5 minutes *)
