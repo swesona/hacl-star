@@ -27,6 +27,11 @@ open Lib.Loops
 let fromDomain_ a = (a * modp_inv2 (pow2 256)) % prime
 
 
+let fromDomainPoint a = 
+  let x, y, z = a in 
+  fromDomain_ x, fromDomain_ y, fromDomain_ z
+
+
 val fromDomain: a: felem4{as_nat4 a < prime} -> Tot (result: felem4 {as_nat4 result = fromDomain_ (as_nat4 a)})
 
 let fromDomain a =  

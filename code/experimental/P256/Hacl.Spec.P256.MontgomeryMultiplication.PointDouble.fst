@@ -200,16 +200,20 @@ let point_double_compute_y3_seq py x3 s m =
     lemma_minus_distr (mD * (sD - x3D)) (8 * pyD * pyD * pyD * pyD);
     y3
 
+#reset-options "--z3refresh --z3rlimit 200"
 
 noextract
 val point_double_seq: p: point_prime -> 
   Tot (r: point_prime  {
-    let x3 = Lib.Sequence.sub r 0 4 in let y3 = Lib.Sequence.sub r 4 4 in let z3 = Lib.Sequence.sub r 8 4 in 
-    let x = Lib.Sequence.sub p 0 4 in let y = Lib.Sequence.sub p 4 4 in let z = Lib.Sequence.sub p 8 4 in 
-    let xD = fromDomain_ (felem_seq_as_nat x) in let yD = fromDomain_ (felem_seq_as_nat y) in let zD = fromDomain_(felem_seq_as_nat z) in 
+    let x3, y3, z3 = felem_seq_as_nat(sub r 0 4), felem_seq_as_nat(sub r 4 4), felem_seq_as_nat(sub r 8 4) in 
+    let x, y, z = felem_seq_as_nat(sub p 0 4), felem_seq_as_nat(sub p 4 4) , felem_seq_as_nat(sub p 8 4) in 
+    
+    let xD, yD, zD = fromDomainPoint(x, y, z) in 
+    let x3D, y3D, z3D = fromDomainPoint (x3, y3, z3) in
     let (xN, yN, zN) = _point_double (xD, yD, zD) in 
-    felem_seq_as_nat x3 = toDomain_ (xN) /\ felem_seq_as_nat y3 = toDomain_ (yN) /\ felem_seq_as_nat z3 = toDomain_ (zN)
-    }) 
+    x3D = xN /\ y3D = yN /\ z3D = zN
+  }) 
+
 
 let point_double_seq p =
   let open FStar.Tactics in 

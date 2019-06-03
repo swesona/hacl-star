@@ -21,6 +21,7 @@ open Hacl.Spec.P256.MontgomeryMultiplication
 open Hacl.Spec.P256.MontgomeryMultiplication.PointDouble
 open Hacl.Spec.P256.MontgomeryMultiplication.PointAdd
 open Hacl.Spec.P256.Normalisation 
+open Hacl.Spec.P256.Ladder
 
 
 open Lib.Loops
@@ -156,3 +157,42 @@ val scalar_bit:
   -> Stack uint64
     (requires fun h0 -> live h0 s)
     (ensures  fun h0 r h1 -> h0 == h1)
+
+
+
+val montgomery_ladder_step0: p: point -> q: point ->tempBuffer: lbuffer uint64 (size 88) -> Stack unit
+  (requires fun h -> live h p /\ live h q /\ live h tempBuffer /\ 
+    LowStar.Monotonic.Buffer.all_disjoint [loc p; loc q; loc tempBuffer] /\
+     
+    as_nat h (gsub p (size 0) (size 4)) < prime /\ 
+    as_nat h (gsub p (size 4) (size 4)) < prime /\
+    as_nat h (gsub p (size 8) (size 4)) < prime /\
+	
+    as_nat h (gsub q (size 0) (size 4)) < prime /\  
+    as_nat h (gsub q (size 4) (size 4)) < prime /\
+    as_nat h (gsub q (size 8) (size 4)) < prime
+  
+  )
+  (ensures fun h0 _ h1 -> modifies (loc p |+| loc q |+|  loc tempBuffer) h0 h1 /\ 
+    (
+      let p_seq = as_seq h1 p in 
+      let q_seq = as_seq h1 q in 
+      let pN_seq, qN_seq = ml_step0 (as_seq h0 p) (as_seq h0 q) in 
+      pN_seq == p_seq /\ qN_seq == q_seq
+    )  
+  )
+
+val montgomery_ladder_step1: p: point -> q: point ->tempBuffer: lbuffer uint64 (size 88) -> Stack unit
+  (requires fun h -> live h p /\ live h q /\ live h tempBuffer /\ 
+    LowStar.Monotonic.Buffer.all_disjoint [loc p; loc q; loc tempBuffer] /\
+     
+    as_nat h (gsub p (size 0) (size 4)) < prime /\ 
+    as_nat h (gsub p (size 4) (size 4)) < prime /\
+    as_nat h (gsub p (size 8) (size 4)) < prime /\
+	
+    as_nat h (gsub q (size 0) (size 4)) < prime /\  
+    as_nat h (gsub q (size 4) (size 4)) < prime /\
+    as_nat h (gsub q (size 8) (size 4)) < prime
+  
+  )
+  (ensures fun h0 _ h1 -> modifies (loc p |+| loc q |+|  loc tempBuffer) h0 h1)

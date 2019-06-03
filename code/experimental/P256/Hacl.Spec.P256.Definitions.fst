@@ -71,7 +71,7 @@ let s = 64ul
 inline_for_extraction
 let long = lbuffer uint64 (size 9)
 
-type scalar = lbuffer uint8 32
+type scalar = lbuffer uint8 (size 32)
 
 val border_felem4: f: felem4 -> Lemma (as_nat4 f < pow2 256)
 let border_felem4 f = admit()

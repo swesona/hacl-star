@@ -25,6 +25,16 @@ noextract
 val fromDomain_: a: int -> Tot (r: nat (*{ r = a * modp_inv2 (pow2 256) % prime}*))
 
 noextract
+val fromDomainPoint: a: tuple3 nat nat nat -> Tot (r: tuple3 nat nat nat 
+  {
+    let x, y, z = a in
+    let x3, y3, z3 = r in 
+    x3 == fromDomain_ x /\ y3 == fromDomain_ y /\ z3 == fromDomain_ z
+  }
+)
+
+
+noextract
 val toDomain_: a: int -> Tot (r: nat (*{r =  a * pow2 256 % prime}*))
 
 val lemmaFromDomain: a: int -> Lemma (fromDomain_ (a) == a * modp_inv2 (pow2 256) % prime)
