@@ -19,58 +19,29 @@ let ith_bit (k:scalar) (i:nat{i < 256}) : uint64 =
 	let q = i / 8 in let r = size (i % 8) in
  	to_u64 ((index k q >>. r) &. u8 1)
 
-let pr = p:lseq uint64 4 {let t = sub p 0 4 in  felem_seq_as_nat t < prime}
-
-
-val fromDomainPoint: tuple3 nat nat nat -> tuple3 nat nat nat 
-
-let fromDomainPoint a = 
-  let (x, y, z) = a in
-  fromDomain_ x, fromDomain_ y, fromDomain_ z
-
-
 val _ml_step0: p: point_nat -> q: point_nat -> tuple2 point_nat point_nat
 
-let _ml_step0 p q = 
-  let r0 = _point_add p q in 
-  let r1 = _point_double q in 
+let _ml_step0 r0 r1 = 
+  let r0 = _point_add r0 r1 in
+  let r1 = _point_double r1 in 
   (r0, r1)
 
-val as_nat_point: p: point_seq -> point_nat
+val _ml_step1: p: point_nat -> q: point_nat -> tuple2 point_nat point_nat
 
-let as_nat_point p = 
-  let x = Lib.Sequence.sub p 0 4 in 
-  let y = Lib.Sequence.sub p 4 4 in 
-  let z = Lib.Sequence.sub p 8 4 in 
-  felem_seq_as_nat x, felem_seq_as_nat y, felem_seq_as_nat z
-
-
-val ml_step0: p: point_prime -> q: point_prime -> (r: tuple2 point_prime point_prime)
-
-let ml_step0 r0 r1 = 
-  let r0 = point_add_seq r0 r1 in
-  let r1 = point_double_seq r1 in 
-  (r0, r1)
-
-
-
-val ml_step1: p: point_prime -> q: point_prime -> tuple2 point_prime point_prime
-
-let ml_step1 r0 r1 = 
-  let r3 = point_double_seq r0 in 
-  let r1 = point_add_seq r0 r1 in 
+let _ml_step1 r0 r1 = 
+  let r3 = _point_double r0 in 
+  let r1 = _point_add r0 r1 in 
   (r3, r1)
 
-(*change to any size *)
-val _ml_step: k: scalar-> i: nat{i < 256} -> p: point_prime-> q: point_prime -> Tot (r: tuple2 point_prime point_prime)
+(*changed to any size *)
+val _ml_step: k: scalar-> i: nat{i < 256} -> p: point_nat -> q: point_nat -> Tot (r: tuple2 point_nat point_nat)
 
 let _ml_step k i p q = 
     let bit = ith_bit k i in 
     let isZeroBit = eq #U64 bit (u64 0) in 
     if isZeroBit then 
-      ml_step0 p q 
-    else 
-      ml_step1 p q  
+      _ml_step0 p q 
+    else _ml_step1 p q  
 
 val montgomery_ladder_step0: p: point_prime -> q: point_prime -> 
   Tot (r: tuple2 point_prime point_prime 
@@ -100,15 +71,15 @@ val montgomery_ladder_step0: p: point_prime -> q: point_prime ->
 
       let (x3N_0, y3N_0, z3N_0), (x3N_1, y3N_1, z3N_1) = _ml_step0 (pxD, pyD, pzD) (qxD, qyD, qzD) in 
       x3N_0 == x3D_0 /\ y3N_0 == y3D_0 /\ z3N_0 == z3D_0 /\ x3N_1 == x3D_1 /\ y3N_1 == y3D_1 /\ z3N_1 == z3D_1 
-    }
+    } 
  )   
-      
+    
 
 let montgomery_ladder_step0 r0 r1 = 
   let r0 = point_add_seq r0 r1 in 
   let r1 = point_double_seq r1 in 
   (r0, r1)
-(*
+
 
 val montgomery_ladder_step1: p: point_prime -> q: point_prime -> 
   Tot (r: tuple2 point_prime point_prime 
@@ -159,8 +130,8 @@ val montgomery_ladder_step1: p: point_prime -> q: point_prime ->
 
 
 let montgomery_ladder_step1 r0 r1 = 
-  let r1 = point_add r0 r1 in 
-  let r0 = point_double r0 in  
+  let r1 = point_add_seq r1 r0 in 
+  let r0 = point_double_seq r0 in  
   (r0, r1)
 
 (*

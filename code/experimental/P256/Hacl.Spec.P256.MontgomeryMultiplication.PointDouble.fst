@@ -15,6 +15,7 @@ open Lib.Loops
 open FStar.Mul
 
 #set-options "--z3rlimit 300" 
+
 let _point_double  (p:point_nat) :  (p:point_nat) =
   let x, y, z = p in 
   let s = (4 * x * y * y) % prime in 
@@ -25,11 +26,15 @@ let _point_double  (p:point_nat) :  (p:point_nat) =
   (x3, y3, z3)
 
 
-val computeS: px: felem_seq_prime -> py: felem_seq_prime -> 
+val computeS:
+  px: felem_seq_prime -> 
+  py: felem_seq_prime -> 
   Lemma ((
-    let pxD = fromDomain_ (felem_seq_as_nat px) in let pyD = fromDomain_(felem_seq_as_nat py) in 
+    let pxD = fromDomain_ (felem_seq_as_nat px) in 
+    let pyD = fromDomain_(felem_seq_as_nat py) in 
     let s = mm_byFour_seq (montgomery_multiplication_seq px (montgomery_multiplication_seq py py)) in 
-    felem_seq_as_nat s == toDomain_(4 * pxD * pyD * pyD % prime)))
+    fromDomain_(felem_seq_as_nat s) == (4 * pxD * pyD * pyD) % prime)
+ )   
 
 let computeS px py = 
   let open FStar.Tactics in 
@@ -46,10 +51,17 @@ let computeS px py =
   
   lemma_mod_mul_distr_r 4 (pxD * pyD * pyD) prime
 
-val computeM: px: felem_seq_prime -> pz: felem_seq_prime -> 
-  Lemma ((let pxD = fromDomain_ (felem_seq_as_nat px) in let pzD = fromDomain_(felem_seq_as_nat pz) in 
-  let m = felem_add_seq (mm_byMinusThree_seq(mm_quatre_seq pz)) (mm_byThree_seq(montgomery_multiplication_seq px px)) in  
-  felem_seq_as_nat m = toDomain_ ((((-3) * pzD * pzD * pzD * pzD + 3 * pxD * pxD) % prime)))) 
+
+val computeM: px: felem_seq_prime -> 
+  pz: felem_seq_prime -> 
+  Lemma (
+    (
+      let pxD = fromDomain_ (felem_seq_as_nat px) in 
+      let pzD = fromDomain_(felem_seq_as_nat pz) in 
+      let m = felem_add_seq (mm_byMinusThree_seq(mm_quatre_seq pz)) (mm_byThree_seq(montgomery_multiplication_seq px px)) in  
+      fromDomain_(felem_seq_as_nat m) = (((-3) * pzD * pzD * pzD * pzD + 3 * pxD * pxD) % prime)
+    )
+) 
 
 let computeM px pz = 
   let open FStar.Tactics in 
@@ -71,11 +83,14 @@ let computeM px pz =
   modulo_distributivity ((-3) * pzD * pzD * pzD * pzD) (3 * pxD * pxD) prime
  
 
-val computeZ3: py: felem_seq_prime -> pz: felem_seq_prime-> 
+val computeZ3: 
+  py: felem_seq_prime -> 
+  pz: felem_seq_prime-> 
   Lemma (
     let z3 = mm_byTwo_seq(montgomery_multiplication_seq py pz) in 
-    let pyD = fromDomain_ (felem_seq_as_nat py) in let pzD = fromDomain_(felem_seq_as_nat pz) in 
-    felem_seq_as_nat z3 = toDomain_(2 * pyD * pzD % prime))
+    let pyD = fromDomain_ (felem_seq_as_nat py) in 
+    let pzD = fromDomain_(felem_seq_as_nat pz) in 
+    fromDomain_(felem_seq_as_nat z3) = 2 * pyD * pzD % prime)
 
 let computeZ3 py pz = 
   let open FStar.Tactics in 
@@ -87,16 +102,22 @@ let computeZ3 py pz =
   let a = montgomery_multiplication_seq py pz in 
   let b = mm_byTwo_seq a in 
 
-  assert_by_tactic (2 * (pyD * pzD) = 2 * pyD * pzD) canon
+  assert_by_tactic (2 * (pyD * pzD) = 2 * pyD * pzD) canon;
+  lemmaToDomainAndBackIsTheSame (2 * pyD * pzD % prime)
 
 
 #reset-options "--z3rlimit 100" 
 val lemma_xToSpecification: pxD: nat -> pyD: nat -> pzD: nat -> 
-  s: felem_seq{felem_seq_as_nat s = toDomain_ (4 * pxD * pyD * pyD % prime)} -> 
-  m: felem_seq{felem_seq_as_nat m = toDomain_ ((((-3) * pzD * pzD * pzD * pzD + 3 * pxD * pxD)) % prime)} -> 
-  x3: felem_seq{(let mD = fromDomain_ (felem_seq_as_nat m) in let sD = fromDomain_ (felem_seq_as_nat s) in 
-    felem_seq_as_nat x3 = toDomain_((mD * mD - 2*sD) % prime))} -> 
-  Lemma ((let (xN, yN, zN) = _point_double (pxD, pyD, pzD) in felem_seq_as_nat x3 = toDomain_ (xN)))
+  s: felem_seq{fromDomain_ (felem_seq_as_nat s) = 4 * pxD * pyD * pyD % prime} -> 
+  m: felem_seq{fromDomain_ (felem_seq_as_nat m) = (((-3) * pzD * pzD * pzD * pzD + 3 * pxD * pxD)) % prime} -> 
+  x3: felem_seq{
+    (let mD = fromDomain_ (felem_seq_as_nat m) in 
+    let sD = fromDomain_ (felem_seq_as_nat s) in 
+    fromDomain_(felem_seq_as_nat x3) = (mD * mD - 2*sD) % prime)} -> 
+  Lemma (
+    (let (xN, yN, zN) = _point_double (pxD, pyD, pzD) in 
+      fromDomain_(felem_seq_as_nat x3) = xN)
+    )
 
 let lemma_xToSpecification pxD pyD pzD s m x3  = ()
 
@@ -105,16 +126,21 @@ val lemma_yToSpecification: pxD: nat -> pyD: nat -> pzD: nat ->
   s: felem_seq{felem_seq_as_nat s = toDomain_ (4 * pxD * pyD * pyD % prime)} -> 
   m: felem_seq{felem_seq_as_nat m = toDomain_ ((((-3) * pzD * pzD * pzD * pzD + 3 * pxD * pxD) % prime))} ->
   x3: felem_seq{(let mD = fromDomain_ (felem_seq_as_nat m) in let sD = fromDomain_ (felem_seq_as_nat s) in 
-    felem_seq_as_nat x3 = toDomain_((mD * mD - 2*sD) % prime))} -> 
+    fromDomain_(felem_seq_as_nat x3) = (mD * mD - 2*sD) % prime)} -> 
   y3: felem_seq{(let mD = fromDomain_ (felem_seq_as_nat m) in let sD = fromDomain_ (felem_seq_as_nat s) in 
     let x3D = fromDomain_ (felem_seq_as_nat x3) in 
-    felem_seq_as_nat y3 = toDomain_ (((mD * (sD - x3D) - (8 * pyD * pyD * pyD * pyD)) % prime)))} -> 
-  Lemma(let (xN, yN, zN) = _point_double (pxD, pyD, pzD) in  felem_seq_as_nat y3 = toDomain_ (yN))  
+    fromDomain_ (felem_seq_as_nat y3) = ((mD * (sD - x3D) - (8 * pyD * pyD * pyD * pyD)) % prime))} -> 
+  Lemma(let (xN, yN, zN) = _point_double (pxD, pyD, pzD) in  fromDomain_(felem_seq_as_nat y3) = yN)  
 
 let lemma_yToSpecification pxD pyD pzD s m x3 y3 = ()
 
 
-val lemma_zToSpecification: pxD: nat ->  pyD: nat -> pzD: nat -> z3: felem_seq{felem_seq_as_nat z3 = toDomain_(2 * pyD * pzD % prime)} -> Lemma (let (xN, yN, zN) = _point_double (pxD, pyD, pzD) in felem_seq_as_nat z3 = toDomain_ (zN))
+val lemma_zToSpecification: pxD: nat ->  pyD: nat -> pzD: nat -> 
+  z3: felem_seq{fromDomain_(felem_seq_as_nat z3) = 2 * pyD * pzD % prime} -> 
+  Lemma (
+    let (xN, yN, zN) = _point_double (pxD, pyD, pzD) in 
+    fromDomain_(felem_seq_as_nat z3) = zN
+  )
 
 let lemma_zToSpecification pxD pyD pzD z3 = ()
 
@@ -136,8 +162,8 @@ val point_double_compute_s_m_seq:
       let pxD = fromDomain_ (felem_seq_as_nat px) in 
       let pyD = fromDomain_ (felem_seq_as_nat py) in 
       let pzD = fromDomain_ (felem_seq_as_nat pz) in 
-      felem_seq_as_nat s == toDomain_(4 * pxD * pyD * pyD % prime) /\
-      felem_seq_as_nat m == toDomain_ ((((-3) * pzD * pzD * pzD * pzD + 3 * pxD * pxD) % prime))
+      fromDomain_(felem_seq_as_nat s) == 4 * pxD * pyD * pyD % prime /\
+      fromDomain_(felem_seq_as_nat m) == (((-3) * pzD * pzD * pzD * pzD + 3 * pxD * pxD) % prime)
   })
 
 let point_double_compute_s_m_seq p = 
@@ -161,9 +187,14 @@ let point_double_compute_s_m_seq p =
 
 
 noextract
-val point_double_compute_x3_seq: s: felem_seq_prime ->  m: felem_seq_prime -> 
-  Tot (x3: felem_seq_prime {let mD = fromDomain_ (felem_seq_as_nat m) in let sD = fromDomain_ (felem_seq_as_nat s) in 
-    felem_seq_as_nat x3 = toDomain_ (((mD * mD - 2 * sD) % prime))})
+val point_double_compute_x3_seq: 
+  s: felem_seq_prime ->  
+  m: felem_seq_prime -> 
+  Tot (x3: felem_seq_prime {
+    let mD = fromDomain_ (felem_seq_as_nat m) in 
+    let sD = fromDomain_ (felem_seq_as_nat s) in 
+    fromDomain_ (felem_seq_as_nat x3) = ((mD * mD - 2 * sD) % prime)}
+  )
 
 let point_double_compute_x3_seq s m = 
   let twoS = mm_byTwo_seq s in 
@@ -174,9 +205,18 @@ let point_double_compute_x3_seq s m =
 
 
 noextract
-val point_double_compute_y3_seq: p_y: felem_seq_prime -> x3: felem_seq_prime->  s: felem_seq_prime -> m: felem_seq_prime -> Tot (y3: felem_seq_prime {
-   let mD = fromDomain_ (felem_seq_as_nat m) in let sD = fromDomain_ (felem_seq_as_nat s) in let x3D = fromDomain_ (felem_seq_as_nat x3) in let pyD = fromDomain_ (felem_seq_as_nat p_y) in
-   felem_seq_as_nat y3 = toDomain_ (((mD * (sD - x3D) - (8 * pyD * pyD * pyD * pyD))% prime))})
+val point_double_compute_y3_seq: 
+  p_y: felem_seq_prime -> 
+  x3: felem_seq_prime-> 
+  s: felem_seq_prime -> 
+  m: felem_seq_prime -> 
+  Tot (y3: felem_seq_prime {
+   let mD = fromDomain_ (felem_seq_as_nat m) in 
+   let sD = fromDomain_ (felem_seq_as_nat s) in 
+   let x3D = fromDomain_ (felem_seq_as_nat x3) in 
+   let pyD = fromDomain_ (felem_seq_as_nat p_y) in
+   fromDomain_ (felem_seq_as_nat y3) = ((mD * (sD - x3D) - (8 * pyD * pyD * pyD * pyD))% prime)
+  })
 
 let point_double_compute_y3_seq py x3 s m = 
     let open FStar.Tactics in 
@@ -200,7 +240,6 @@ let point_double_compute_y3_seq py x3 s m =
     lemma_minus_distr (mD * (sD - x3D)) (8 * pyD * pyD * pyD * pyD);
     y3
 
-#reset-options "--z3refresh --z3rlimit 200"
 
 noextract
 val point_double_seq: p: point_prime -> 

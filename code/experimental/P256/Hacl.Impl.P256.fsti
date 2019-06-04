@@ -151,8 +151,9 @@ val norm: p: point -> resultPoint: point -> tempBuffer: lbuffer uint64 (size 32)
   )
 
 
+
 val scalar_bit:
-    s:scalar
+    s:lbuffer uint8 (size 32) 
   -> n:size_t{v n < 256}
   -> Stack uint64
     (requires fun h0 -> live h0 s)
@@ -173,14 +174,14 @@ val montgomery_ladder_step0: p: point -> q: point ->tempBuffer: lbuffer uint64 (
     as_nat h (gsub q (size 8) (size 4)) < prime
   
   )
-  (ensures fun h0 _ h1 -> modifies (loc p |+| loc q |+|  loc tempBuffer) h0 h1 /\ 
+  (ensures fun h0 _ h1 -> modifies (loc p |+| loc q |+|  loc tempBuffer) h0 h1 /\
     (
-      let p_seq = as_seq h1 p in 
-      let q_seq = as_seq h1 q in 
-      let pN_seq, qN_seq = ml_step0 (as_seq h0 p) (as_seq h0 q) in 
-      pN_seq == p_seq /\ qN_seq == q_seq
-    )  
+      let p1 = as_seq h1 p in 
+      let q1 = as_seq h1 q in 
+      let pN, qN = Hacl.Spec.P256.Ladder.montgomery_ladder_step0 (as_seq h0 p) (as_seq h0 q) in 
+      pN == p1 /\ qN == q1
   )
+)
 
 val montgomery_ladder_step1: p: point -> q: point ->tempBuffer: lbuffer uint64 (size 88) -> Stack unit
   (requires fun h -> live h p /\ live h q /\ live h tempBuffer /\ 

@@ -931,6 +931,7 @@ let lemma_modifies3 a b c =
   LowStar.Monotonic.Buffer.loc_union_comm b c
 
 
+
 val lemma_modifies3_1: a: LowStar.Monotonic.Buffer.loc -> b: LowStar.Monotonic.Buffer.loc -> c: LowStar.Monotonic.Buffer.loc -> 
   Lemma (ensures ((a |+| b |+| c) == (a |+| c |+| b)))
 
@@ -952,7 +953,25 @@ let montgomery_ladder_step0 r0 r1 tempBuffer =
     modifies2_is_modifies3 r1 tempBuffer r0 h1 h2;
     lemma_modifies3 (loc r1) (loc tempBuffer) (loc r0);
     lemma_modifies3_1 (loc r0) (loc tempBuffer) (loc r1);
-    assert(modifies (loc r0 |+| loc r1 |+|  loc tempBuffer) h0 h2)
+    assert(modifies (loc r0 |+| loc r1 |+|  loc tempBuffer) h0 h2);
+    assert(let pN, qN = Hacl.Spec.P256.Ladder.montgomery_ladder_step0 (as_seq h0 r0) (as_seq h0 r1) in 
+      Lib.Sequence.equal (as_seq h2 r0) pN /\ Lib.Sequence.equal (as_seq h2 r1) qN)
+
+
+val lemma_modifies_3_two_parts: 
+  (#a0: Type0) ->
+  (#a1: Type0) -> 
+  (#a2: Type0) -> 
+  a: buffer_t MUT a0 ->
+  b: buffer_t MUT a1 ->
+  c: buffer_t MUT a2 ->
+  h0: FStar.HyperStack.mem ->
+  h1: FStar.HyperStack.mem -> 
+  h2: FStar.HyperStack.mem -> 
+  Lemma (requires (modifies3 a b c h0 h1 /\ modifies3 a c b h1 h2))
+  (ensures (modifies3  c b a h0 h2))
+
+let lemma_modifies_3_two_parts #a0 #a1 #a2 a b c h0 h1 h2 = ()
 
 
 let montgomery_ladder_step1 r0 r1 tempBuffer = 
@@ -961,15 +980,12 @@ let montgomery_ladder_step1 r0 r1 tempBuffer =
     let h1 = ST.get() in 
   point_double r0 r0 tempBuffer; 
     let h2 = ST.get() in 
-    modifies2_is_modifies3 r1 tempBuffer r0 h0 h1; 
-    lemma_modifies3 (loc r1) (loc tempBuffer) (loc r0); 
-    lemma_modifies3_1 (loc r0) (loc tempBuffer) (loc r0); 
-    assert(modifies (loc r0 |+| loc r1 |+| loc tempBuffer) h0 h1);
-    
-    modifies2_is_modifies3 r0 tempBuffer r1 h1 h2;
-    assert(modifies (loc r0 |+| loc tempBuffer |+| loc r1) h1 h2);
-    lemma_modifies3_1 (loc r0) (loc tempBuffer) (loc r1);
-    assert(modifies (loc r0 |+| loc r1 |+|  loc tempBuffer) h1 h2);
-    assert(modifies (loc r0 |+| loc r1 |+|  loc tempBuffer) h0 h2)
+    modifies2_is_modifies3 tempBuffer r1 r0 h0 h1; 
+    modifies2_is_modifies3 tempBuffer r0 r1 h1 h2;
+    lemma_modifies_3_two_parts tempBuffer r1 r0 h0 h1 h2;
+
+    assert(modifies3 r0 r1 tempBuffer h0 h2);
+    assert(let pN, qN = Hacl.Spec.P256.Ladder.montgomery_ladder_step1 (as_seq h0 r0) (as_seq h0 r1) in 
+      Lib.Sequence.equal (as_seq h2 r0) pN /\ Lib.Sequence.equal (as_seq h2 r1) qN)
 
 (* 5 minutes *)
