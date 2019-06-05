@@ -1071,7 +1071,7 @@ val montgomery_ladder_step: p: point -> q: point ->tempBuffer: lbuffer uint64 (s
 
 
 let montgomery_ladder_step r0 r1 tempBuffer scalarSize scalar i = 
-  let bit = scalarSize -. i in 
+  let bit = scalarSize -. i -.1 in 
   let bit = scalar_bit scalar bit in 
   cswap bit r0 r1;
   montgomery_ladder_step1 r0 r1 tempBuffer;
@@ -1089,5 +1089,5 @@ let scalarMultiplication p result scalarSize scalar tempBuffer  =
   let q = sub tempBuffer (size 0) (size 12) in 
   let buff = sub tempBuffer (size 12) (size 88) in 
   montgomery_ladder q result scalarSize scalar buff;
-  norm result result buff
+  norm q result buff
   

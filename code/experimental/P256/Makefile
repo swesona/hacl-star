@@ -1,6 +1,6 @@
 FSTAR_HOME   ?= ../../../FStar
 KREMLIN_HOME ?= ../../../kremlin
-HACL_HOME    ?= ../..
+HACL_HOME ?= ../../../
 
 CACHE_DIR     = .cache
 OUTPUT_DIR    = .output
@@ -70,7 +70,7 @@ $(CACHE_DIR)/Lib.%.checked: | .depend
 	touch $@
 
 $(CACHE_DIR)/%.checked: | .depend
-	$(FSTAR) $< $(ENABLE_HINTS) --hint_file $(HINT_DIR)/$(notdir $<).hints && \
+	$(FSTAR) $<  && \
 	touch $@
 
 $(OUTPUT_DIR)/%.krml: | .depend
