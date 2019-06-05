@@ -239,6 +239,16 @@ void pointDoubleTest2(uint64_t * pointA)
    
 }
 
+
+void MLTest0(uint64_t * p, uint64_t * result, uint8_t* scalar, uint64_t * tempBuffer )
+{
+
+   scalarMultiplication(p, result, 32, scalar, tempBuffer);
+   print_uu_l(result, 12, false);
+
+}
+
+
 int main()
 {
    time_t t; 
@@ -280,11 +290,16 @@ int main()
    q[10] = 0uL;
    q[11] = 0uL;
 
-   testToDomain(basePoint);
+   // testToDomain(basePoint);
    
-   pointAddTest(basePoint, q);
-   pointDoubleTest(basePoint);
-   pointDoubleTest2(basePoint);
+   // pointAddTest(basePoint, q);
+   // pointDoubleTest(basePoint);
+   // pointDoubleTest2(basePoint);
+
+   uint8_t * scalar  = (uint8_t *) malloc (sizeof (uint8_t) * 32);
+   scalar[0] = 1;
+
+   MLTest0(basePoint, resultPoint, scalar, tempBuffer);
   
    
 }

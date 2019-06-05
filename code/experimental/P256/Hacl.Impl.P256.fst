@@ -16,7 +16,7 @@ open Hacl.Spec.P256.MontgomeryMultiplication
 open Hacl.Spec.P256.MontgomeryMultiplication.PointDouble
 open Hacl.Spec.P256.MontgomeryMultiplication.PointAdd
 open Hacl.Spec.P256.Normalisation 
-
+ 
 open FStar.Math.Lemmas
 
 friend Hacl.Spec.P256.MontgomeryMultiplication
@@ -108,9 +108,9 @@ let solinas_fast_reduction_partially_opened c result =
 
 inline_for_extraction noextract 
 val toDomain: value: felem -> result: felem ->  Stack unit 
-  (requires fun h ->  as_nat h value < prime /\ live h value /\live h result /\ disjoint result value)
-  (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\ as_nat h1 result = toDomain_ (as_nat h0 value))
-
+  (requires fun h ->  as_nat h value < prime /\ live h value /\live h result /\ eq_or_disjoint value result)
+  (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\ as_nat h1 result = toDomain_ (as_nat h0 value)) 
+ 
 let toDomain value result = 
   let value0 = index value (size 0) in 
   let value1 = index value (size 1) in 
@@ -153,7 +153,7 @@ let multiplication_partially_opened (a0, a1, a2, a3) b result =
   upd result (size 3) r3
 
 
-val fromDomain: f: felem-> result: felem-> Stack unit
+val fromDomain: f: felem-> result: felem-> Stack unit 
   (requires fun h -> live h f /\ live h result /\ as_nat h f < prime)
   (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\ as_nat h1 result = (as_nat h0 f * modp_inv2(pow2 256)) % prime/\ as_nat h1 result = fromDomain_ (as_nat h0 f))
 
@@ -912,6 +912,16 @@ let norm p resultPoint tempBuffer =
        point_x_as_nat h3 resultPoint == xN /\ point_y_as_nat h3 resultPoint == yN /\ point_z_as_nat h3 resultPoint == zN)
     (**)
 
+inline_for_extraction noextract 
+val scalar_bit:
+    s:lbuffer uint8 (size 32) 
+  -> n:size_t{v n < 256}
+  -> Stack uint64
+    (requires fun h0 -> live h0 s)
+    (ensures  fun h0 r h1 -> h0 == h1)
+
+
+
 
 let scalar_bit s n =
   let h0 = ST.get () in
@@ -939,6 +949,30 @@ let lemma_modifies3_1 a b c =
   LowStar.Monotonic.Buffer.loc_union_assoc a b c;
   LowStar.Monotonic.Buffer.loc_union_comm b c;
   LowStar.Monotonic.Buffer.loc_union_assoc a c b
+
+
+inline_for_extraction noextract 
+val montgomery_ladder_step0: p: point -> q: point ->tempBuffer: lbuffer uint64 (size 88) -> Stack unit
+  (requires fun h -> live h p /\ live h q /\ live h tempBuffer /\ 
+    LowStar.Monotonic.Buffer.all_disjoint [loc p; loc q; loc tempBuffer] /\
+     
+    as_nat h (gsub p (size 0) (size 4)) < prime /\ 
+    as_nat h (gsub p (size 4) (size 4)) < prime /\
+    as_nat h (gsub p (size 8) (size 4)) < prime /\
+	
+    as_nat h (gsub q (size 0) (size 4)) < prime /\  
+    as_nat h (gsub q (size 4) (size 4)) < prime /\
+    as_nat h (gsub q (size 8) (size 4)) < prime
+  
+  )
+  (ensures fun h0 _ h1 -> modifies (loc p |+| loc q |+|  loc tempBuffer) h0 h1 /\
+    (
+      let p1 = as_seq h1 p in 
+      let q1 = as_seq h1 q in 
+      let pN, qN = Hacl.Spec.P256.Ladder.montgomery_ladder_step0 (as_seq h0 p) (as_seq h0 q) in 
+      pN == p1 /\ qN == q1
+  )
+)
 
 
 let montgomery_ladder_step0 r0 r1 tempBuffer = 
@@ -974,6 +1008,31 @@ val lemma_modifies_3_two_parts:
 let lemma_modifies_3_two_parts #a0 #a1 #a2 a b c h0 h1 h2 = ()
 
 
+inline_for_extraction noextract 
+val montgomery_ladder_step1: p: point -> q: point ->tempBuffer: lbuffer uint64 (size 88) -> Stack unit
+  (requires fun h -> live h p /\ live h q /\ live h tempBuffer /\ 
+    LowStar.Monotonic.Buffer.all_disjoint [loc p; loc q; loc tempBuffer] /\
+     
+    as_nat h (gsub p (size 0) (size 4)) < prime /\ 
+    as_nat h (gsub p (size 4) (size 4)) < prime /\
+    as_nat h (gsub p (size 8) (size 4)) < prime /\
+	
+    as_nat h (gsub q (size 0) (size 4)) < prime /\  
+    as_nat h (gsub q (size 4) (size 4)) < prime /\
+    as_nat h (gsub q (size 8) (size 4)) < prime
+  
+  )
+  (ensures fun h0 _ h1 -> modifies (loc p |+| loc q |+|  loc tempBuffer) h0 h1 /\ 
+    (
+      let p1 = as_seq h1 p in 
+      let q1 = as_seq h1 q in 
+      let pN, qN = Hacl.Spec.P256.Ladder.montgomery_ladder_step1 (as_seq h0 p) (as_seq h0 q) in 
+      pN == p1 /\ qN == q1
+  ) 
+  )
+
+
+
 let montgomery_ladder_step1 r0 r1 tempBuffer = 
     let h0 = ST.get() in 
   point_add r1 r0 r1 tempBuffer;
@@ -988,4 +1047,47 @@ let montgomery_ladder_step1 r0 r1 tempBuffer =
     assert(let pN, qN = Hacl.Spec.P256.Ladder.montgomery_ladder_step1 (as_seq h0 r0) (as_seq h0 r1) in 
       Lib.Sequence.equal (as_seq h2 r0) pN /\ Lib.Sequence.equal (as_seq h2 r1) qN)
 
-(* 5 minutes *)
+
+
+
+inline_for_extraction noextract 
+val montgomery_ladder_step: p: point -> q: point ->tempBuffer: lbuffer uint64 (size 88) -> 
+  scalarSize: size_t -> 
+  scalar: lbuffer uint8 scalarSize -> 
+  i:size_t{v i < v scalarSize} -> 
+  Stack unit
+  (requires fun h -> live h p /\ live h q /\ live h tempBuffer /\ 
+    LowStar.Monotonic.Buffer.all_disjoint [loc p; loc q; loc tempBuffer] /\
+     
+    as_nat h (gsub p (size 0) (size 4)) < prime /\ 
+    as_nat h (gsub p (size 4) (size 4)) < prime /\
+    as_nat h (gsub p (size 8) (size 4)) < prime /\
+	
+    as_nat h (gsub q (size 0) (size 4)) < prime /\  
+    as_nat h (gsub q (size 4) (size 4)) < prime /\
+    as_nat h (gsub q (size 8) (size 4)) < prime
+  )
+  (ensures fun h0 _ h1 -> True)
+
+
+let montgomery_ladder_step r0 r1 tempBuffer scalarSize scalar i = 
+  let bit = scalarSize -. i in 
+  let bit = scalar_bit scalar bit in 
+  cswap bit r0 r1;
+  montgomery_ladder_step1 r0 r1 tempBuffer;
+  cswap bit r0 r1
+
+
+let montgomery_ladder p q scalarSize scalar tempBuffer =  
+  let inv h1 (i: nat {i <= v scalarSize}) = True in 
+  for 0ul scalarSize inv (fun i -> montgomery_ladder_step p q tempBuffer scalarSize scalar i)
+
+
+let scalarMultiplication p result scalarSize scalar tempBuffer  = 
+  let scalarSize = scalarSize *. 8 in 
+  pointToDomain p result;
+  let q = sub tempBuffer (size 0) (size 12) in 
+  let buff = sub tempBuffer (size 12) (size 88) in 
+  montgomery_ladder q result scalarSize scalar buff;
+  norm result result buff
+  

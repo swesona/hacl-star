@@ -63,7 +63,7 @@ let point_z_as_nat (h: mem) (e: point) : GTot nat =
 
 
 val pointToDomain: p: point -> result: point -> Stack unit 
-  (requires fun h -> live h p /\ live h result /\ disjoint p result /\
+  (requires fun h -> live h p /\ live h result /\ eq_or_disjoint p result /\ 
     point_x_as_nat h p < prime /\ point_y_as_nat h p < prime /\ point_z_as_nat h p < prime)
   (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\ 
     point_x_as_nat h1 result == toDomain_ (point_x_as_nat h0 p) /\
@@ -72,26 +72,13 @@ val pointToDomain: p: point -> result: point -> Stack unit
 
 
 val pointFromDomain: p: point -> result: point-> Stack unit 
-  (requires fun h -> live h p /\ live h result/\ disjoint result p /\ 
+  (requires fun h -> live h p /\ live h result /\ eq_or_disjoint p result /\ 
   point_x_as_nat h p < prime /\ point_y_as_nat h p < prime /\ point_z_as_nat h p < prime)
   (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\
     point_x_as_nat h1 result == fromDomain_ (point_x_as_nat h0 p) /\
     point_y_as_nat h1 result == fromDomain_ (point_y_as_nat h0 p) /\
     point_z_as_nat h1 result == fromDomain_ (point_z_as_nat h0 p))
 
-(*
-val point_double: p: point -> tempBuffer: lbuffer uint64 (size 88) -> Stack unit
-  (requires fun h -> live h p /\ live h tempBuffer /\ disjoint p tempBuffer /\ 
-    as_nat h (gsub p (size 8) (size 4)) < prime /\ 
-    as_nat h (gsub p (size 0) (size 4)) < prime /\ 
-    as_nat h (gsub p (size 4) (size 4)) < prime)
-  (ensures fun h0 _ h1 -> modifies2 tempBuffer p h0 h1 /\  
-    as_seq h1 p == point_double_seq (as_seq h0 p) /\
-    as_nat h1 (gsub p (size 8) (size 4)) < prime /\ 
-    as_nat h1 (gsub p (size 0) (size 4)) < prime /\ 
-    as_nat h1 (gsub p (size 4) (size 4)) < prime
-  )
-*)
 
 val point_double: p: point -> result: point -> tempBuffer: lbuffer uint64 (size 88) -> Stack unit
   (requires fun h -> live h p /\ live h tempBuffer /\ live h result /\
@@ -151,49 +138,16 @@ val norm: p: point -> resultPoint: point -> tempBuffer: lbuffer uint64 (size 32)
   )
 
 
+val montgomery_ladder: p: point -> q: point ->
+  scalarSize: size_t -> scalar: lbuffer uint8 scalarSize -> 
+  tempBuffer:  lbuffer uint64 (size 100)  -> 
+  Stack unit
+  (requires fun h -> live h p /\ live h tempBuffer)
+  (ensures fun h0 _ h1 -> True)
 
-val scalar_bit:
-    s:lbuffer uint8 (size 32) 
-  -> n:size_t{v n < 256}
-  -> Stack uint64
-    (requires fun h0 -> live h0 s)
-    (ensures  fun h0 r h1 -> h0 == h1)
-
-
-
-val montgomery_ladder_step0: p: point -> q: point ->tempBuffer: lbuffer uint64 (size 88) -> Stack unit
-  (requires fun h -> live h p /\ live h q /\ live h tempBuffer /\ 
-    LowStar.Monotonic.Buffer.all_disjoint [loc p; loc q; loc tempBuffer] /\
-     
-    as_nat h (gsub p (size 0) (size 4)) < prime /\ 
-    as_nat h (gsub p (size 4) (size 4)) < prime /\
-    as_nat h (gsub p (size 8) (size 4)) < prime /\
-	
-    as_nat h (gsub q (size 0) (size 4)) < prime /\  
-    as_nat h (gsub q (size 4) (size 4)) < prime /\
-    as_nat h (gsub q (size 8) (size 4)) < prime
-  
-  )
-  (ensures fun h0 _ h1 -> modifies (loc p |+| loc q |+|  loc tempBuffer) h0 h1 /\
-    (
-      let p1 = as_seq h1 p in 
-      let q1 = as_seq h1 q in 
-      let pN, qN = Hacl.Spec.P256.Ladder.montgomery_ladder_step0 (as_seq h0 p) (as_seq h0 q) in 
-      pN == p1 /\ qN == q1
-  )
-)
-
-val montgomery_ladder_step1: p: point -> q: point ->tempBuffer: lbuffer uint64 (size 88) -> Stack unit
-  (requires fun h -> live h p /\ live h q /\ live h tempBuffer /\ 
-    LowStar.Monotonic.Buffer.all_disjoint [loc p; loc q; loc tempBuffer] /\
-     
-    as_nat h (gsub p (size 0) (size 4)) < prime /\ 
-    as_nat h (gsub p (size 4) (size 4)) < prime /\
-    as_nat h (gsub p (size 8) (size 4)) < prime /\
-	
-    as_nat h (gsub q (size 0) (size 4)) < prime /\  
-    as_nat h (gsub q (size 4) (size 4)) < prime /\
-    as_nat h (gsub q (size 8) (size 4)) < prime
-  
-  )
-  (ensures fun h0 _ h1 -> modifies (loc p |+| loc q |+|  loc tempBuffer) h0 h1)
+val scalarMultiplication: p: point -> result: point -> 
+  scalarSize: size_t -> scalar: lbuffer uint8 scalarSize -> 
+  tempBuffer: lbuffer uint64 (size 100) ->
+  Stack unit
+  (requires fun h -> live h p /\ live h result /\ live h tempBuffer)
+  (ensures fun h0 _ h1 -> True)

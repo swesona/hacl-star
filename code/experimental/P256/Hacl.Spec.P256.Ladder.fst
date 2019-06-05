@@ -39,7 +39,7 @@ val _ml_step: k: scalar-> i: nat{i < 256} -> p: point_nat -> q: point_nat -> Tot
 let _ml_step k i p q = 
     let bit = ith_bit k i in 
     let isZeroBit = eq #U64 bit (u64 0) in 
-    if isZeroBit then 
+    if isZeroBit then  
       _ml_step0 p q 
     else _ml_step1 p q  
 
@@ -134,7 +134,16 @@ let montgomery_ladder_step1 r0 r1 =
   let r0 = point_double_seq r0 in  
   (r0, r1)
 
-(*
 
-val montgomery_ladder_step: k: scalar -> i: nat {i < 256} -> To
-*)
+val montgomery_ladder_step: p: point_prime -> q: point_prime -> 
+  k: scalar -> i: nat {i < 256} -> Tot (tuple2 point_prime point_prime)
+
+
+let montgomery_ladder_step p q k i = 
+  let bit = ith_bit k i in 
+  let isZeroBit = eq #U64 bit (u64 0) in 
+  if isZeroBit then 
+   montgomery_ladder_step0 p q
+  else   
+    montgomery_ladder_step1 p q
+    
