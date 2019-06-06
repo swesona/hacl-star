@@ -20,7 +20,8 @@ open Hacl.Spec.P256.SolinasReduction
 open Hacl.Spec.P256.MontgomeryMultiplication
 open Hacl.Spec.P256.MontgomeryMultiplication.PointDouble
 open Hacl.Spec.P256.MontgomeryMultiplication.PointAdd
-
+open Hacl.Spec.P256.Normalisation 
+open Hacl.Spec.P256.Ladder
 
 
 open Lib.Loops
@@ -60,16 +61,18 @@ let point_z_as_nat (h: mem) (e: point) : GTot nat =
   let s3 = s.[11] in 
   D.as_nat4 (s0, s1, s2, s3)
 
+
 val pointToDomain: p: point -> result: point -> Stack unit 
-  (requires fun h -> live h p /\ live h result /\ disjoint p result /\
+  (requires fun h -> live h p /\ live h result /\ eq_or_disjoint p result /\ 
     point_x_as_nat h p < prime /\ point_y_as_nat h p < prime /\ point_z_as_nat h p < prime)
   (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\ 
     point_x_as_nat h1 result == toDomain_ (point_x_as_nat h0 p) /\
     point_y_as_nat h1 result == toDomain_ (point_y_as_nat h0 p) /\
     point_z_as_nat h1 result == toDomain_ (point_z_as_nat h0 p))
 
+
 val pointFromDomain: p: point -> result: point-> Stack unit 
-  (requires fun h -> live h p /\ live h result/\ disjoint result p /\ 
+  (requires fun h -> live h p /\ live h result /\ eq_or_disjoint p result /\ 
   point_x_as_nat h p < prime /\ point_y_as_nat h p < prime /\ point_z_as_nat h p < prime)
   (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\
     point_x_as_nat h1 result == fromDomain_ (point_x_as_nat h0 p) /\
@@ -77,39 +80,74 @@ val pointFromDomain: p: point -> result: point-> Stack unit
     point_z_as_nat h1 result == fromDomain_ (point_z_as_nat h0 p))
 
 
-val point_double: p: point -> result: point ->  tempBuffer: lbuffer uint64 (size 88) -> Stack unit
-  (requires fun h -> live h p /\ live h result /\ live h tempBuffer /\ 
-    disjoint p result /\ disjoint tempBuffer result /\ disjoint p tempBuffer /\ 
+val point_double: p: point -> result: point -> tempBuffer: lbuffer uint64 (size 88) -> Stack unit
+  (requires fun h -> live h p /\ live h tempBuffer /\ live h result /\
+    disjoint p tempBuffer /\ disjoint result tempBuffer /\
+    eq_or_disjoint p result /\
     as_nat h (gsub p (size 8) (size 4)) < prime /\ 
     as_nat h (gsub p (size 0) (size 4)) < prime /\ 
     as_nat h (gsub p (size 4) (size 4)) < prime)
-  (ensures fun h0 _ h1 -> modifies2 tempBuffer result h0 h1 /\  
+  (ensures fun h0 _ h1 -> modifies2 tempBuffer result  h0 h1 /\  
     as_seq h1 result == point_double_seq (as_seq h0 p) /\
-    as_nat h1 (gsub p (size 8) (size 4)) < prime /\ 
-    as_nat h1 (gsub p (size 0) (size 4)) < prime /\ 
-    as_nat h1 (gsub p (size 4) (size 4)) < prime
-  )
+    as_nat h1 (gsub result (size 8) (size 4)) < prime /\ 
+    as_nat h1 (gsub result (size 0) (size 4)) < prime /\ 
+    as_nat h1 (gsub result (size 4) (size 4)) < prime 
+  ) 
 
 
-  
+(* < prime is post condition? *)
 val point_add: p: point -> q: point -> result: point -> tempBuffer: lbuffer uint64 (size 88) -> 
    Stack unit (requires fun h -> live h p /\ live h q /\ live h result /\ live h tempBuffer /\ 
-   LowStar.Monotonic.Buffer.all_disjoint [loc p; loc q; loc result; loc tempBuffer] /\
+   eq_or_disjoint p result /\
+   disjoint p q /\ disjoint p tempBuffer /\ disjoint q tempBuffer /\ disjoint q result /\ disjoint result tempBuffer /\  
     as_nat h (gsub p (size 8) (size 4)) < prime /\ 
     as_nat h (gsub p (size 0) (size 4)) < prime /\ 
     as_nat h (gsub p (size 4) (size 4)) < prime /\
     as_nat h (gsub q (size 8) (size 4)) < prime /\ 
     as_nat h (gsub q (size 0) (size 4)) < prime /\  
     as_nat h (gsub q (size 4) (size 4)) < prime 
-    )
-   (ensures fun h0 _ h1 -> modifies2 tempBuffer result h0 h1 /\ as_seq h1 result == point_add_seq (as_seq h0 p) (as_seq h0 q))
+    ) 
+   (ensures fun h0 _ h1 -> 
+     modifies2 tempBuffer result h0 h1 /\ 
+     as_seq h1 result == point_add_seq (as_seq h0 p) (as_seq h0 q) /\
+     as_nat h1 (gsub result (size 8) (size 4)) < prime /\ 
+     as_nat h1 (gsub result (size 0) (size 4)) < prime /\ 
+     as_nat h1 (gsub result (size 4) (size 4)) < prime 
+  )
 
 
 val norm: p: point -> resultPoint: point -> tempBuffer: lbuffer uint64 (size 32) -> Stack unit
   (requires fun h -> live h p /\ live h resultPoint /\ live h tempBuffer /\ disjoint p tempBuffer /\ disjoint tempBuffer resultPoint /\ 
     as_nat h (gsub p (size 0) (size 4)) < prime /\
     as_nat h (gsub p (size 4) (size 4)) < prime /\
-    as_nat h (gsub p (size 8) (size 4)) < prime  
+    as_nat h (gsub p (size 8) (size 4)) < prime 
+  ) 
+  (ensures fun h0 _ h1 -> 
+      modifies2 tempBuffer resultPoint h0 h1 /\	(
+      let x3 = point_x_as_nat h1 resultPoint in  
+      let y3 = point_y_as_nat h1 resultPoint in 
+      let z3 = point_z_as_nat h1 resultPoint in 
+
+      let xD = fromDomain_ (point_x_as_nat h0 p) in 
+      let yD = fromDomain_ (point_y_as_nat h0 p) in 
+      let zD = fromDomain_ (point_z_as_nat h0 p) in 
+
+      let (xN, yN, zN) = _norm (xD, yD, zD) in 
+      x3 == xN /\ y3 == yN /\ z3 == zN 
+   )   
   )
+
+
+val montgomery_ladder: p: point -> q: point ->
+  scalarSize: size_t -> scalar: lbuffer uint8 scalarSize -> 
+  tempBuffer:  lbuffer uint64 (size 100)  -> 
+  Stack unit
+  (requires fun h -> live h p /\ live h tempBuffer)
   (ensures fun h0 _ h1 -> True)
 
+val scalarMultiplication: p: point -> result: point -> 
+  scalarSize: size_t -> scalar: lbuffer uint8 scalarSize -> 
+  tempBuffer: lbuffer uint64 (size 100) ->
+  Stack unit
+  (requires fun h -> live h p /\ live h result /\ live h tempBuffer)
+  (ensures fun h0 _ h1 -> True)

@@ -9,6 +9,14 @@ open FStar.HyperStack.All
 open Lib.Sequence
 open Lib.Buffer
 
+
+noextract
+let prime:pos =
+  assert_norm (pow2 256 - pow2 224 + pow2 192 + pow2 96 -1 > 0);
+  pow2 256 - pow2 224 + pow2 192 + pow2 96 -1
+
+
+
 open Hacl.Spec.Curve25519.Field64.Definition
 
 inline_for_extraction noextract
@@ -47,11 +55,6 @@ let felem_seq_as_nat (a: felem_seq) : Tot nat  =
 open FStar.Mul
 
 noextract
-let prime:pos =
-  assert_norm (pow2 256 - pow2 224 + pow2 192 + pow2 96 -1 > 0);
-  pow2 256 - pow2 224 + pow2 192 + pow2 96 -1
-
-noextract
 let felem_seq_prime = a: felem_seq {felem_seq_as_nat a < prime}
 noextract
 let point_prime =  p: point_seq{let x = Lib.Sequence.sub p 0 4 in let y = Lib.Sequence.sub p 4 4 in let z = Lib.Sequence.sub p 8 4 in 
@@ -68,29 +71,12 @@ let s = 64ul
 inline_for_extraction
 let long = lbuffer uint64 (size 9)
 
-(*noextract
-val as_nat4: f:felem4 -> Tot nat
-let as_nat4 f =
-  let (s0, s1, s2, s3) = f in
-  v s0 + v s1 * pow2 64 + v s2 * pow2 64 * pow2 64 +
-  v s3 * pow2 64 * pow2 64 * pow2 64
-
-*)
+type scalar = lbuffer uint8 (size 32)
 
 val border_felem4: f: felem4 -> Lemma (as_nat4 f < pow2 256)
 let border_felem4 f = admit()
 
-(*noextract
-val wide_as_nat4: f:felem8 -> Tot nat
-let wide_as_nat4 f =
-  let (s0, s1, s2, s3, s4, s5, s6, s7) = f in
-  v s0 + v s1 * pow2 64 + v s2 * pow2 64 * pow2 64 +
-  v s3 * pow2 64 * pow2 64 * pow2 64 +
-  v s4 * pow2 64 * pow2 64 * pow2 64 * pow2 64 +
-  v s5 * pow2 64 * pow2 64 * pow2 64 * pow2 64 * pow2 64 +
-  v s6 * pow2 64 * pow2 64 * pow2 64 * pow2 64 * pow2 64 * pow2 64 +
-  v s7 * pow2 64 * pow2 64 * pow2 64 * pow2 64 * pow2 64 * pow2 64 * pow2 64
-*)
+
 noextract
 val as_nat9: f: felem9 -> Tot nat 
 let as_nat9 f = 

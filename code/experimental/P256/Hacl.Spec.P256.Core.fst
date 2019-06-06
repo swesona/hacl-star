@@ -3,10 +3,12 @@ module Hacl.Spec.P256.Core
 open Lib.IntTypes
 open FStar.Math.Lemmas
 open FStar.Math.Lib
+
 open Hacl.Spec.Curve25519.Field64.Definition
 open Hacl.Spec.P256.Definitions
 open Hacl.Spec.Curve25519.Field64.Core
 open Hacl.Spec.P256.Lemmas
+
 open FStar.Mul
 
 
@@ -29,17 +31,12 @@ let eq_u64 a b =
   let open Lib.RawIntTypes in
   FStar.UInt64.(u64_to_UInt64 a =^ u64_to_UInt64 b)
 
+
 let eq_0_u64 a = 
   let b = u64 0 in 
   eq_u64 a b
 
-val eq_pow64_u64: a: uint64 -> Tot (r: bool {uint_v a == pow2 64 -1 ==> r == true /\ uint_v a <> pow2 64 - 1 ==> r == false})
-
-let eq_pow64_u64 a = 
-  let b = u64 (normalize_term(pow2 64 - 1)) in 
-  eq_u64 a b 
-
-
+inline_for_extraction noextract
 val cmovznz: cin : uint64{uint_v cin <=1} ->  x: uint64 -> y: uint64   -> 
   Pure uint64
   (requires True)
@@ -55,6 +52,7 @@ let cmovznz cin  x y  =
     log_or (logand y x2) (logand x (lognot (x2)));
     x3
 
+
 inline_for_extraction noextract
 val cmovznz4: cin: uint64{uint_v cin <=1} -> x: felem4 -> y: felem4 -> Pure (r: felem4)
 (requires True)
@@ -67,33 +65,32 @@ let cmovznz4 cin (x0, x1, x2, x3) (y0, y1, y2, y3) =
   let r3 = cmovznz cin x3 y3 in 
   (r0, r1, r2, r3)
 
+
+inline_for_extraction noextract
 #set-options "--z3rlimit 100"
-
-let felem_add arg1 arg2 = 
-  let (x8, c) = add4 arg1 arg2 in 
-  let (x1, x3, x5, x7) = c in 
-   lemma_nat_4 c;
-  let p256 =  (u64 0xffffffffffffffff, u64 0xffffffff, u64 0, u64 0xffffffff00000001) in 
-  assert_norm (as_nat4 p256 == prime);
-  let (x16, r) = sub4 c p256 in 
-  lemma_for_multiplication_1 arg1 arg2;
-  let (x9, x11, x13, x15) = r in   
-    lemma_nat_4 r; 
+let felem_add (a0, a1, a2, a3) (b0, b1, b2, b3) = 
+  let (x8, (x1, x3, x5, x7)) = add4 (a0, a1, a2, a3) (b0, b1, b2, b3)  in 
+   lemma_nat_4 (x1, x3, x5, x7);
+  assert_norm (as_nat4  (u64 0xffffffffffffffff, u64 0xffffffff, u64 0, u64 0xffffffff00000001) == prime);
+  let (x16, (x9, x11, x13, x15)) = sub4 (x1, x3, x5, x7)  (u64 0xffffffffffffffff, u64 0xffffffff, u64 0, u64 0xffffffff00000001) in 
+  lemma_for_multiplication_1 (a0, a1, a2, a3) (b0, b1, b2, b3);
+    lemma_nat_4 (x9, x11, x13, x15); 
   let (x17, x18) = subborrow x8 (u64 0) x16  in 
-    prime_lemma (as_nat4 arg1 + as_nat4 arg2);
-    small_modulo_lemma_extended (as_nat4 c) prime; 
-  let result = cmovznz4 x18 r c in 
-  assert(as_nat4 result = (as_nat4 arg1 + as_nat4 arg2) % prime);
-  result
+    prime_lemma (as_nat4 (a0, a1, a2, a3)  + as_nat4 (b0, b1, b2, b3));
+    small_modulo_lemma_extended (as_nat4 (x1, x3, x5, x7)) prime; 
+  let (r0, r1, r2, r3) = cmovznz4 x18 (x9, x11, x13, x15) (x1, x3, x5, x7) in 
+  assert(as_nat4 (r0, r1, r2, r3) = (as_nat4 (a0, a1, a2, a3)  + as_nat4 (b0, b1, b2, b3)) % prime);
+  (r0, r1, r2, r3)
 
+
+(*  opening anything calls growing up the code*)
 #reset-options "--z3rlimit 400"
-
 let felem_sub arg1 arg2 = 
   let (c, r) = sub4 arg1 arg2 in 
-    lemma_adding_prime arg1 arg2;
-    
+    lemma_adding_prime arg1 arg2;    
+ 
   let x9 = cmovznz c (u64 0) (u64 0xffffffffffffffff) in 
-  
+
   let prime_temp_0 = logand (u64 0xffffffffffffffff) x9 in 
   let prime_temp_1 = logand (u64 0xffffffff) x9 in 
   let prime_temp_2 = u64 0 in 
@@ -111,27 +108,13 @@ let felem_sub arg1 arg2 =
     lemma_sub_add arg1 arg2 prime_temp r;
   r1
 
+
 let get_high_part a = 
   to_u32(shift_right a (size 32))
 
-val lemma_small_get_high_part: a: uint64 {uint_v a < pow2 32} -> Lemma (let r = get_high_part a in uint_v r == 0)
-
-let lemma_small_get_high_part a = ()
 
 let get_low_part a = to_u32 a
 
-val store_high_u: src: uint32 -> element: uint64  -> Tot uint64
-
-let store_high_u src element = 
-  let as_uint64 = to_u64 src in 
-  let src =  Lib.IntTypes.shift_left as_uint64 (size 32) in 
-  logxor element src
-
-val store_low_u: src: uint32 -> element: uint64 -> Tot uint64
-
-let store_low_u src element = 
-  let as_uint64 = to_u64 src in 
-  logxor element as_uint64
 
 val lemma_xor_zero: low: uint64{uint_v (get_high_part low) ==  0} -> high: uint64{uint_v (get_low_part high) == 0} ->  Lemma (uint_v (logxor low high) = uint_v high * pow2 32 + uint_v low)
 
@@ -152,15 +135,16 @@ let store_high_low_u high low =
 let reduction_prime_2prime a = 
   let p256 =  (u64 0xffffffffffffffff, u64 0xffffffff, u64 0, u64 0xffffffff00000001) in 
   assert_norm (as_nat4 p256 == prime);
-  let (x16, reduced_result) = sub4 a p256 in 
+  let (x16, reduced_result) = sub4 a (u64 0xffffffffffffffff, u64 0xffffffff, u64 0, u64 0xffffffff00000001) in 
   cmovznz4 x16 reduced_result a
+
 
 val reduction_prime_2prime_with_carry: carry: uint64{uint_v carry <= 1} -> a: felem4{as_nat4 a + uint_v carry * pow2 256 < 2 * prime} -> Tot (r: felem4 {as_nat4 r == (as_nat4 a + uint_v carry * pow2 256) % prime})
 
 let reduction_prime_2prime_with_carry carry a = 
   lemma_nat_4 a;
   let p256 =  (u64 0xffffffffffffffff, u64 0xffffffff, u64 0, u64 0xffffffff00000001) in 
-  assert_norm (as_nat4 p256 == prime);
+    assert_norm (as_nat4 p256 == prime);
   let (x16, r) = sub4 a p256 in 
   let (result, c) = subborrow carry (u64 0) x16  in  
     assert(if as_nat4 a < prime then uint_v x16 = 1 else uint_v x16 = 0);
@@ -173,13 +157,13 @@ let reduction_prime_2prime_with_carry carry a =
     assert(if uint_v c = 0 then uint_v carry = uint_v x16 else uint_v carry < uint_v x16);
     assert(if uint_v c = 0 then uint_v carry = 0 && uint_v x16 = 0 \/ uint_v carry = 1 && uint_v x16 = 1 else uint_v carry = 0 && uint_v x16 = 1);
 
-  let result = cmovznz4 c r a in 
-    assert(if uint_v carry = 1 && uint_v x16 = 1 then as_nat4 result = (as_nat4 a + uint_v carry * pow2 256) % prime else True);
-    assert(if uint_v carry = 1 && uint_v x16 = 0 then as_nat4 result = (as_nat4 a + uint_v carry * pow2 256) % prime else True);
-  assert(if uint_v carry = 0 && uint_v x16 = 1 then as_nat4 result = (as_nat4 a + uint_v carry * pow2 256) % prime else True);
-  result
+  let (r0, r1, r2, r3) = cmovznz4 c r a in 
+    assert(if uint_v carry = 1 && uint_v x16 = 1 then as_nat4  (r0, r1, r2, r3) = (as_nat4 a + uint_v carry * pow2 256) % prime else True);
+    assert(if uint_v carry = 1 && uint_v x16 = 0 then as_nat4  (r0, r1, r2, r3) = (as_nat4 a + uint_v carry * pow2 256) % prime else True);
+    assert(if uint_v carry = 0 && uint_v x16 = 1 then as_nat4  (r0, r1, r2, r3) = (as_nat4 a + uint_v carry * pow2 256) % prime else True);
+   (r0, r1, r2, r3)
 
-
+inline_for_extraction noextract
 val shift_carry: x: uint64 -> cin: uint64{uint_v cin <=1} -> Tot (r: uint64 {uint_v r = (uint_v x * 2) % pow2 64 + uint_v cin})
 
 let shift_carry x cin = 
@@ -193,9 +177,11 @@ val lemma_get_number: a: nat {a < pow2 64} -> Lemma (
 
 let lemma_get_number a = ()
 
+
 val shift_left_lemma: a0: nat {a0 < pow2 64} -> a1: nat {a1 < pow2 64} -> a2: nat {a2 < pow2 64} -> a3: nat {a3 < pow2 64 /\
 a0 + a1 * pow2 64 + a2 * pow2 128 + a3 * pow2 192 < prime} -> Lemma (let input = a0 + a1 * pow2 64 + a2 * pow2 128 + a3 * pow2 192 in 
   let mask = 0x7fffffffffffffff in 
+ 
   let carry0 = if a0 > mask then 1 else 0 in 
   let carry1 = if a1 > mask then 1 else 0 in 
   let carry2 = if a2 > mask then 1 else 0 in 
@@ -233,8 +219,8 @@ let shift_left_lemma a0 a1 a2 a3 =
   assert_norm (pow2 64 * pow2 128 = pow2 192);
   assert_norm (pow2 64 * pow2 192 = pow2 256)
 
-#reset-options "--z3rlimit 500"
 
+#reset-options "--z3rlimit 500"
 let shift_left_felem input =  
   let (a0, a1, a2, a3) = input in 
   let mask = u64 0x7fffffffffffffff in   
@@ -257,6 +243,7 @@ let shift_left_felem input =
   assert_norm(uint_v a3_updated * pow2 64 * pow2 64 * pow2 64 == uint_v a3_updated * pow2 192);
   reduction_prime_2prime_with_carry carry3 (a0_updated, a1_updated, a2_updated, a3_updated)
 
+
 let upload_prime () = 
   let p256 = (u64 (0xffffffffffffffff), u64 (0x00000000ffffffff), u64 (0), u64 (0xffffffff00000001)) in
   assert_norm (as_nat4 p256 == prime);
@@ -276,8 +263,6 @@ let shift_256 c =
     r
 
 
-
-
 val lemma_wide: o: felem8 -> Lemma (wide_as_nat4 o =
   (let (o0, o1, o2, o3, o4, o5, o6, o7) = o in 
    v o0 + v o1 * pow2 64 +  v o2 * pow2 (64 * 2) + v o3 * pow2 (3 * 64) + 
@@ -292,14 +277,12 @@ let lemma_wide o =
     assert_norm(pow2 64 * pow2 64 * pow2 64  * pow2 64 * pow2 64* pow2 64 * pow2 64 = pow2 (7 * 64));
     ()
 
-
-
+inline_for_extraction noextract
 val add8: a: felem8 -> b: felem8 -> Pure (uint64 & felem8)
   (requires True) 
   (ensures fun (c, r) -> uint_v c <= 1 /\  wide_as_nat4 a + wide_as_nat4 b = wide_as_nat4 r + uint_v c * pow2 512)
 
-
-let add8 a b = 
+let add8  (a0, a1, a2, a3, a4, a5, a6, a7) (b0, b1, b2, b3, b4, b5, b6, b7) = 
     assert_norm(pow2 64 * pow2 64 = pow2 128);
     assert_norm(pow2 64 * pow2 64 * pow2 64 = pow2 192);
     assert_norm(pow2 64 * pow2 64 * pow2 64 * pow2 64 = pow2 256);
@@ -307,8 +290,6 @@ let add8 a b =
     assert_norm(pow2 64 * pow2 64 * pow2 64  * pow2 64 * pow2 64 * pow2 64 = pow2 (6 * 64));
     assert_norm(pow2 64 * pow2 64 * pow2 64  * pow2 64 * pow2 64* pow2 64 * pow2 64 = pow2 (7 * 64));
     assert_norm(pow2 64 * pow2 64 * pow2 64  * pow2 64 * pow2 64* pow2 64 * pow2 64 * pow2 64 = pow2 512);
-  let (a0, a1, a2, a3, a4, a5, a6, a7) = a in 
-  let (b0, b1, b2, b3, b4, b5, b6, b7) = b in 
   let c3, r = add4 (a0, a1, a2, a3) (b0, b1, b2, b3) in 
   let o4, c4 = addcarry c3 a4 b4 in
   let o5, c5 = addcarry c4 a5 b5 in 
@@ -316,7 +297,7 @@ let add8 a b =
   let o7, c7 = addcarry c6 a7 b7 in 
   let (o0, o1, o2, o3) = r in 
 
-  assert(wide_as_nat4 a + wide_as_nat4 b = 
+  assert(wide_as_nat4 (a0, a1, a2, a3, a4, a5, a6, a7)  + wide_as_nat4 (b0, b1, b2, b3, b4, b5, b6, b7) = 
    v o0 + v o1 * pow2 64 +  v o2 * pow2 (2 * 64) + v o3 * pow2 (3 * 64) + 
    v o4 * pow2 (4 * 64) + v o5 * pow2 (5 * 64) +  v o6 * pow2 (6 * 64) + v o7 * pow2 (7 * 64) + v c7 * pow2 512);
 
@@ -324,11 +305,12 @@ let add8 a b =
   lemma_wide out;
   c7, out
 
-val add9: a: felem8 -> b: felem8 -> Pure (felem9)
+inline_for_extraction noextract
+val add9: a : felem8 -> b: felem8 -> Pure (felem9)
   (requires True)
   (ensures fun r -> wide_as_nat4 a + wide_as_nat4 b = as_nat9 r)
 
-let add9 a b = 
+let add9 (a0, a1, a2, a3, a4, a5, a6, a7) (b0, b1, b2, b3, b4, b5, b6, b7) = 
     assert_norm(pow2 64 * pow2 64 = pow2 128);
     assert_norm(pow2 64 * pow2 64 * pow2 64 = pow2 192);
     assert_norm(pow2 64 * pow2 64 * pow2 64 * pow2 64 = pow2 256);
@@ -336,8 +318,6 @@ let add9 a b =
     assert_norm(pow2 64 * pow2 64 * pow2 64  * pow2 64 * pow2 64 * pow2 64 = pow2 (6 * 64));
     assert_norm(pow2 64 * pow2 64 * pow2 64  * pow2 64 * pow2 64* pow2 64 * pow2 64 = pow2 (7 * 64));
     assert_norm(pow2 64 * pow2 64 * pow2 64  * pow2 64 * pow2 64* pow2 64 * pow2 64 * pow2 64 = pow2 512);
-  let (a0, a1, a2, a3, a4, a5, a6, a7) = a in 
-  let (b0, b1, b2, b3, b4, b5, b6, b7) = b in 
   let c3, r = add4 (a0, a1, a2, a3) (b0, b1, b2, b3) in 
   let o4, c4 = addcarry c3 a4 b4 in
   let o5, c5 = addcarry c4 a5 b5 in 
@@ -345,13 +325,14 @@ let add9 a b =
   let o7, c7 = addcarry c6 a7 b7 in 
   let (o0, o1, o2, o3) = r in 
 
-  assert(wide_as_nat4 a + wide_as_nat4 b = 
+  assert(wide_as_nat4 (a0, a1, a2, a3, a4, a5, a6, a7)  + wide_as_nat4 (b0, b1, b2, b3, b4, b5, b6, b7) = 
    v o0 + v o1 * pow2 64 +  v o2 * pow2 (2 * 64) + v o3 * pow2 (3 * 64) + 
    v o4 * pow2 (4 * 64) + v o5 * pow2 (5 * 64) +  v o6 * pow2 (6 * 64) + v o7 * pow2 (7 * 64) + v c7 * pow2 512);
 
   let out = o0, o1, o2, o3, o4, o5, o6, o7 in 
   lemma_wide out;
   o0, o1, o2, o3, o4, o5, o6, o7,  c7
+
 
 val add8_without_carry: a: felem8{wide_as_nat4 a < pow2 449} -> b: felem8 {wide_as_nat4 b < pow2 320} -> Tot (r: felem8 {wide_as_nat4 r = wide_as_nat4 a + wide_as_nat4 b})
 
@@ -361,7 +342,7 @@ let add8_without_carry a b =
   assert(uint_v carry = 0);
   r
 
-
+inline_for_extraction noextract
 val shortened_mul: a: felem4 -> b: uint64 -> Tot (r: felem8 {as_nat4 a * uint_v b = wide_as_nat4 r /\ wide_as_nat4 r < pow2 320})
 
 let shortened_mul a b = 
@@ -376,26 +357,27 @@ let shortened_mul a b =
   f0, f1, f2, f3, c, (u64 0), (u64 0), u64(0)  
 
 
+inline_for_extraction noextract
 val mod_64: a: felem8 -> Tot (r: uint64 {wide_as_nat4 a % pow2 64 = uint_v r})
 
-let mod_64 a = 
-  let (a0, a1, a2, a3, a4, a5, a6, a7) = a in 
-  a0
+let mod_64 (a0, a1, a2, a3, a4, a5, a6, a7) =  a0
 
+inline_for_extraction noextract
 val shift_9: a: felem9 -> Tot (r: felem8 {as_nat9 a / pow2 64 = wide_as_nat4 r})
 
 let shift_9 a = 
   let (a0, a1, a2, a3, a4, a5, a6, a7, a8) = a in 
   (a1, a2, a3, a4, a5, a6, a7, a8)
 
+inline_for_extraction noextract
 val shift_8: a: felem8 -> Tot (r: felem8 {wide_as_nat4 a / pow2 64 = wide_as_nat4 r})
 
 let shift_8 a = 
   let (a0, a1, a2, a3, a4, a5, a6, a7) = a in 
   (a1, a2, a3, a4, a5, a6, a7, (u64 0))
 
-#reset-options "--z3rlimit 1000"  
 
+#reset-options "--z3rlimit 1000"  
 val lemma_less_than_primes : a: nat {a < prime} -> b: nat {b < prime} -> Lemma (ensures (
   let s = 64 in 
   let t = a * b in 
@@ -453,6 +435,7 @@ let lemma_less_than_primes a b =
   let tU = t3 / pow2 s in 
   assert(tU < 2 * prime)
 
+
 val montgomery_multiplication_one_round_proof: t: felem8 {wide_as_nat4 t < pow2 449} -> 
   result: felem8 {wide_as_nat4 result = (wide_as_nat4 t + (wide_as_nat4 t % pow2 64) * prime) / pow2 64} ->
   co: nat{ co % prime == wide_as_nat4 t % prime} -> Lemma (
@@ -489,8 +472,8 @@ let montgomery_multiplication_one_round t =
     lemma_div_lt (wide_as_nat4 t3) 513 64;
   result
 
-#reset-options "--z3refresh" 
 
+#reset-options "--z3refresh" 
 let montgomery_multiplication (a0, a1, a2, a3) (b0, b1, b2, b3) = 
   let primeU = upload_prime () in 
   assert_norm(prime < pow2 256);
@@ -501,14 +484,14 @@ let montgomery_multiplication (a0, a1, a2, a3) (b0, b1, b2, b3) =
   border_felem4 (b0, b1, b2, b3) ;
   lemma_mult_lt_sqr (as_nat4 (a0, a1, a2, a3)) (as_nat4 (b0, b1, b2, b3)) (pow2 256);
   
-  let t = mul4 (a0, a1, a2, a3)  (b0, b1, b2, b3) in 
-  let t1 = mod_64 t in 
+  let (t_0, t_1, t_2, t_3, t_4, t_5, t_6, t_7) = mul4 (a0, a1, a2, a3)  (b0, b1, b2, b3) in 
+  let t1 = mod_64 (t_0, t_1, t_2, t_3, t_4, t_5, t_6, t_7) in 
   let t2 = shortened_mul primeU t1 in 
-  let t3 = add9 t t2 in 
+  let t3 = add9 (t_0, t_1, t_2, t_3, t_4, t_5, t_6, t_7) t2 in 
   let t_state0 = shift_9 t3 in  
     lemma_div_lt (as_nat9 t3) 513 64;
     
-    mult_one_round (wide_as_nat4 t) (as_nat4 (a0, a1, a2, a3) * as_nat4  (b0, b1, b2, b3) );
+    mult_one_round (wide_as_nat4 (t_0, t_1, t_2, t_3, t_4, t_5, t_6, t_7)) (as_nat4 (a0, a1, a2, a3) * as_nat4  (b0, b1, b2, b3) );
     lemma_mul_nat (as_nat4  (a0, a1, a2, a3)) (as_nat4  (b0, b1, b2, b3)) (modp_inv2 (pow2 64));
 
   let t_state1 = montgomery_multiplication_one_round t_state0 in
@@ -524,8 +507,7 @@ let montgomery_multiplication (a0, a1, a2, a3) (b0, b1, b2, b3) =
     assert(wide_as_nat4 t_state3 < 2 * prime);
   let (t0, t1, t2, t3, t4, t5, t6, t7) = t_state3 in 
     lemma_prime_as_wild_nat t_state3;
-  let r = reduction_prime_2prime_with_carry t4 (t0, t1, t2, t3) in 
-  r
+  reduction_prime_2prime_with_carry t4 (t0, t1, t2, t3)
 
 
 let cube_tuple a = 
@@ -541,6 +523,7 @@ let cube_tuple a =
 
 
 let quatre_tuple a = 
+  [@inline_let]
   let squared = montgomery_multiplication a a in 
   let power4 = montgomery_multiplication squared squared in 
     lemma_brackets ((as_nat4 a * as_nat4 a * modp_inv2 (pow2 256)) % prime) ((as_nat4 a * as_nat4 a * modp_inv2 (pow2 256)) % prime) (modp_inv2 (pow2 256));
@@ -585,12 +568,14 @@ let multByFour_tuple a =
     lemma_four (as_nat4 a);
   multByFour
 
-let multByEight_tuple a = 
-  let multByFour = multByFour_tuple a in 
-  let multByEight = shift_left_felem multByFour in 
-    lemma_mod_mul_distr_l (as_nat4 a * 4) 2 prime;
-    lemma_eight (as_nat4 a);
-  multByEight
+
+let multByEight_tuple (a0, a1, a2, a3) = 
+  let multByFour = multByFour_tuple (a0, a1, a2, a3)  in 
+  let (m0, m1, m2, m3) = shift_left_felem multByFour in 
+    lemma_mod_mul_distr_l (as_nat4 (a0, a1, a2, a3)  * 4) 2 prime;
+    lemma_eight (as_nat4 (a0, a1, a2, a3) );
+  (m0, m1, m2, m3)
+
 
 let multByMinusThree_tuple a = 
   let byThree = multByThree_tuple a in 
@@ -603,7 +588,6 @@ let multByMinusThree_tuple a =
 
  
 (* takes felem4 and returns boolean *)
-(* NB: something mod prime!  *) 
 let isOne_tuple a = 
   let (a0, a1, a2, a3) = a in 
   let r0 = eq_mask a0 (u64 1) in 
@@ -618,7 +602,6 @@ let isOne_tuple a =
     lemma_log_and1 r01 r23;
   let f = eq_u64 r (u64 0xffffffffffffffff) in  
    f
-
 
 
 let equalFelem a b = 
@@ -641,16 +624,6 @@ let equalFelem a b =
       lemma_equality a b; 
       r
 
-
-let uploadOne () = 
-  let one = (u64 (1), u64(0), u64(0), u64(0)) in 
-  assert_norm (as_nat4 one == 1);
-  one
-
-let uploadZero () = 
-  let zero = (u64 (0), u64 (0), u64(0), u64(0)) in 
-  assert_norm (as_nat4 zero == 0);
-  zero
 
 let isZero_tuple_u a = 
   let (a0, a1, a2, a3) = a in 
