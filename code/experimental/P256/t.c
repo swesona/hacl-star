@@ -1,4 +1,13 @@
 #include <inttypes.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <stdbool.h>
+#include <time.h>
 
 
 #include "p256-c/Hacl_Impl_P256.h"
@@ -7,6 +16,21 @@
 #include <stdlib.h>
 
 #include <unistd.h>
+
+
+typedef __attribute__((aligned(32))) uint8_t POINT[12 * 8];
+typedef __attribute__((aligned(32))) uint8_t SCALAR[32];
+
+typedef uint64_t cycles;
+
+static __inline__ cycles cpucycles(void)
+{
+  uint64_t rax,rdx,aux;
+  asm volatile ( "rdtscp\n" : "=a" (rax), "=d" (rdx), "=c" (aux) : : );
+  return (rdx << 32) + rax;
+}
+#define ROUNDS 10000
+#define SIZE   1
 
 uint64_t generateRandom()
 {
@@ -4417,4 +4441,37 @@ Test50();
 Test51();
 Test52();
 
+  POINT key,pub;
+  SCALAR priv;
+  uint64_t tempBuffer[800];
+  uint64_t res = 0;
+  cycles a,b;
+  clock_t t1,t2;
+  uint64_t count = ROUNDS * SIZE;
+
+  memset(pub,'P',8*8);
+  *((uint64_t*)(pub+64)) = 1;
+  *((uint64_t*)(pub+64+8)) = 0;
+  *((uint64_t*)(pub+64+16)) = 0;
+  *((uint64_t*)(pub+64+24)) = 0;
+  memset(priv,'S',32);
+
+  t1 = clock();
+  a = cpucycles();
+  for (int j = 0; j < ROUNDS; j++) {
+    scalarMultiplication(pub,key,32,priv,tempBuffer);
+    res ^= key[0] ^ key[15];
+  }
+  b = cpucycles();
+  t2 = clock();
+  clock_t tdiff1 = t2 - t1;
+  cycles cdiff1 = b - a;
+
+  double time = (((double)tdiff1) / CLOCKS_PER_SEC);
+  double nsigs = ((double)ROUNDS) / time;
+  double nbytes = ((double)count/1000000.0) / time;
+  printf("P-256 PERF:\n");
+  printf("cycles for %" PRIu64 " muls: %" PRIu64 " (%.2fcycles/mul)\n",count,(uint64_t)cdiff1,(double)cdiff1/count);
+  printf("time for %" PRIu64 " muls: %" PRIu64 "s (%.2fus/mul)\n",count,(uint64_t)time,((double)time * 1000000.0)/count);
+  printf("smult %8.2f mul/s\n",nsigs);
 }
