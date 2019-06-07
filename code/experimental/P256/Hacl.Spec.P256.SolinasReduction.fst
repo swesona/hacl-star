@@ -237,8 +237,8 @@ val fast_reduction_upload_zero_buffer: input: felem8_32 -> Tot (r: felem4
    let (r0, r1, r2, r3) = r in 
    D.as_nat4 r == uint_v c0 + uint_v c1 * pow2 (1 * 32) + uint_v c2 * pow2 (2 * 32) + uint_v c3 * pow2 (3 * 32) + uint_v c4 * pow2 (4 * 32) + uint_v c5 * pow2 (5 * 32) + uint_v  c6 * pow2 (6 * 32) + uint_v c7 * pow2 (7 * 32)})
 
-let fast_reduction_upload_zero_buffer input = 
-  let (c0, c1, c2, c3, c4, c5, c6, c7) = input in   
+let fast_reduction_upload_zero_buffer (c0, c1, c2, c3, c4, c5, c6, c7)  = 
+  (* let (c0, c1, c2, c3, c4, c5, c6, c7) = input in    *)
   let b0 = store_high_low_u c1 c0 in 
   let b1 = store_high_low_u c3 c2 in 
   let b2 = store_high_low_u c5 c4 in 
@@ -258,8 +258,8 @@ val fast_reduction_upload_first_buffer: input: felem8_32 -> Tot (r: felem4
   let (r0, r1, r2, r3) = r in 
   D.as_nat4 r == (uint_v c11 * pow2 (3 * 32) + uint_v c12 * pow2 (4 * 32) + uint_v c13 * pow2 (5 * 32) + uint_v c14 * pow2 (6 * 32) + uint_v c15 * pow2 (7 * 32)) % prime})
 
-let fast_reduction_upload_first_buffer input = 
-  let (c8, c9, c10, c11, c12, c13, c14, c15) = input in 
+let fast_reduction_upload_first_buffer (c8, c9, c10, c11, c12, c13, c14, c15) = 
+  (* let (c8, c9, c10, c11, c12, c13, c14, c15) = input in  *)
   let b0 = u64(0) in 
   let b1 = store_high_low_u c11 (u32 0) in 
   let b2 = store_high_low_u c13 c12 in 
@@ -279,8 +279,8 @@ val fast_reduction_upload_second_buffer: input: felem8_32 -> Tot (r: felem4
   let (r0, r1, r2, r3) = r in 
   D.as_nat4 r = (uint_v c12 * pow2 (3 * 32) + uint_v c13 * pow2 (4 * 32) + uint_v c14 * pow2 (5* 32) + uint_v c15 * pow2 (6 * 32)) % prime})
 
-let fast_reduction_upload_second_buffer input = 
-    let (c8, c9, c10, c11, c12, c13, c14, c15) = input in 
+let fast_reduction_upload_second_buffer (c8, c9, c10, c11, c12, c13, c14, c15) = 
+    (* let (c8, c9, c10, c11, c12, c13, c14, c15) = input in  *)
     let b0 = u64 (0) in 
     let b1 = store_high_low_u c12 (u32 0) in 
     let b2 = store_high_low_u c14 c13 in 
@@ -299,8 +299,8 @@ val fast_reduction_upload_third_buffer: input: felem8_32 -> Tot (r: felem4
   D.as_nat4 r = uint_v c8 + uint_v c9 * pow2 32 + uint_v c10 * pow2 (2 * 32) + uint_v c14 * pow2 (6 * 32) + uint_v c15 * pow2 (7 * 32)
   })
 
-let fast_reduction_upload_third_buffer input = 
-   let (c8, c9, c10, c11, c12, c13, c14, c15) = input in 
+let fast_reduction_upload_third_buffer (c8, c9, c10, c11, c12, c13, c14, c15) = 
+   (* let (c8, c9, c10, c11, c12, c13, c14, c15) = input in  *)
    let b0 = store_high_low_u c9 c8 in 
    let b1 = store_high_low_u (u32 0) c10 in 
    let b2 = u64 0 in 
@@ -319,8 +319,8 @@ val fast_reduction_upload_forth_buffer: input: felem8_32 -> Tot (r: felem4
   let (r0, r1, r2, r3) = r in 
   D.as_nat4 r = uint_v c9 + uint_v c10 * pow2 32 + uint_v c11 * pow2 (2 * 32) + uint_v c13 * pow2 (3 * 32) + uint_v c14 * pow2 (4 * 32) + uint_v c15 * pow2 (5 * 32) + uint_v c13 * pow2 (6 * 32) + uint_v c8 * pow2 (7 * 32)})
 
-let fast_reduction_upload_forth_buffer input = 
-    let (c8, c9, c10, c11, c12, c13, c14, c15) = input in 
+let fast_reduction_upload_forth_buffer (c8, c9, c10, c11, c12, c13, c14, c15) = 
+    (* let (c8, c9, c10, c11, c12, c13, c14, c15) = input in  *)
     let b0 = store_high_low_u c10 c9 in 
     let b1 = store_high_low_u c13 c11 in 
     let b2 = store_high_low_u c15 c14 in 
@@ -339,8 +339,8 @@ val fast_reduction_upload_fifth_buffer: input: felem8_32 -> Tot (r: felem4
   let (r0, r1, r2, r3) = r in 
   D.as_nat4 r = uint_v c11 + uint_v c12 * pow2 32 + uint_v c13 * pow2 (2 * 32) + uint_v c8 * pow2 (6 * 32) + uint_v c10 * pow2 (7 * 32)})
 
-let fast_reduction_upload_fifth_buffer input = 
-    let (c8, c9, c10, c11, c12, c13, c14, c15) = input in 
+let fast_reduction_upload_fifth_buffer (c8, c9, c10, c11, c12, c13, c14, c15) = 
+    (* let (c8, c9, c10, c11, c12, c13, c14, c15) = input in  *)
     let b0 = store_high_low_u c12 c11 in 
     let b1 = store_high_low_u (u32 0) c13 in 
     let b2 = u64 0 in 
@@ -360,8 +360,8 @@ val fast_reduction_upload_sixth_buffer: input: felem8_32 -> Tot (r: felem4
   D.as_nat4 r = uint_v c12 + uint_v c13 * pow2 32 + uint_v c14 * pow2 (2 * 32) + uint_v c15 * pow2 (3 * 32) + 
       uint_v c9 * pow2 (6 * 32) + uint_v c11 * pow2 (7 * 32)})
 
-let fast_reduction_upload_sixth_buffer input = 
-    let (c8, c9, c10, c11, c12, c13, c14, c15) = input in 
+let fast_reduction_upload_sixth_buffer (c8, c9, c10, c11, c12, c13, c14, c15) = 
+    (* let (c8, c9, c10, c11, c12, c13, c14, c15) = input in  *)
     let b0 = store_high_low_u c13 c12 in 
     let b1 = store_high_low_u c15 c14 in 
     let b2 = u64 0 in 
@@ -381,8 +381,8 @@ val fast_reduction_upload_seventh_buffer: input: felem8_32 -> Tot (r: felem4
   D.as_nat4 r = uint_v c13 + uint_v c14 * pow2 32 + uint_v c15 * pow2 (2 * 32) + uint_v c8 * pow2 (3* 32) +  uint_v c9 * pow2 (4 * 32) + uint_v c10 * pow2 (5 * 32) + uint_v c12 * pow2 (7 * 32)})
 
 
-let fast_reduction_upload_seventh_buffer input = 
-    let (c8, c9, c10, c11, c12, c13, c14, c15) = input in 
+let fast_reduction_upload_seventh_buffer (c8, c9, c10, c11, c12, c13, c14, c15) = 
+    (* let (c8, c9, c10, c11, c12, c13, c14, c15) = input in  *)
     let b0 = store_high_low_u c14 c13 in 
     let b1 = store_high_low_u c8 c15 in 
     let b2 = store_high_low_u c10 c9 in 
@@ -402,8 +402,8 @@ val fast_reduction_upload_eighth_buffer: input: felem8_32 -> Tot (r: felem4
   D.as_nat4 r = uint_v c14 + uint_v c15 * pow2 32 + uint_v c9 * pow2 (3 * 32) + uint_v c10 * pow2 (4* 32) + uint_v c11 * pow2 (5 * 32) + uint_v c13 * pow2 (7 * 32)})
 
 
-let fast_reduction_upload_eighth_buffer input = 
-    let (c8, c9, c10, c11, c12, c13, c14, c15) = input in 
+let fast_reduction_upload_eighth_buffer (c8, c9, c10, c11, c12, c13, c14, c15) = 
+    (* let (c8, c9, c10, c11, c12, c13, c14, c15) = input in  *)
     let b0 = store_high_low_u c15 c14 in 
     let b1 = store_high_low_u c9 (u32 0) in 
     let b2 = store_high_low_u c11 c10 in 
@@ -526,29 +526,29 @@ let solinas_reduction (f0, f1, f2, f3, f4, f5, f6, f7) =
 
   assert(D.wide_as_nat4 (f0, f1, f2, f3, f4, f5, f6, f7) =  (c0_n + c1_n * pow2 32 + c2_n * pow2 (2 * 32) + c3_n * pow2 (3 * 32) + c4_n * pow2 (4 * 32) + c5_n * pow2 (5 * 32) + c6_n * pow2 (6 * 32) + c7_n * pow2 (7 * 32) + c8_n * pow2 256 + c9_n * pow2 288 + c10_n * pow2 (10 * 32)  + c11_n * pow2 (11 * 32) + c12_n * pow2 (12 * 32) + c13_n* pow2 (13 * 32) + c14_n * pow2 (14 * 32) + c15_n * pow2 (15 * 32)));
 
-  let c_low = (c0, c1, c2, c3, c4, c5, c6, c7) in 
-  let c_high = (c8, c9, c10, c11, c12, c13, c14, c15) in 
+  (* let c_low = (c0, c1, c2, c3, c4, c5, c6, c7) in  *)
+  (* let c_high = (c8, c9, c10, c11, c12, c13, c14, c15) in  *)
 
-  let state0 = fast_reduction_upload_zero_buffer  c_low in 
-    let state0_red = reduction_prime_2prime state0 in 
-  let state1 = fast_reduction_upload_first_buffer c_high in 
-  let state2 = fast_reduction_upload_second_buffer c_high in 
-  let state3 = fast_reduction_upload_third_buffer c_high in 
+  let (state0_0, state0_1, state0_2, state0_3) = fast_reduction_upload_zero_buffer  (c0, c1, c2, c3, c4, c5, c6, c7) in 
+    let (state0_red_0, state0_red_1, state0_red_2, state0_red_3) = reduction_prime_2prime (state0_0, state0_1, state0_2, state0_3) in 
+  let state1 = fast_reduction_upload_first_buffer (c8, c9, c10, c11, c12, c13, c14, c15) in 
+  let state2 = fast_reduction_upload_second_buffer (c8, c9, c10, c11, c12, c13, c14, c15) in 
+  let state3 = fast_reduction_upload_third_buffer (c8, c9, c10, c11, c12, c13, c14, c15) in 
       let state3_red = reduction_prime_2prime state3 in 
-  let state4 = fast_reduction_upload_forth_buffer c_high in 
+  let state4 = fast_reduction_upload_forth_buffer (c8, c9, c10, c11, c12, c13, c14, c15) in 
       let state4_red = reduction_prime_2prime state4 in 
-  let state5 = fast_reduction_upload_fifth_buffer c_high in
+  let state5 = fast_reduction_upload_fifth_buffer (c8, c9, c10, c11, c12, c13, c14, c15) in
       let state5_red = reduction_prime_2prime state5 in     
-  let state6 = fast_reduction_upload_sixth_buffer c_high in 
+  let state6 = fast_reduction_upload_sixth_buffer (c8, c9, c10, c11, c12, c13, c14, c15) in 
     let state6_red = reduction_prime_2prime state6 in 
-  let state7 = fast_reduction_upload_seventh_buffer c_high in 
+  let state7 = fast_reduction_upload_seventh_buffer (c8, c9, c10, c11, c12, c13, c14, c15) in 
       let state7_red = reduction_prime_2prime state7 in 
-  let state8 = fast_reduction_upload_eighth_buffer c_high in 
+  let state8 = fast_reduction_upload_eighth_buffer (c8, c9, c10, c11, c12, c13, c14, c15) in 
       let state8_red = reduction_prime_2prime state8 in 
 
   let state1_2 = shift_left_felem state1 in 
   let state2_2 = shift_left_felem state2 in 
-  let r0 = felem_add state0_red state1_2 in 
+  let r0 = felem_add (state0_red_0, state0_red_1, state0_red_2, state0_red_3)  state1_2 in 
   let r1 = felem_add r0 state2_2 in 
   let r0 = felem_add r1 state3_red in 
   let r1 = felem_add r0 state4_red in 
@@ -558,10 +558,10 @@ let solinas_reduction (f0, f1, f2, f3, f4, f5, f6, f7) =
   let result = felem_sub r0 state8_red in 
     modulo_lemma (D.as_nat4 result) prime;
 
-  reduce_brackets (D.as_nat4 state0_red) (D.as_nat4 state1) (D.as_nat4 state2) (D.as_nat4 state3_red) (D.as_nat4 state4_red) (D.as_nat4 state5_red) (D.as_nat4 state6_red) (D.as_nat4 state7_red) (D.as_nat4 state8_red);
+  reduce_brackets (D.as_nat4 (state0_red_0, state0_red_1, state0_red_2, state0_red_3) ) (D.as_nat4 state1) (D.as_nat4 state2) (D.as_nat4 state3_red) (D.as_nat4 state4_red) (D.as_nat4 state5_red) (D.as_nat4 state6_red) (D.as_nat4 state7_red) (D.as_nat4 state8_red);
 
   solinas_reduction_mod c0_n c1_n c2_n c3_n c4_n c5_n c6_n c7_n c8_n c9_n c10_n c11_n c12_n c13_n c14_n c15_n 
-    (D.as_nat4 state0_red) (D.as_nat4 state1) (D.as_nat4 state2) (D.as_nat4 state3_red) 
+    (D.as_nat4 (state0_red_0, state0_red_1, state0_red_2, state0_red_3) ) (D.as_nat4 state1) (D.as_nat4 state2) (D.as_nat4 state3_red) 
     (D.as_nat4 state4_red) (D.as_nat4 state5_red) (D.as_nat4 state6_red) (D.as_nat4 state7_red)
     (D.as_nat4  state8_red) (D.as_nat4 result);
 

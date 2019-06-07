@@ -649,7 +649,7 @@ let norm_part_two a tempBuffer =
 inline_for_extraction noextract   
 val norm_part_three:a: felem -> tempBuffer: lbuffer uint64 (size 8) -> 
   Stack unit (requires fun h -> live h a /\ live h tempBuffer /\ disjoint a tempBuffer /\  
-   as_nat h a < prime)
+   as_nat h a < prime)   
   (ensures fun h0 _ h1 ->  modifies1 tempBuffer h0 h1 /\ (let buffer_result = gsub tempBuffer (size 4) (size 4) in as_nat h1 buffer_result < prime
     /\ (let k = fromDomain_ (as_nat h0 a) in as_nat h1 buffer_result = toDomain_(pow k ((pow2 94 - 1) * pow2 2) % prime))))
 

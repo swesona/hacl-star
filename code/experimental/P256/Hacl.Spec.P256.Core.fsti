@@ -28,6 +28,7 @@ val get_high_part: a: uint64 -> Tot (r: uint32{uint_v r == uint_v a / (pow2 32)}
 inline_for_extraction noextract
 val get_low_part: a: uint64 -> Tot (r: uint32{uint_v r == uint_v a % (pow2 32)}) 
 
+
 val store_high_low_u: high: uint32 -> low: uint32 -> Tot (r: uint64 {uint_v r = uint_v high * pow2 32+ uint_v low})
 
 inline_for_extraction noextract
@@ -42,6 +43,7 @@ val upload_prime: unit -> Tot (r: felem4 {as_nat4 r = prime})
 inline_for_extraction noextract 
 val shift_256: c: felem4 -> Tot (r: felem8{wide_as_nat4 r = as_nat4 c * pow2 256})
  
+inline_for_extraction noextract
 val montgomery_multiplication: a: felem4 {as_nat4 a < prime} -> b: felem4{as_nat4 b < prime}  -> 
   Tot (result: felem4 {as_nat4 result = as_nat4 a * as_nat4 b * modp_inv2 (pow2 256) % prime})
 
