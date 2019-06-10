@@ -300,9 +300,9 @@ let lemma_wide o =
     ()
 
 inline_for_extraction noextract
-val add8: a: felem8 -> b: felem8 -> Pure (uint64 & felem8)
+val add8: a: felem8 -> b: felem8 -> Pure (felem9)
   (requires True) 
-  (ensures fun (c, r) -> uint_v c <= 1 /\  wide_as_nat4 a + wide_as_nat4 b = wide_as_nat4 r + uint_v c * pow2 512)
+  (ensures fun r ->True (*uint_v c <= 1 /\  wide_as_nat4 a + wide_as_nat4 b = wide_as_nat4 r + uint_v c * pow2 512) *) )
 
 let add8  (a0, a1, a2, a3, a4, a5, a6, a7) (b0, b1, b2, b3, b4, b5, b6, b7) = 
     assert_norm(pow2 64 * pow2 64 = pow2 128);
@@ -325,7 +325,7 @@ let add8  (a0, a1, a2, a3, a4, a5, a6, a7) (b0, b1, b2, b3, b4, b5, b6, b7) =
  *)
   (* let out = o0, o1, o2, o3, o4, o5, o6, o7 in  *)
   lemma_wide (o0, o1, o2, o3, o4, o5, o6, o7);
-  c7, (o0, o1, o2, o3, o4, o5, o6, o7)
+  (c7, o0, o1, o2, o3, o4, o5, o6, o7)
 
 inline_for_extraction noextract
 val add9: a : felem8 -> b: felem8 -> Pure (felem9)
@@ -358,7 +358,7 @@ inline_for_extraction noextract
 val add8_without_carry: a: felem8{wide_as_nat4 a < pow2 449} -> b: felem8 {wide_as_nat4 b < pow2 320} -> Tot (r: felem8 {wide_as_nat4 r = wide_as_nat4 a + wide_as_nat4 b})
 
 let add8_without_carry (a0, a1, a2, a3, a4, a5, a6, a7) (b0, b1, b2, b3, b4, b5, b6, b7) = 
-  let (carry, (r0, r1, r2, r3, r4, r5, r6, r7))  = add8 (a0, a1, a2, a3, a4, a5, a6, a7) (b0, b1, b2, b3, b4, b5, b6, b7) in 
+  let (carry, r0, r1, r2, r3, r4, r5, r6, r7)  = add8 (a0, a1, a2, a3, a4, a5, a6, a7) (b0, b1, b2, b3, b4, b5, b6, b7) in 
   assert_norm(pow2 320 + pow2 449 < pow2 512);   
   assert(uint_v carry = 0);
   (r0, r1, r2, r3, r4, r5, r6, r7)
@@ -477,10 +477,10 @@ let montgomery_multiplication_one_round_proof t result co =
 
 inline_for_extraction noextract
 val montgomery_multiplication_one_round: t: felem8{wide_as_nat4 t < pow2 449} -> 
+  primeU: felem4 -> 
 Tot (result: felem8 { wide_as_nat4 result = (wide_as_nat4 t + (wide_as_nat4 t % pow2 64) * prime) / pow2 64 /\wide_as_nat4 result < pow2 449})
 
-let montgomery_multiplication_one_round (a0, a1, a2, a3, a4, a5, a6, a7) = 
- let (prim0, prim1, prim2, prim3) = upload_prime () in 
+let montgomery_multiplication_one_round (a0, a1, a2, a3, a4, a5, a6, a7) (prim0, prim1, prim2, prim3) = 
   let t1 = mod_64 (a0, a1, a2, a3, a4, a5, a6, a7) in 
   let (t2_0, t2_1, t2_2, t2_3, t2_4, t2_5, t2_6, t2_7) = shortened_mul (prim0, prim1, prim2, prim3) t1 in 
     assert_norm(pow2 256 * pow2 64 = pow2 320);
@@ -490,15 +490,6 @@ let montgomery_multiplication_one_round (a0, a1, a2, a3, a4, a5, a6, a7) =
   let (r_0, r_1, r_2, r_3, r_4, r_5, r_6, r_7)  = shift_8 (t3_0, t3_1, t3_2, t3_3, t3_4, t3_5, t3_6, t3_7)  in 
     lemma_div_lt (wide_as_nat4 (t3_0, t3_1, t3_2, t3_3, t3_4, t3_5, t3_6, t3_7)) 513 64;
   (r_0, r_1, r_2, r_3, r_4, r_5, r_6, r_7)
-
-
-
-
-
-
-
-
-
 
 
 #reset-options "--z3refresh" 
@@ -514,40 +505,40 @@ let montgomery_multiplication (a0, a1, a2, a3) (b0, b1, b2, b3) =
   
   let (t_0, t_1, t_2, t_3, t_4, t_5, t_6, t_7) = mul4 (a0, a1, a2, a3)  (b0, b1, b2, b3) in 
   let t1 = mod_64 (t_0, t_1, t_2, t_3, t_4, t_5, t_6, t_7) in 
-  let t2 = shortened_mul (prim0, prim1, prim2, prim3) t1 in 
-  let t3 = add9 (t_0, t_1, t_2, t_3, t_4, t_5, t_6, t_7) t2 in 
-  let t_state0 = shift_9 t3 in  
-    lemma_div_lt (as_nat9 t3) 513 64;
+  let (t2_0, t2_1, t2_2, t2_3, t2_4, t2_5, t2_6, t2_7) = shortened_mul (prim0, prim1, prim2, prim3) t1 in 
+  let (t3_0, t3_1, t3_2, t3_3, t3_4, t3_5, t3_6, t3_7, t3_8) = add9 (t_0, t_1, t_2, t_3, t_4, t_5, t_6, t_7) (t2_0, t2_1, t2_2, t2_3, t2_4, t2_5, t2_6, t2_7) in 
+  let (st0, st1, st2, st3, st4, st5, st6, st7) = shift_9 (t3_0, t3_1, t3_2, t3_3, t3_4, t3_5, t3_6, t3_7, t3_8) in  
+    lemma_div_lt (as_nat9 (t3_0, t3_1, t3_2, t3_3, t3_4, t3_5, t3_6, t3_7, t3_8)) 513 64;
     
     mult_one_round (wide_as_nat4 (t_0, t_1, t_2, t_3, t_4, t_5, t_6, t_7)) (as_nat4 (a0, a1, a2, a3) * as_nat4  (b0, b1, b2, b3) );
     lemma_mul_nat (as_nat4  (a0, a1, a2, a3)) (as_nat4  (b0, b1, b2, b3)) (modp_inv2 (pow2 64));
 
-  let t_state1 = montgomery_multiplication_one_round t_state0 in
-    montgomery_multiplication_one_round_proof t_state0 t_state1 (as_nat4  (a0, a1, a2, a3) * as_nat4 (b0, b1, b2, b3) * modp_inv2 (pow2 64));
+  let (st10, st11, st12, st13, st14, st15, st16, st17)  = montgomery_multiplication_one_round (st0, st1, st2, st3, st4, st5, st6, st7) (prim0, prim1, prim2, prim3) in
+    montgomery_multiplication_one_round_proof (st0, st1, st2, st3, st4, st5, st6, st7)  (st10, st11, st12, st13, st14, st15, st16, st17) (as_nat4  (a0, a1, a2, a3) * as_nat4 (b0, b1, b2, b3) * modp_inv2 (pow2 64));
     lemma_mul_nat4 (as_nat4  (a0, a1, a2, a3)) (as_nat4 (b0, b1, b2, b3)) (modp_inv2 (pow2 64)) (modp_inv2(pow2 64));
-  let t_state2 = montgomery_multiplication_one_round t_state1 in 
-    montgomery_multiplication_one_round_proof t_state1 t_state2 (as_nat4  (a0, a1, a2, a3) * as_nat4  (b0, b1, b2, b3) * modp_inv2 (pow2 64) * modp_inv2 (pow2 64));
+  let (st20, st21, st22, st23, st24, st25, st26, st27) = montgomery_multiplication_one_round (st10, st11, st12, st13, st14, st15, st16, st17) (prim0, prim1, prim2, prim3) in 
+    montgomery_multiplication_one_round_proof (st10, st11, st12, st13, st14, st15, st16, st17) (st20, st21, st22, st23, st24, st25, st26, st27) (as_nat4  (a0, a1, a2, a3) * as_nat4  (b0, b1, b2, b3) * modp_inv2 (pow2 64) * modp_inv2 (pow2 64));
     lemma_mul_nat5 (as_nat4  (a0, a1, a2, a3)) (as_nat4 (b0, b1, b2, b3)) (modp_inv2 (pow2 64)) (modp_inv2 (pow2 64)) (modp_inv2 (pow2 64));
-  let t_state3 = montgomery_multiplication_one_round t_state2 in 
-    montgomery_multiplication_one_round_proof t_state2 t_state3 (as_nat4 (a0, a1, a2, a3)* as_nat4 (b0, b1, b2, b3) * modp_inv2 (pow2 64) * modp_inv2 (pow2 64) * modp_inv2(pow2 64));
+  let (st30, st31, st32, st33, st34, st35, st36, st37) = montgomery_multiplication_one_round (st20, st21, st22, st23, st24, st25, st26, st27) (prim0, prim1, prim2, prim3) in 
+    montgomery_multiplication_one_round_proof (st20, st21, st22, st23, st24, st25, st26, st27) 
+      (st30, st31, st32, st33, st34, st35, st36, st37)  (as_nat4 (a0, a1, a2, a3)* as_nat4 (b0, b1, b2, b3) * modp_inv2 (pow2 64) * modp_inv2 (pow2 64) * modp_inv2(pow2 64));
     lemma_decrease_pow (as_nat4  (a0, a1, a2, a3) * as_nat4 (b0, b1, b2, b3));
     lemma_less_than_primes (as_nat4  (a0, a1, a2, a3)) (as_nat4 (b0, b1, b2, b3));
-    assert(wide_as_nat4 t_state3 < 2 * prime);
-  let (t0, t1, t2, t3, t4, t5, t6, t7) = t_state3 in 
-    lemma_prime_as_wild_nat t_state3;
-  reduction_prime_2prime_with_carry t4 t0 t1 t2 t3
+    assert(wide_as_nat4  (st30, st31, st32, st33, st34, st35, st36, st37) < 2 * prime);
+    lemma_prime_as_wild_nat  (st30, st31, st32, st33, st34, st35, st36, st37);
+  reduction_prime_2prime_with_carry st34 st30 st31 st32 st33
 
 
-let cube_tuple a = 
-  let squared = montgomery_multiplication a a in 
-  let cube = montgomery_multiplication squared a in 
-    lemma_mul_nat (as_nat4 a) (as_nat4 a) (modp_inv2 (pow2 256));
-    lemma_mul_nat2   (as_nat4 a) (modp_inv2 (pow2 256));
-    lemma_brackets ((as_nat4 a * as_nat4 a * modp_inv2(pow2 256)) % prime) (as_nat4 a) (modp_inv2 (pow2 256));
-    lemma_mod_mul_distr_l (as_nat4 a * as_nat4 a * modp_inv2(pow2 256)) (as_nat4 a * modp_inv2 (pow2 256)) prime;
-    lemma_brackets5 (as_nat4 a) (as_nat4 a) (modp_inv2 (pow2 256)) (as_nat4 a) (modp_inv2 (pow2 256));
-    lemma_distr_mult (as_nat4 a) (as_nat4 a) (modp_inv2 (pow2 256)) (as_nat4 a) (modp_inv2 (pow2 256));
-    cube 
+let cube_tuple (a0, a1, a2, a3) = 
+  let (s0, s1, s2, s3) = montgomery_multiplication (a0, a1, a2, a3) (a0, a1, a2, a3) in 
+  let (c0, c1, c2, c3) = montgomery_multiplication (s0, s1, s2, s3) (a0, a1, a2, a3) in 
+    lemma_mul_nat (as_nat4 (a0, a1, a2, a3)) (as_nat4 (a0, a1, a2, a3)) (modp_inv2 (pow2 256));
+    lemma_mul_nat2   (as_nat4 (a0, a1, a2, a3)) (modp_inv2 (pow2 256));
+    lemma_brackets ((as_nat4 (a0, a1, a2, a3) * as_nat4 (a0, a1, a2, a3) * modp_inv2(pow2 256)) % prime) (as_nat4 (a0, a1, a2, a3)) (modp_inv2 (pow2 256));
+    lemma_mod_mul_distr_l (as_nat4 (a0, a1, a2, a3) * as_nat4 (a0, a1, a2, a3) * modp_inv2(pow2 256)) (as_nat4 (a0, a1, a2, a3) * modp_inv2 (pow2 256)) prime;
+    lemma_brackets5 (as_nat4 (a0, a1, a2, a3)) (as_nat4 (a0, a1, a2, a3)) (modp_inv2 (pow2 256)) (as_nat4 (a0, a1, a2, a3)) (modp_inv2 (pow2 256));
+    lemma_distr_mult (as_nat4 (a0, a1, a2, a3)) (as_nat4 (a0, a1, a2, a3)) (modp_inv2 (pow2 256)) (as_nat4 (a0, a1, a2, a3)) (modp_inv2 (pow2 256));
+    (c0, c1, c2, c3) 
 
 
 let quatre_tuple a = 
