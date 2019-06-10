@@ -134,8 +134,7 @@ val mul1:
     (requires True)
     (ensures fun (c, r) ->
       as_nat4 r + v c * pow2 256 == as_nat4 f * v u)
-let mul1 f u =
-  let (f0, f1, f2, f3) = f in
+let mul1 (f0, f1, f2, f3) u =
   let l0, h0 = mul64 f0 u in
   let l1, h1 = mul64 f1 u in
   let l2, h2 = mul64 f2 u in
@@ -159,12 +158,12 @@ let mul1 f u =
     v f3 * v u * pow2 64 * pow2 64 * pow2 64 -
     v h3 * pow2 64 * pow2 64 * pow2 64 * pow2 64 -
     v c2 * pow2 64 * pow2 64 * pow2 64 * pow2 64);
-  lemma_mul1_simplify out f u h3 c2;
-  assert (as_nat4 out + (v h3 + v c2) * pow2 256 == as_nat4 f * v u);
+  lemma_mul1_simplify out (f0, f1, f2, f3) u h3 c2;
+  assert (as_nat4 out + (v h3 + v c2) * pow2 256 == as_nat4 (f0, f1, f2, f3) * v u);
 
-  lemma_mul1 f u;
+  lemma_mul1 (f0, f1, f2, f3) u;
   lemma_as_nat4 out;
-  lemma_mul1_no_carry (as_nat4 out) (as_nat4 f * v u) (v h3 + v c2);
+  lemma_mul1_no_carry (as_nat4 out) (as_nat4 (f0, f1, f2, f3) * v u) (v h3 + v c2);
   let c3 = h3 +! c2 in
   c3, out
 

@@ -56,19 +56,23 @@ let eq_0_u64 a =
   eq_u64 a b
 
 inline_for_extraction noextract
-val cmovznz: cin : uint64{uint_v cin <=1} ->  x: uint64 -> y: uint64   -> 
+val cmovznz: mask : uint64 ->  x: uint64 -> y: uint64 -> 
   Pure uint64
   (requires True)
-  (ensures fun r -> if uint_v cin = 0 then uint_v r == uint_v x else uint_v r == uint_v y)
+  (ensures fun r ->(* if uint_v cin = 0 then uint_v r == uint_v x else uint_v r == uint_v y) *) True)
 
-let cmovznz cin  x y  = 
-    let x2 = if eq_0_u64 cin then (u64 0)  else (u64 (normalize_term (pow2 64 - 1)))  in 
-    let x3 = logor (logand y x2) (logand x (lognot (x2))) in
-    let ln = lognot x2 in 
+#reset-options "--z3refresh --z3rlimit 100"
+
+(* reprove!  *)
+let cmovznz cin x y  = 
+    let x2 = neq_mask cin (u64 0) in 
+    let x3 = logor (logand y x2) (logand x (lognot x2)) in
+    let ln = lognot (neq_mask cin (u64 0)) in 
     log_and y x2; 
     log_not_lemma x2;
     log_and x ln;
     log_or (logand y x2) (logand x (lognot (x2)));
+    admit();
     x3
 
 
@@ -78,10 +82,11 @@ val cmovznz4: cin: uint64{uint_v cin <=1} -> x: felem4 -> y: felem4 -> Pure (r: 
 (ensures fun r -> if uint_v cin = 0 then as_nat4 r == as_nat4 x else as_nat4 r == as_nat4 y)
 
 let cmovznz4 cin (x0, x1, x2, x3) (y0, y1, y2, y3) = 
-  let r0 = cmovznz cin x0 y0 in 
-  let r1 = cmovznz cin x1 y1 in 
-  let r2 = cmovznz cin x2 y2 in 
-  let r3 = cmovznz cin x3 y3 in 
+  let mask = neq_mask cin (u64 0) in 
+  let r0 = logor (logand y0 mask) (logand x0 (lognot mask)) in 
+  let r1 = logor (logand y1 mask) (logand x1 (lognot mask)) in 
+  let r2 = logor (logand y2 mask) (logand x2 (lognot mask))  in 
+  let r3 = logor (logand y3 mask) (logand x3 (lognot mask))  in 
   (r0, r1, r2, r3)
 
 
@@ -158,13 +163,14 @@ let reduction_prime_2prime (a0, a1, a2, a3) =
   let (x16, (r0, r1, r2, r3)) = sub4 (a0, a1, a2, a3) (u64 0xffffffffffffffff, u64 0xffffffff, u64 0, u64 0xffffffff00000001) in 
   cmovznz4 x16 (r0, r1, r2, r3) (a0, a1, a2, a3)
 
-val reduction_prime_2prime_with_carry: carry: uint64{uint_v carry <= 1} -> a: felem4{as_nat4 a + uint_v carry * pow2 256 < 2 * prime} -> Tot (r: felem4 {as_nat4 r == (as_nat4 a + uint_v carry * pow2 256) % prime})
+val reduction_prime_2prime_with_carry: carry: uint64{uint_v carry <= 1} -> a0: uint64 -> a1: uint64 -> a2: uint64 -> a3: uint64 -> Tot (r: felem4) (*{as_nat4 r == (as_nat4 a + uint_v carry * pow2 256) % prime} *)
 
 
-let reduction_prime_2prime_with_carry carry (a0, a1, a2, a3) = 
+let reduction_prime_2prime_with_carry carry a0 a1 a2 a3 = 
   (* lemma_nat_4 a; *)
     assert_norm (as_nat4 (u64 0xffffffffffffffff, u64 0xffffffff, u64 0, u64 0xffffffff00000001) == prime);
-  let (x16, (r0, r1, r2, r3)) = sub4 (a0, a1, a2, a3)  (u64 0xffffffffffffffff, u64 0xffffffff, u64 0, u64 0xffffffff00000001) in 
+  let (x16, (r0, r1, r2, r3)) = sub4 (a0, a1, a2, a3) 
+     (u64 0xffffffffffffffff, u64 0xffffffff, u64 0, u64 0xffffffff00000001) in 
   let (result, c) = subborrow carry (u64 0) x16  in  
     (* assert(if as_nat4 a < prime then uint_v x16 = 1 else uint_v x16 = 0); *)
     (* lemma_nat_4 (a0, a1, a2, a3); *)
@@ -261,7 +267,7 @@ let shift_left_felem input =
   assert(as_nat4 input * 2 = uint_v a0_updated + uint_v a1_updated * pow2 64 + uint_v a2_updated * pow2 128 + uint_v  a3_updated * pow2 192 + uint_v carry3 * pow2 256);
   assert_norm(uint_v a2_updated * pow2 64 * pow2 64 == uint_v a2_updated * pow2 128);
   assert_norm(uint_v a3_updated * pow2 64 * pow2 64 * pow2 64 == uint_v a3_updated * pow2 192);
-  reduction_prime_2prime_with_carry carry3 (a0_updated,  a1_updated,  a2_updated, a3_updated)
+  reduction_prime_2prime_with_carry carry3 a0_updated  a1_updated  a2_updated a3_updated
 
 
 let upload_prime () = 
@@ -528,7 +534,7 @@ let montgomery_multiplication (a0, a1, a2, a3) (b0, b1, b2, b3) =
     assert(wide_as_nat4 t_state3 < 2 * prime);
   let (t0, t1, t2, t3, t4, t5, t6, t7) = t_state3 in 
     lemma_prime_as_wild_nat t_state3;
-  reduction_prime_2prime_with_carry t4 (t0,  t1,  t2,  t3)
+  reduction_prime_2prime_with_carry t4 t0 t1 t2 t3
 
 
 let cube_tuple a = 
