@@ -247,8 +247,7 @@ let shift_left_lemma a0 a1 a2 a3 =
 
 
 #reset-options "--z3rlimit 500"
-let shift_left_felem input =  
-  let (a0, a1, a2, a3) = input in 
+let shift_left_felem (a0, a1, a2, a3) =  
   let mask = u64 0x7fffffffffffffff in   
   let carry0 = gt a0 mask in 
   let carry1 = gt a1 mask in 
@@ -264,20 +263,18 @@ let shift_left_felem input =
   assert_norm(pow2 64 * pow2 64 * pow2 64 = pow2 192);
 
   shift_left_lemma (uint_v a0) (uint_v a1) (uint_v a2) (uint_v a3); 
-  assert(as_nat4 input * 2 = uint_v a0_updated + uint_v a1_updated * pow2 64 + uint_v a2_updated * pow2 128 + uint_v  a3_updated * pow2 192 + uint_v carry3 * pow2 256);
+  assert(as_nat4 (a0, a1, a2, a3) * 2 = uint_v a0_updated + uint_v a1_updated * pow2 64 + uint_v a2_updated * pow2 128 + uint_v  a3_updated * pow2 192 + uint_v carry3 * pow2 256);
   assert_norm(uint_v a2_updated * pow2 64 * pow2 64 == uint_v a2_updated * pow2 128);
   assert_norm(uint_v a3_updated * pow2 64 * pow2 64 * pow2 64 == uint_v a3_updated * pow2 192);
   reduction_prime_2prime_with_carry carry3 a0_updated  a1_updated  a2_updated a3_updated
 
 
 let upload_prime () = 
-  let p256 = (u64 (0xffffffffffffffff), u64 (0x00000000ffffffff), u64 (0), u64 (0xffffffff00000001)) in
-  assert_norm (as_nat4 p256 == prime);
-  p256
+  assert_norm (as_nat4 (u64 (0xffffffffffffffff), u64 (0x00000000ffffffff), u64 (0), u64 (0xffffffff00000001))  == prime);
+  (u64 (0xffffffffffffffff), u64 (0x00000000ffffffff), u64 (0), u64 (0xffffffff00000001)) 
 
 
-let shift_256 c = 
-    let (c0, c1, c2, c3) = c in 
+let shift_256 (c0, c1, c2, c3)  = 
     assert_norm(pow2 64 * pow2 64 = pow2 128);
     assert_norm(pow2 64 * pow2 64 * pow2 64 = pow2 192);
     assert_norm(pow2 64 * pow2 64 * pow2 64 * pow2 64 = pow2 256);
@@ -285,8 +282,7 @@ let shift_256 c =
     assert_norm(pow2 64 * pow2 64 * pow2 64  * pow2 64 * pow2 64 * pow2 64 = pow2 (6 * 64));
     assert_norm(pow2 64 * pow2 64 * pow2 64  * pow2 64 * pow2 64* pow2 64 * pow2 64 = pow2 (7 * 64));
     assert_norm(pow2 64 * pow2 64 * pow2 64  * pow2 64 * pow2 64* pow2 64 * pow2 64 * pow2 64 = pow2 (8 * 64));
-    let r = (u64(0), u64(0), u64 (0), u64 (0), c0, c1, c2, c3) in 
-    r
+    (u64(0), u64(0), u64 (0), u64 (0), c0, c1, c2, c3)
 
 
 val lemma_wide: o: felem8 -> Lemma (wide_as_nat4 o =
@@ -344,19 +340,17 @@ let add9 (a0, a1, a2, a3, a4, a5, a6, a7) (b0, b1, b2, b3, b4, b5, b6, b7) =
     assert_norm(pow2 64 * pow2 64 * pow2 64  * pow2 64 * pow2 64 * pow2 64 = pow2 (6 * 64));
     assert_norm(pow2 64 * pow2 64 * pow2 64  * pow2 64 * pow2 64* pow2 64 * pow2 64 = pow2 (7 * 64));
     assert_norm(pow2 64 * pow2 64 * pow2 64  * pow2 64 * pow2 64* pow2 64 * pow2 64 * pow2 64 = pow2 512);
-  let c3, r = add4 (a0, a1, a2, a3) (b0, b1, b2, b3) in 
+  let c3, (o0, o1, o2, o3) = add4 (a0, a1, a2, a3) (b0, b1, b2, b3) in 
   let o4, c4 = addcarry a4 b4 c3 in
   let o5, c5 = addcarry a5 b5 c4 in 
   let o6, c6 = addcarry a6 b6 c5 in 
   let o7, c7 = addcarry a7 b7 c6 in 
-  let (o0, o1, o2, o3) = r in 
 
   assert(wide_as_nat4 (a0, a1, a2, a3, a4, a5, a6, a7)  + wide_as_nat4 (b0, b1, b2, b3, b4, b5, b6, b7) = 
    v o0 + v o1 * pow2 64 +  v o2 * pow2 (2 * 64) + v o3 * pow2 (3 * 64) + 
    v o4 * pow2 (4 * 64) + v o5 * pow2 (5 * 64) +  v o6 * pow2 (6 * 64) + v o7 * pow2 (7 * 64) + v c7 * pow2 512);
+  lemma_wide (o0, o1, o2, o3, o4, o5, o6, o7 );
 
-  let out = o0, o1, o2, o3, o4, o5, o6, o7 in 
-  lemma_wide out;
   o0, o1, o2, o3, o4, o5, o6, o7,  c7
 
 
@@ -369,12 +363,12 @@ let add8_without_carry (a0, a1, a2, a3, a4, a5, a6, a7) (b0, b1, b2, b3, b4, b5,
   assert(uint_v carry = 0);
   (r0, r1, r2, r3, r4, r5, r6, r7)
 
+
 inline_for_extraction noextract
 val shortened_mul: a: felem4 -> b: uint64 -> Tot (r: felem8 {as_nat4 a * uint_v b = wide_as_nat4 r /\ wide_as_nat4 r < pow2 320})
 
-let shortened_mul a b = 
-  let (c, f) = mul1 a b in 
-  let (f0, f1, f2, f3) = f in 
+let shortened_mul (a0, a1, a2, a3) b = 
+  let (c, (f0, f1, f2, f3)) = mul1 (a0, a1, a2, a3) b in 
    assert_norm(pow2 64 * pow2 64 = pow2 128);
    assert_norm(pow2 64 * pow2 64 * pow2 64 = pow2 192);
    assert_norm(pow2 64 * pow2 64 * pow2 64 * pow2 64 = pow2 256);
@@ -392,15 +386,13 @@ let mod_64 (a0, a1, a2, a3, a4, a5, a6, a7) =  a0
 inline_for_extraction noextract
 val shift_9: a: felem9 -> Tot (r: felem8 {as_nat9 a / pow2 64 = wide_as_nat4 r})
 
-let shift_9 a = 
-  let (a0, a1, a2, a3, a4, a5, a6, a7, a8) = a in 
+let shift_9 (a0, a1, a2, a3, a4, a5, a6, a7, a8) = 
   (a1, a2, a3, a4, a5, a6, a7, a8)
 
 inline_for_extraction noextract
 val shift_8: a: felem8 -> Tot (r: felem8 {wide_as_nat4 a / pow2 64 = wide_as_nat4 r})
 
-let shift_8 a = 
-  let (a0, a1, a2, a3, a4, a5, a6, a7) = a in 
+let shift_8 (a0, a1, a2, a3, a4, a5, a6, a7) = 
   (a1, a2, a3, a4, a5, a6, a7, (u64 0))
 
 
@@ -487,22 +479,31 @@ inline_for_extraction noextract
 val montgomery_multiplication_one_round: t: felem8{wide_as_nat4 t < pow2 449} -> 
 Tot (result: felem8 { wide_as_nat4 result = (wide_as_nat4 t + (wide_as_nat4 t % pow2 64) * prime) / pow2 64 /\wide_as_nat4 result < pow2 449})
 
-let montgomery_multiplication_one_round t = 
- let primeU = upload_prime () in 
-  let t1 = mod_64 t in 
-  let t2 = shortened_mul primeU t1 in 
+let montgomery_multiplication_one_round (a0, a1, a2, a3, a4, a5, a6, a7) = 
+ let (prim0, prim1, prim2, prim3) = upload_prime () in 
+  let t1 = mod_64 (a0, a1, a2, a3, a4, a5, a6, a7) in 
+  let (t2_0, t2_1, t2_2, t2_3, t2_4, t2_5, t2_6, t2_7) = shortened_mul (prim0, prim1, prim2, prim3) t1 in 
     assert_norm(pow2 256 * pow2 64 = pow2 320);
-    assert(wide_as_nat4 t2 = uint_v t1 * prime);
-  let t3 = add8_without_carry t t2 in 
+    assert(wide_as_nat4 (t2_0, t2_1, t2_2, t2_3, t2_4, t2_5, t2_6, t2_7) = uint_v t1 * prime);
+  let (t3_0, t3_1, t3_2, t3_3, t3_4, t3_5, t3_6, t3_7) = add8_without_carry (a0, a1, a2, a3, a4, a5, a6, a7) (t2_0, t2_1, t2_2, t2_3, t2_4, t2_5, t2_6, t2_7) in 
     assert_norm (pow2 320 + pow2 449 < pow2 513); 
-  let result = shift_8 t3 in 
-    lemma_div_lt (wide_as_nat4 t3) 513 64;
-  result
+  let (r_0, r_1, r_2, r_3, r_4, r_5, r_6, r_7)  = shift_8 (t3_0, t3_1, t3_2, t3_3, t3_4, t3_5, t3_6, t3_7)  in 
+    lemma_div_lt (wide_as_nat4 (t3_0, t3_1, t3_2, t3_3, t3_4, t3_5, t3_6, t3_7)) 513 64;
+  (r_0, r_1, r_2, r_3, r_4, r_5, r_6, r_7)
+
+
+
+
+
+
+
+
+
 
 
 #reset-options "--z3refresh" 
 let montgomery_multiplication (a0, a1, a2, a3) (b0, b1, b2, b3) = 
-  let primeU = upload_prime () in 
+  let (prim0, prim1, prim2, prim3) = upload_prime () in 
   assert_norm(prime < pow2 256);
   assert_norm (pow2 256 * pow2 256 = pow2 512);
   assert_norm (pow2 320 + pow2 512 < pow2 513);
@@ -513,7 +514,7 @@ let montgomery_multiplication (a0, a1, a2, a3) (b0, b1, b2, b3) =
   
   let (t_0, t_1, t_2, t_3, t_4, t_5, t_6, t_7) = mul4 (a0, a1, a2, a3)  (b0, b1, b2, b3) in 
   let t1 = mod_64 (t_0, t_1, t_2, t_3, t_4, t_5, t_6, t_7) in 
-  let t2 = shortened_mul primeU t1 in 
+  let t2 = shortened_mul (prim0, prim1, prim2, prim3) t1 in 
   let t3 = add9 (t_0, t_1, t_2, t_3, t_4, t_5, t_6, t_7) t2 in 
   let t_state0 = shift_9 t3 in  
     lemma_div_lt (as_nat9 t3) 513 64;
