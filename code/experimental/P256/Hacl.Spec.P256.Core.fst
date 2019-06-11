@@ -337,17 +337,39 @@ let add8_without_carry (a0, a1, a2, a3, a4, a5, a6, a7) (b0, b1, b2, b3, b4, b5,
   (r0, r1, r2, r3, r4, r5, r6, r7)
 
 
-val shortened_mul: a: felem4 -> b: uint64 -> Tot (r: felem8 {as_nat4 a * uint_v b = wide_as_nat4 r /\ wide_as_nat4 r < pow2 320})
+inline_for_extraction noextract
+val addcarry_third_0:
+    x:uint64
+  -> y:uint64
+  -> Pure (uint64 & uint64)
+    (requires True)
+    (ensures fun (r, c) -> True)
 
-let shortened_mul (a0, a1, a2, a3) b = 
-  let (c, f0, f1, f2, f3) = mul1 (a0, a1, a2, a3) b in 
-   assert_norm(pow2 64 * pow2 64 = pow2 128);
-   assert_norm(pow2 64 * pow2 64 * pow2 64 = pow2 192);
-   assert_norm(pow2 64 * pow2 64 * pow2 64 * pow2 64 = pow2 256);
-   assert_norm(pow2 64 * pow2 64 * pow2 64  * pow2 64 * pow2 64= pow2 320);
-   assert_norm(pow2 64 * pow2 64 * pow2 64  * pow2 64 * pow2 64 * pow2 64 = pow2 (6 * 64));
-   assert_norm(pow2 64 * pow2 64 * pow2 64  * pow2 64 * pow2 64* pow2 64 * pow2 64 = pow2 (7 * 64));
-  f0, f1, f2, f3, c, (u64 0), (u64 0), u64(0)  
+[@CInline]
+let addcarry_third_0 x y =
+  let res = x +. y in
+  let c = if lt_u64 res x then (u64 1) else (u64 0) in
+  res, c
+
+inline_for_extraction noextract
+val shortened_mul: b: uint64 -> Tot (r: felem8)
+
+let shortened_mul u = 
+  let mask = neq_mask u (u64 0) in 
+  let h0 = logand (u -. 1) mask in 
+  let l0 = 0 -. (logand u mask) in 
+
+  let l1_ = logand (u <<. (size 32)) (u64 0xffffffff00000000) in 
+  let l1, c = subborrow l1_ u (u64 0) in 
+  let h1 = logand (u >>. (size 32)) (u64 0xffffffff) -. c in 
+
+
+  let l3, h3 = mul64 (u64 0xffffffff00000001) u in
+
+  let o1, c0 = addcarry_third_0 l1 h0 in
+  let o2 = h1 +. c0 in 
+  l0, o1, o2, l3, h3, (u64 0), (u64 0), (u64 0)
+
 
 
 inline_for_extraction noextract
@@ -438,9 +460,8 @@ val montgomery_multiplication_one_round_proof: t: felem8 {wide_as_nat4 t < pow2 
     wide_as_nat4 result < pow2 449)
 
 let montgomery_multiplication_one_round_proof t result co = 
-  let primeU = upload_prime () in 
   let t1 = mod_64 t in 
-  let t2 = shortened_mul primeU t1 in 
+  let t2 = shortened_mul t1 in 
     assert_norm(pow2 256 * pow2 64 = pow2 320);
     assert(wide_as_nat4 t2 = uint_v t1 * prime);
   let t3 = add8_without_carry t t2 in 
@@ -452,12 +473,11 @@ let montgomery_multiplication_one_round_proof t result co =
 
 inline_for_extraction noextract
 val montgomery_multiplication_one_round: t: felem8{wide_as_nat4 t < pow2 449} -> 
-  primeU: felem4 -> 
 Tot (result: felem8 { wide_as_nat4 result = (wide_as_nat4 t + (wide_as_nat4 t % pow2 64) * prime) / pow2 64 /\wide_as_nat4 result < pow2 449})
 
-let montgomery_multiplication_one_round (a0, a1, a2, a3, a4, a5, a6, a7) (prim0, prim1, prim2, prim3) = 
+let montgomery_multiplication_one_round (a0, a1, a2, a3, a4, a5, a6, a7)  = 
   let t1 = mod_64 (a0, a1, a2, a3, a4, a5, a6, a7) in 
-  let (t2_0, t2_1, t2_2, t2_3, t2_4, t2_5, t2_6, t2_7) = shortened_mul (prim0, prim1, prim2, prim3) t1 in 
+  let (t2_0, t2_1, t2_2, t2_3, t2_4, t2_5, t2_6, t2_7) = shortened_mul t1 in 
     assert_norm(pow2 256 * pow2 64 = pow2 320);
     assert(wide_as_nat4 (t2_0, t2_1, t2_2, t2_3, t2_4, t2_5, t2_6, t2_7) = uint_v t1 * prime);
   let (t3_0, t3_1, t3_2, t3_3, t3_4, t3_5, t3_6, t3_7) = add8_without_carry (a0, a1, a2, a3, a4, a5, a6, a7) (t2_0, t2_1, t2_2, t2_3, t2_4, t2_5, t2_6, t2_7) in 
@@ -470,7 +490,6 @@ let montgomery_multiplication_one_round (a0, a1, a2, a3, a4, a5, a6, a7) (prim0,
 
 #reset-options "--z3refresh" 
 let montgomery_multiplication (a0, a1, a2, a3) (b0, b1, b2, b3) = 
-  let (prim0, prim1, prim2, prim3) = upload_prime () in 
   assert_norm(prime < pow2 256);
   assert_norm (pow2 256 * pow2 256 = pow2 512);
   assert_norm (pow2 320 + pow2 512 < pow2 513);
@@ -481,7 +500,7 @@ let montgomery_multiplication (a0, a1, a2, a3) (b0, b1, b2, b3) =
   
   let (t_0, t_1, t_2, t_3, t_4, t_5, t_6, t_7) = mul4 (a0, a1, a2, a3)  (b0, b1, b2, b3) in 
   let t1 = mod_64 (t_0, t_1, t_2, t_3, t_4, t_5, t_6, t_7) in 
-  let (t2_0, t2_1, t2_2, t2_3, t2_4, t2_5, t2_6, t2_7) = shortened_mul (prim0, prim1, prim2, prim3) t1 in 
+  let (t2_0, t2_1, t2_2, t2_3, t2_4, t2_5, t2_6, t2_7) = shortened_mul t1 in 
   let (t3_8, t3_0, t3_1, t3_2, t3_3, t3_4, t3_5, t3_6, t3_7) = add8 (t_0, t_1, t_2, t_3, t_4, t_5, t_6, t_7) (t2_0, t2_1, t2_2, t2_3, t2_4, t2_5, t2_6, t2_7) in 
   let (st0, st1, st2, st3, st4, st5, st6, st7) = shift_9 (t3_0, t3_1, t3_2, t3_3, t3_4, t3_5, t3_6, t3_7, t3_8) in  
     lemma_div_lt (as_nat9 (t3_0, t3_1, t3_2, t3_3, t3_4, t3_5, t3_6, t3_7, t3_8)) 513 64;
@@ -489,13 +508,13 @@ let montgomery_multiplication (a0, a1, a2, a3) (b0, b1, b2, b3) =
     mult_one_round (wide_as_nat4 (t_0, t_1, t_2, t_3, t_4, t_5, t_6, t_7)) (as_nat4 (a0, a1, a2, a3) * as_nat4  (b0, b1, b2, b3) );
     lemma_mul_nat (as_nat4  (a0, a1, a2, a3)) (as_nat4  (b0, b1, b2, b3)) (modp_inv2 (pow2 64));
 
-  let (st10, st11, st12, st13, st14, st15, st16, st17)  = montgomery_multiplication_one_round (st0, st1, st2, st3, st4, st5, st6, st7) (prim0, prim1, prim2, prim3) in
+  let (st10, st11, st12, st13, st14, st15, st16, st17)  = montgomery_multiplication_one_round (st0, st1, st2, st3, st4, st5, st6, st7) in
     montgomery_multiplication_one_round_proof (st0, st1, st2, st3, st4, st5, st6, st7)  (st10, st11, st12, st13, st14, st15, st16, st17) (as_nat4  (a0, a1, a2, a3) * as_nat4 (b0, b1, b2, b3) * modp_inv2 (pow2 64));
     lemma_mul_nat4 (as_nat4  (a0, a1, a2, a3)) (as_nat4 (b0, b1, b2, b3)) (modp_inv2 (pow2 64)) (modp_inv2(pow2 64));
-  let (st20, st21, st22, st23, st24, st25, st26, st27) = montgomery_multiplication_one_round (st10, st11, st12, st13, st14, st15, st16, st17) (prim0, prim1, prim2, prim3) in 
+  let (st20, st21, st22, st23, st24, st25, st26, st27) = montgomery_multiplication_one_round (st10, st11, st12, st13, st14, st15, st16, st17)in 
     montgomery_multiplication_one_round_proof (st10, st11, st12, st13, st14, st15, st16, st17) (st20, st21, st22, st23, st24, st25, st26, st27) (as_nat4  (a0, a1, a2, a3) * as_nat4  (b0, b1, b2, b3) * modp_inv2 (pow2 64) * modp_inv2 (pow2 64));
     lemma_mul_nat5 (as_nat4  (a0, a1, a2, a3)) (as_nat4 (b0, b1, b2, b3)) (modp_inv2 (pow2 64)) (modp_inv2 (pow2 64)) (modp_inv2 (pow2 64));
-  let (st30, st31, st32, st33, st34, st35, st36, st37) = montgomery_multiplication_one_round (st20, st21, st22, st23, st24, st25, st26, st27) (prim0, prim1, prim2, prim3) in 
+  let (st30, st31, st32, st33, st34, st35, st36, st37) = montgomery_multiplication_one_round (st20, st21, st22, st23, st24, st25, st26, st27)in 
     montgomery_multiplication_one_round_proof (st20, st21, st22, st23, st24, st25, st26, st27) 
       (st30, st31, st32, st33, st34, st35, st36, st37)  (as_nat4 (a0, a1, a2, a3)* as_nat4 (b0, b1, b2, b3) * modp_inv2 (pow2 64) * modp_inv2 (pow2 64) * modp_inv2(pow2 64));
     lemma_decrease_pow (as_nat4  (a0, a1, a2, a3) * as_nat4 (b0, b1, b2, b3));
