@@ -320,11 +320,6 @@ let montgomery_multiplication_buffer a b r=
   let b3 = Lib.Buffer.index b (size 3) in 
 
     let h0 = ST.get() in 
-
-    [@inline_let]
-    let a_tuple = a0, a1, a2, a3 in 
-    [@inline_let]
-    let b_tuple = b0, b1, b2, b3 in 
   let (r0, r1, r2, r3) = montgomery_multiplication (a0, a1, a2, a3) (b0, b1, b2, b3) in 
   Lib.Buffer.upd r (size 0) r0;
   Lib.Buffer.upd r (size 1) r1;
@@ -333,9 +328,9 @@ let montgomery_multiplication_buffer a b r=
 
     let h1 = ST.get() in 
 
-  lemmaFromDomainToDomain (as_nat4 a_tuple);
-  lemmaFromDomainToDomain (as_nat4 b_tuple);
-  multiplicationInDomain #(fromDomain_ (as_nat4 a_tuple)) #(fromDomain_ (as_nat4 b_tuple)) a_tuple b_tuple;
+  lemmaFromDomainToDomain (as_nat4 (a0, a1, a2, a3));
+  lemmaFromDomainToDomain (as_nat4 (b0, b1, b2, b3));
+  multiplicationInDomain #(fromDomain_ (as_nat4 (a0, a1, a2, a3) )) #(fromDomain_ (as_nat4 (b0, b1, b2, b3))) (a0, a1, a2, a3)  (b0, b1, b2, b3);
   assert(Lib.Sequence.equal  (montgomery_multiplication_seq (as_seq h0 a) (as_seq h0 b))  (as_seq h1 r))
 
 #reset-options "--z3refresh --z3rlimit 100" 

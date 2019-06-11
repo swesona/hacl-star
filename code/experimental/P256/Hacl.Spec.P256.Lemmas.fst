@@ -49,7 +49,7 @@ let prime_lemma a =
   modulo_lemma (a - prime) prime;
   lemma_mod_plus (a - prime) 1 prime
 
-val lemma_for_multiplication_1: 
+(*val lemma_for_multiplication_1: 
   a: felem4 {as_nat4 a < prime} -> 
   b: felem4 {as_nat4 b < prime} -> 
   Lemma (ensures (
@@ -66,6 +66,8 @@ let lemma_for_multiplication_1 a b =
   let (x16, r) = sub4 c p256 in   
   admit();
   lemma_nat_4 c
+*)
+
 
 val small_modulo_lemma_extended: a: nat -> b: pos -> Lemma (if a < b then a % b = a else True)
 
@@ -82,7 +84,7 @@ val lemma_add4_zero: a: felem4 -> b: felem4 -> Lemma (let (c, r) = add4 a b in
 
 let lemma_add4_zero a b = ()
   
-val lemma_adding_prime: a: felem4{as_nat4 a < prime}  -> b: felem4{as_nat4 b < prime} -> Lemma (let (c, r) = sub4 a b in 
+(*val lemma_adding_prime: a: felem4{as_nat4 a < prime}  -> b: felem4{as_nat4 b < prime} -> Lemma (let (c, r) = sub4 a b in 
   if as_nat4 a < as_nat4 b then 
     (as_nat4 a - as_nat4 b) % prime == (as_nat4 r - pow2 256 + prime) 
   else
@@ -100,6 +102,8 @@ let lemma_adding_prime a b =
     begin
       small_modulo_lemma_extended (as_nat4 r) prime
     end
+*)
+
 
 val lemma_enough_to_carry: a: felem4 -> b: felem4 -> Lemma (
   if as_nat4 b >= (pow2 256 - as_nat4 a) then 

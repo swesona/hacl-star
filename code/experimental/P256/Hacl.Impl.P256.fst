@@ -23,6 +23,17 @@ friend Hacl.Spec.P256.MontgomeryMultiplication
 open FStar.Mul
 
 
+inline_for_extraction
+let basepoint_list : x:list uint64 =
+  [@inline_let]
+  let l =
+    [0xffffffffffffffff; 0xffffffff; 0; 0xffffffff00000001]
+  in
+
+  l
+
+
+
 #set-options "--z3rlimit 500" 
 val p256_add: arg1: felem -> arg2: felem ->  out: felem -> Stack unit 
   (requires (fun h0 ->  
