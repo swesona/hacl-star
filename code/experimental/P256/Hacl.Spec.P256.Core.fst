@@ -326,32 +326,6 @@ let add8  (a0, a1, a2, a3, a4, a5, a6, a7) (b0, b1, b2, b3, b4, b5, b6, b7) =
   lemma_wide (o0, o1, o2, o3, o4, o5, o6, o7);
   (c7, o0, o1, o2, o3, o4, o5, o6, o7)
 
-inline_for_extraction noextract
-val add9: a : felem8 -> b: felem8 -> Pure (felem9)
-  (requires True)
-  (ensures fun r -> wide_as_nat4 a + wide_as_nat4 b = as_nat9 r)
-
-let add9 (a0, a1, a2, a3, a4, a5, a6, a7) (b0, b1, b2, b3, b4, b5, b6, b7) = 
-    assert_norm(pow2 64 * pow2 64 = pow2 128);
-    assert_norm(pow2 64 * pow2 64 * pow2 64 = pow2 192);
-    assert_norm(pow2 64 * pow2 64 * pow2 64 * pow2 64 = pow2 256);
-    assert_norm(pow2 64 * pow2 64 * pow2 64  * pow2 64 * pow2 64= pow2 (5 * 64));
-    assert_norm(pow2 64 * pow2 64 * pow2 64  * pow2 64 * pow2 64 * pow2 64 = pow2 (6 * 64));
-    assert_norm(pow2 64 * pow2 64 * pow2 64  * pow2 64 * pow2 64* pow2 64 * pow2 64 = pow2 (7 * 64));
-    assert_norm(pow2 64 * pow2 64 * pow2 64  * pow2 64 * pow2 64* pow2 64 * pow2 64 * pow2 64 = pow2 512);
-  let c3, (o0, o1, o2, o3) = add4 (a0, a1, a2, a3) (b0, b1, b2, b3) in 
-  let o4, c4 = addcarry a4 b4 c3 in
-  let o5, c5 = addcarry a5 b5 c4 in 
-  let o6, c6 = addcarry a6 b6 c5 in 
-  let o7, c7 = addcarry a7 b7 c6 in 
-
-  assert(wide_as_nat4 (a0, a1, a2, a3, a4, a5, a6, a7)  + wide_as_nat4 (b0, b1, b2, b3, b4, b5, b6, b7) = 
-   v o0 + v o1 * pow2 64 +  v o2 * pow2 (2 * 64) + v o3 * pow2 (3 * 64) + 
-   v o4 * pow2 (4 * 64) + v o5 * pow2 (5 * 64) +  v o6 * pow2 (6 * 64) + v o7 * pow2 (7 * 64) + v c7 * pow2 512);
-  lemma_wide (o0, o1, o2, o3, o4, o5, o6, o7 );
-
-  o0, o1, o2, o3, o4, o5, o6, o7,  c7
-
 
 inline_for_extraction noextract
 val add8_without_carry: a: felem8{wide_as_nat4 a < pow2 449} -> b: felem8 {wide_as_nat4 b < pow2 320} -> Tot (r: felem8 {wide_as_nat4 r = wide_as_nat4 a + wide_as_nat4 b})
@@ -363,7 +337,6 @@ let add8_without_carry (a0, a1, a2, a3, a4, a5, a6, a7) (b0, b1, b2, b3, b4, b5,
   (r0, r1, r2, r3, r4, r5, r6, r7)
 
 
-inline_for_extraction noextract
 val shortened_mul: a: felem4 -> b: uint64 -> Tot (r: felem8 {as_nat4 a * uint_v b = wide_as_nat4 r /\ wide_as_nat4 r < pow2 320})
 
 let shortened_mul (a0, a1, a2, a3) b = 
@@ -509,7 +482,7 @@ let montgomery_multiplication (a0, a1, a2, a3) (b0, b1, b2, b3) =
   let (t_0, t_1, t_2, t_3, t_4, t_5, t_6, t_7) = mul4 (a0, a1, a2, a3)  (b0, b1, b2, b3) in 
   let t1 = mod_64 (t_0, t_1, t_2, t_3, t_4, t_5, t_6, t_7) in 
   let (t2_0, t2_1, t2_2, t2_3, t2_4, t2_5, t2_6, t2_7) = shortened_mul (prim0, prim1, prim2, prim3) t1 in 
-  let (t3_0, t3_1, t3_2, t3_3, t3_4, t3_5, t3_6, t3_7, t3_8) = add9 (t_0, t_1, t_2, t_3, t_4, t_5, t_6, t_7) (t2_0, t2_1, t2_2, t2_3, t2_4, t2_5, t2_6, t2_7) in 
+  let (t3_8, t3_0, t3_1, t3_2, t3_3, t3_4, t3_5, t3_6, t3_7) = add8 (t_0, t_1, t_2, t_3, t_4, t_5, t_6, t_7) (t2_0, t2_1, t2_2, t2_3, t2_4, t2_5, t2_6, t2_7) in 
   let (st0, st1, st2, st3, st4, st5, st6, st7) = shift_9 (t3_0, t3_1, t3_2, t3_3, t3_4, t3_5, t3_6, t3_7, t3_8) in  
     lemma_div_lt (as_nat9 (t3_0, t3_1, t3_2, t3_3, t3_4, t3_5, t3_6, t3_7, t3_8)) 513 64;
     
