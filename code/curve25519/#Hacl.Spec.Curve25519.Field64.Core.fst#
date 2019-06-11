@@ -145,27 +145,7 @@ let mul1 (f0, f1, f2, f3) u =
   let o1, c0 = addcarry l1 h0 (u64 0) in
   let o2, c1 = addcarry l2 h1 c0 in
   let o3, c2 = addcarry l3 h2 c1 in
-  (* let out = (o0, o1, o2, o3) in *)
-
-  assert (as_nat4 (o0, o1, o2, o3)  ==
-    v f0 * v u - v h0 * pow2 64 +
-    (v f1 * v u - v h1 * pow2 64 + v h0 - v c0 * pow2 64) * pow2 64 +
-    (v f2 * v u - v h2 * pow2 64 + v h1 + v c0 - v c1 * pow2 64) * pow2 64 * pow2 64 +
-    (v f3 * v u - v h3 * pow2 64 + v h2 + v c1 - v c2 * pow2 64) * pow2 64 * pow2 64 * pow2 64);
-
-  assert (as_nat4 (o0, o1, o2, o3) ==
-    v f0 * v u +
-    v f1 * v u * pow2 64  +
-    v f2 * v u * pow2 64 * pow2 64 +
-    v f3 * v u * pow2 64 * pow2 64 * pow2 64 -
-    v h3 * pow2 64 * pow2 64 * pow2 64 * pow2 64 -
-    v c2 * pow2 64 * pow2 64 * pow2 64 * pow2 64);
-  lemma_mul1_simplify (o0, o1, o2, o3) (f0, f1, f2, f3) u h3 c2;
-  assert (as_nat4 (o0, o1, o2, o3) + (v h3 + v c2) * pow2 256 == as_nat4 (f0, f1, f2, f3) * v u);
-
-  lemma_mul1 (f0, f1, f2, f3) u;
-  lemma_as_nat4 (o0, o1, o2, o3);
-  lemma_mul1_no_carry (as_nat4 (o0, o1, o2, o3)) (as_nat4 (f0, f1, f2, f3) * v u) (v h3 + v c2);
+  
   let c3 = h3 +! c2 in
   c3, o0, o1, o2, o3
 

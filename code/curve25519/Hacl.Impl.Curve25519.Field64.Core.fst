@@ -14,7 +14,7 @@ module ST = FStar.HyperStack.ST
 open Hacl.Spec.Curve25519.Field64.Core
 
 #set-options "--z3rlimit 20 --max_fuel 0 --max_ifuel 0"
-
+(*)
 val add: out:u256 -> f1:u256 -> f2:u256
   -> Stack uint64
     (requires fun h -> live h f1 /\ live h f2 /\ live h out)
@@ -250,7 +250,7 @@ let fadd out f1 f2 =
   out.(2ul) <- o2;
   out.(3ul) <- o3
 
-[@ CInline]
+(* [@ CInline]
 let fsub out f1 f2 =
   let f10 = f1.(0ul) in
   let f11 = f1.(1ul) in
@@ -267,7 +267,7 @@ let fsub out f1 f2 =
   out.(0ul) <- o0;
   out.(1ul) <- o1;
   out.(2ul) <- o2;
-  out.(3ul) <- o3
+  out.(3ul) <- o3 *)
 
 val carry_wide:
   out:u256 -> inp:u512
@@ -424,3 +424,4 @@ let cswap2 bit p1 p2 =
   let h1 = ST.get () in
   Lib.Sequence.eq_intro (as_seq h1 p1) (if v bit = 1 then as_seq h0 p2 else as_seq h0 p1);
   Lib.Sequence.eq_intro (as_seq h1 p2) (if v bit = 1 then as_seq h0 p1 else as_seq h0 p2)
+*)

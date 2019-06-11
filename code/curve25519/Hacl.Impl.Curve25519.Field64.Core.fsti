@@ -38,6 +38,7 @@ let wide_as_nat (h:mem) (e:u512) : GTot nat =
   let s7 = s.[7] in
   S.wide_as_nat4 (s0, s1, s2, s3, s4, s5, s6, s7)
 
+(*)
 noextract
 let fevalh (h:mem) (f:u256) : GTot P.elem = (as_nat h f) % P.prime
 
@@ -66,7 +67,7 @@ val fadd: out:u256 -> f1:u256  -> f2:u256
     (ensures  fun h0 _ h1 ->
       modifies (loc out) h0 h1 /\
       fevalh h1 out == P.fadd (fevalh h0 f1) (fevalh h0 f2))
-
+(* 
 [@ CInline]
 val fsub: out:u256 -> f1:u256 -> f2:u256
   -> Stack unit
@@ -78,7 +79,7 @@ val fsub: out:u256 -> f1:u256 -> f2:u256
     (ensures  fun h0 _ h1 ->
       modifies (loc out) h0 h1 /\
       fevalh h1 out == P.fsub (fevalh h0 f1) (fevalh h0 f2))
-
+ *)
 [@ CInline]
 val fmul: out:u256 -> f1:u256 -> f2:u256 -> tmp:u1024
   -> Stack unit
@@ -165,3 +166,4 @@ val cswap2: bit:uint64{v bit <= 1} -> p1:u512 -> p2:u512
       modifies (loc p1 |+| loc p2) h0 h1 /\
       (v bit == 1 ==> as_seq h1 p1 == as_seq h0 p2 /\ as_seq h1 p2 == as_seq h0 p1) /\
       (v bit == 0 ==> as_seq h1 p1 == as_seq h0 p1 /\ as_seq h1 p2 == as_seq h0 p2))
+*)
