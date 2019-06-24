@@ -103,7 +103,7 @@ let p256_add arg1 arg2 out =
   let cc = add_carry cc (index r0 (size 0)) (u64 0) r0 in 
   let cc = add_carry cc (index r1 (size 0)) ((u64 0) -. (t <<. (size 32))) r1 in 
   let cc = add_carry cc (index r2 (size 0)) ((u64 0) -. t) r2 in 
-  let cc = add_carry cc (index r3 (size 0)) ((t <<. (size 32)) -. (t <<. (size 1))) r3 in 
+  let _  = add_carry cc (index r3 (size 0)) ((t <<. (size 32)) -. (t <<. (size 1))) r3 in 
 
 
   let h1 = ST.get() in 
@@ -121,28 +121,40 @@ val p256_sub: arg1: felem -> arg2: felem -> out: felem -> Stack unit
 
 let p256_sub arg1 arg2 out = 
   let h0 = ST.get() in 
-    let arg1_0 = index arg1 (size 0) in 
-    let arg1_1 = index arg1 (size 1) in 
-    let arg1_2 = index arg1 (size 2) in 
-    let arg1_3 = index arg1 (size 3) in 
-    
-    let arg2_0 = index arg2 (size 0) in 
-    let arg2_1 = index arg2 (size 1) in 
-    let arg2_2 = index arg2 (size 2) in 
-    let arg2_3 = index arg2 (size 3) in 
+        push_frame();
+  let h0 = ST.get() in 
 
-    let a = (arg1_0, arg1_1, arg1_2, arg1_3) in 
-    let b = (arg2_0, arg2_1, arg2_2, arg2_3) in 
+  let a0 = index arg1 (size 0) in 
+  let a1 = index arg1 (size 1) in 
+  let a2 = index arg1 (size 2) in 
+  let a3 = index arg1 (size 3) in 
 
-    let (r0, r1, r2, r3) = felem_sub a b in 
-    
-    upd out (size 0) r0;
-    upd out (size 1) r1;
-    upd out (size 2) r2;
-    upd out (size 3) r3;
+  let b0 = index arg2 (size 0) in 
+  let b1 = index arg2 (size 1) in 
+  let b2 = index arg2 (size 2) in 
+  let b3 = index arg2 (size 3) in 
 
+  let r0 = sub out (size 0) (size 1) in 
+  let r1 = sub out (size 1) (size 1) in 
+  let r2 = sub out (size 2) (size 1) in 
+  let r3 = sub out (size 3) (size 1) in 
+
+
+  let cc = sub_borrow (u64 0) a0 b0 r0 in 
+  let cc = sub_borrow cc a1 b1 r1 in 
+  let cc = sub_borrow cc a2 b2 r2 in 
+  let cc = sub_borrow cc a3 b3 r3 in 
+
+  let t = cc in 
+  let cc = add_carry (u64 0) (index r0 (size 0)) ((u64 0) -. t) r0 in 
+  let cc = add_carry cc (index r1 (size 0)) (((u64 0) -. t) >>. (size 32)) r1 in 
+  let cc = add_carry cc (index r2 (size 0)) (u64 0) r2 in 
+  let _ = add_carry cc (index r3 (size 0)) (t -. (t <<. (size 32))) r3 in 
+
+admit();
     let h1 = ST.get() in 
   assert(Lib.Sequence.equal (as_seq h1 out) (felem_sub_seq (as_seq h0 arg1) (as_seq h0 arg2)));
+    pop_frame();
   ()
 
 
