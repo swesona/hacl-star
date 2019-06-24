@@ -31,9 +31,6 @@ let sub4_prime (f10, f11, f12, f13)  =
   c3, (o0, o1, o2, o3)
 *) 
 
-inline_for_extraction noextract
-val lt_u64:a:uint64 -> b:uint64 -> Tot bool
-
 let lt_u64 a b =
   let open Lib.RawIntTypes in
   FStar.UInt64.(u64_to_UInt64 a <^ u64_to_UInt64 b)

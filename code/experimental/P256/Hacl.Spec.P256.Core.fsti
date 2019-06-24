@@ -11,6 +11,9 @@ open Hacl.Spec.P256.Lemmas
 open FStar.Mul
 
 inline_for_extraction noextract
+val lt_u64:a:uint64 -> b:uint64 -> Tot bool
+
+inline_for_extraction noextract
 val eq_u64:a:uint64 -> b:uint64 -> Tot (r: bool {if uint_v a = uint_v b then r == true else r == false})
 
 inline_for_extraction noextract
