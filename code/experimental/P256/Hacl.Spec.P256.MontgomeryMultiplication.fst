@@ -15,6 +15,9 @@ open Hacl.Spec.P256.Core
 
 open Hacl.Impl.Curve25519.Field64.Core
 open Hacl.Spec.Curve25519.Field64.Definition
+open Hacl.Spec.Curve25519.Field64.Core 
+
+open Hacl.Impl.Gen
 
 open Lib.IntTypes
 open Lib.Buffer
@@ -278,6 +281,95 @@ let felem_sub_seq a b =
   r
 
 
+
+#reset-options "--z3refresh --z3rlimit 500"
+
+val mm_round: x: uint64 -> b: felem -> t4: uint64 -> result: felem -> 
+  Stack uint64
+  (requires fun h -> live h b /\ live h result)
+  (ensures fun h0 _ h1 -> True)
+
+
+let mm_round x b t4 tempBuffer =  
+  let open Lib.Buffer in 
+  push_frame();
+
+  let tempBufferLocal = create (size 2) (u64 0) in 
+  let temp_zl = sub tempBufferLocal (size 0) (size 1) in 
+  let temp_zh = sub tempBufferLocal (size 1) (size 1) in 
+  let temp_zl_el = index temp_zl (size 0) in 
+  let temp_zh_el = index temp_zh (size 0) in 
+
+  let b0 = index b (size 0) in 
+  let b1 = index b (size 1) in 
+  let b2 = index b (size 2) in 
+  let b3 = index b (size 3) in 
+  
+  let t0 = index tempBuffer (size 0) in 
+  let t1 = index tempBuffer (size 1) in 
+  let t2 = index tempBuffer (size 2) in 
+  let t3 = index tempBuffer (size 3) in 
+
+  let t0_b = sub tempBuffer (size 0) (size 1) in 
+  let t1_b = sub tempBuffer (size 1) (size 1) in 
+  let t2_b = sub tempBuffer (size 2) (size 1) in 
+  let t3_b = sub tempBuffer (size 3) (size 1) in 
+
+  let zl, zh = mul64 x b0 in 
+  let k = add_carry (u64 0) zl t0 temp_zl in 
+  let f = index temp_zl (size 0) in 
+  let _ = add_carry k zh (u64 0) t0_b in
+
+
+  let zl, zh = mul64 x b1 in 
+    let t0 = index t0_b (size 0) in 
+  let k = add_carry (u64 0) zl t0 temp_zl in 
+  let _ = add_carry k zh (u64 0) temp_zh in 
+  let k = add_carry (u64 0) (index temp_zl (size 0)) t1 t0_b in 
+  let _ = add_carry k (index temp_zh (size 0)) (u64 0) t1_b in
+
+
+  let zl, zh = mul64 x b2 in 
+     let t1 = index t1_b (size 0) in         
+  let k = add_carry (u64 0) zl t1 temp_zl in 
+  let _ = add_carry k zh (u64 0) temp_zh in 
+  let k = add_carry (u64 0) (index temp_zl (size 0)) t2 t1_b in 
+  let _ = add_carry k (index temp_zh (size 0)) (u64 0) t2_b in
+
+
+  let zl, zh = mul64 x b3 in 
+     let t2 = index t2_b (size 0) in 
+  let k = add_carry (u64 0) zl t2 temp_zl in 
+   let _ = add_carry k zh (u64 0) temp_zh in 
+  let k = add_carry (u64 0) (index temp_zl (size 0)) t3 t2_b in 
+  let _ = add_carry k (index temp_zh (size 0)) (u64 0) t3_b in
+
+    let t3 = index t3_b (size 0) in 
+    let t0 = index t0_b (size 0) in 
+    let t1 = index t1_b (size 0) in 
+  
+  let t4 = add_carry (u64 0) t3 t4 t3_b in 
+  let k = add_carry (u64 0) t0 (f <<. (size 32)) t0_b in 
+  let k = add_carry k t1 (f >>. (size 32)) t1_b in 
+
+
+  let m = sub_borrow (u64 0) f (f <<. (size 32)) temp_zl in 
+  let _ = sub_borrow m f (f >>. (size 32)) temp_zh in 
+    let t2 = index t2_b (size 0) in 
+    let t3 = index t3_b (size 0) in 
+  
+  let k = add_carry k t2 (index temp_zl (size 0)) t2_b in 
+  let k = add_carry k t3 (index temp_zh (size 0)) t3_b in 
+  let _ = add_carry k t4 (u64 0) temp_zl in 
+  let t4 = index temp_zl (size 0) in 
+
+
+   pop_frame();
+   admit();
+   t4
+
+
+
 let montgomery_multiplication_seq a b  = 
   let a0 = index a 0 in 
   let a1 = index a 1 in 
@@ -307,31 +399,96 @@ let montgomery_multiplication_seq a b  =
    r
 
 
-let montgomery_multiplication_buffer a b r= 
 
-  let a0 = Lib.Buffer.index a (size 0) in 
-  let a1 = Lib.Buffer.index a (size 1) in 
-  let a2 = Lib.Buffer.index a (size 2) in 
-  let a3 = Lib.Buffer.index a (size 3) in 
 
-  let b0 = Lib.Buffer.index b (size 0) in 
-  let b1 = Lib.Buffer.index b (size 1) in 
-  let b2 = Lib.Buffer.index b (size 2) in 
-  let b3 = Lib.Buffer.index b (size 3) in 
+let montgomery_multiplication_buffer a b result = 
+  let open Lib.Buffer in 
 
-    let h0 = ST.get() in 
-  let (r0, r1, r2, r3) = montgomery_multiplication (a0, a1, a2, a3) (b0, b1, b2, b3) in 
-  Lib.Buffer.upd r (size 0) r0;
-  Lib.Buffer.upd r (size 1) r1;
-  Lib.Buffer.upd r (size 2) r2;
-  Lib.Buffer.upd r (size 3) r3;
+    push_frame();
+    let tempBuffer = create (size 6) (u64 0) in 
+      let temp_zl = sub tempBuffer (size 0) (size 1) in 
+      let temp_zh = sub tempBuffer (size 1) (size 1) in 
+      let t0_buffer = sub tempBuffer (size 2) (size 1) in 
+      let t1_buffer = sub tempBuffer (size 3) (size 1) in 
+      let t2_buffer = sub tempBuffer (size 4) (size 1) in 
+      let t3_buffer = sub tempBuffer (size 5) (size 1) in 
+      let t_buffer = sub tempBuffer (size 2) (size 4) in 
+    
+  let x = index a (size 0) in 
+  let a1 = index a (size 1) in 
+  let a2 = index a (size 2) in 
+  let a3 = index a (size 3) in 
+  
+  let b0 = index b (size 0) in 
+  let b1 = index b (size 1) in 
+  let b2 = index b (size 2) in 
+  let b3 = index b (size 3) in 
+  
+  let f, t0 = mul64 b0 x in 
+ 
+  let zl, zh = mul64 b1 x in 
+  let k = add_carry (u64 0)  zl t0 temp_zl in (* temp0 = zl + t0 *) 
+  let _ = add_carry k zh (u64 0) temp_zh in  
+  let k = add_carry (u64 0) (index temp_zl (size 0)) (f <<. (size 32)) temp_zl in 
+  let _ = add_carry k (index temp_zh (size 0)) (u64 0) temp_zh in 
+  let t0 = (index temp_zl (size 0)) in 
+  let t1 = (index temp_zh (size 0)) in 
 
-    let h1 = ST.get() in 
+  let zl, zh = mul64 b2 x in 
+  let k = add_carry  (u64 0)  zl t1 temp_zl  in 
+  let _ = add_carry k zh (u64 0) temp_zh in 
+  let k = add_carry  (u64 0) (index temp_zl (size 0)) (f >>. (size 32)) temp_zl in 
+  let _ = add_carry k (index temp_zh (size 0)) (u64 0) temp_zh in 
+  let t1 = (index temp_zl (size 0)) in 
+  let t2 = (index temp_zh (size 0)) in 
 
-  lemmaFromDomainToDomain (as_nat4 (a0, a1, a2, a3));
-  lemmaFromDomainToDomain (as_nat4 (b0, b1, b2, b3));
-  multiplicationInDomain #(fromDomain_ (as_nat4 (a0, a1, a2, a3) )) #(fromDomain_ (as_nat4 (b0, b1, b2, b3))) (a0, a1, a2, a3)  (b0, b1, b2, b3);
-  assert(Lib.Sequence.equal  (montgomery_multiplication_seq (as_seq h0 a) (as_seq h0 b))  (as_seq h1 r))
+
+  let zl, zh = mul64 b3 x in 
+  let k = add_carry (u64 0) zl t2 temp_zl in 
+  let _ = add_carry k zh (u64 0) temp_zh in 
+  let k = add_carry (u64 0) (index temp_zl (size 0)) f temp_zl in 
+  let _  = add_carry k (index temp_zh (size 0)) (u64 0) temp_zh in 
+  let t2 = (index temp_zl (size 0)) in 
+  let t3 = (index temp_zh (size 0)) in 
+
+  let t4 = add_carry (u64 0) t3 f temp_zl in (*t3 == temp_zl *) 
+  let k = sub_borrow (u64 0) t2 (f <<. (size 32)) temp_zh in 
+    let t3 = (index temp_zl (size 0)) in 
+    let t2 = (index temp_zh (size 0)) in 
+  let k = sub_borrow k t3 (f >>. (size 32)) temp_zl in 
+    let t3 = index temp_zl (size 0) in 
+  let _ = sub_borrow k t4 (u64 0) temp_zh in  
+    let t4 = (index temp_zh (size 0)) in  
+
+  upd t_buffer (size 0) t0;
+  upd t_buffer (size 1) t1; 
+  upd t_buffer (size 2) t2;
+  upd t_buffer (size 3) t3;
+
+  let t4 = mm_round a1 b t4 t_buffer in 
+  let t4 = mm_round a2 b t4 t_buffer in 
+  let t4 = mm_round a3 b t4 t_buffer in 
+
+  let r0 = sub result (size 0) (size 1) in 
+  let r1 = sub result (size 1) (size 1) in  
+  let r2 = sub result (size 2) (size 1) in 
+  let r3 = sub result (size 3) (size 1) in 
+
+  let t0 = index t_buffer (size 0) in 
+  let t1 = index t_buffer (size 1) in 
+  let t2 = index t_buffer (size 2) in 
+  let t3 = index t_buffer (size 3) in 
+
+
+  let k = add_carry  (u64 0) t0 t4 r0 in 
+  let k = add_carry k t1 ((u64 0) -.(t4 <<. (size 32))) r1 in 
+  let k = add_carry k t2 ((u64 0) -. t4) r2 in 
+  let _ = add_carry k t3 ((t4 <<. (size 32)) -. (t4 <<. (size 1))) r3 in
+
+  admit();
+  pop_frame() 
+
+
 
 #reset-options "--z3refresh --z3rlimit 100" 
 

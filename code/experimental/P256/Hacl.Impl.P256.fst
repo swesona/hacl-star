@@ -16,6 +16,7 @@ open Hacl.Spec.P256.MontgomeryMultiplication
 open Hacl.Spec.P256.MontgomeryMultiplication.PointDouble
 open Hacl.Spec.P256.MontgomeryMultiplication.PointAdd
 open Hacl.Spec.P256.Normalisation 
+open Hacl.Impl.Gen
  
 open FStar.Math.Lemmas
 
@@ -24,138 +25,13 @@ open FStar.Mul
 
 
 inline_for_extraction
-let basepoint_list : x:list uint64 =
+let prime_buffer : x:list uint64 =
   [@inline_let]
   let l =
     [0xffffffffffffffff; 0xffffffff; 0; 0xffffffff00000001]
   in
 
   l
-
-val add_carry: cin: uint64 -> x: uint64 -> y: uint64 -> result1: lbuffer uint64 (size 1) -> 
-  Stack uint64 
-    (requires fun h -> live h result1)
-    (ensures fun h0 _ h1 -> True)
-
-let add_carry cin x y result1 = 
-  let res1 = x +. cin in 
-  let c = if lt_u64 res1 cin then u64 1 else u64 0 in
-  let res = res1 +. y in
-  let c = if lt_u64 res res1 then c +. u64 1 else c in
-  Lib.Buffer.upd result1 (size 0) res;
-  c
-  
-val sub_borrow: cin: uint64 -> x: uint64 -> y: uint64 -> result1: lbuffer uint64 (size 1) -> 
-  Stack uint64
-    (requires fun h -> live h result1)
-    (ensures fun h0 _ h1 -> True)
-
-let sub_borrow cin x y result1 = 
-  let open Hacl.Spec.Curve25519.Field64.Core in 
-  let res = x -. y -. cin in
-  let c =
-    if eq_u64 cin (u64 1) then
-      (if le_u64 x y then u64 1 else u64 0)
-    else
-      (if lt_u64 x y then u64 1 else u64 0) in
-  Lib.Buffer.upd result1 (size 0) res;
-  c
-
-
-
-#set-options "--z3rlimit 500" 
-val p256_add: arg1: felem -> arg2: felem ->  out: felem -> Stack unit 
-  (requires (fun h0 ->  
-    (let arg1_as_seq = as_seq h0 arg1 in let arg2_as_seq = as_seq h0 arg2 in 
-    felem_seq_as_nat arg1_as_seq < prime /\ felem_seq_as_nat arg2_as_seq < prime /\
-    live h0 out /\ live h0 arg1 /\ live h0 arg2))
-  )
-  (ensures (fun h0 _ h1 -> modifies1 out h0 h1 /\ 
-    (let arg1_as_seq = as_seq h0 arg1 in let arg2_as_seq = as_seq h0 arg2 in 
-    as_nat h1 out < prime /\ as_seq h1 out == felem_add_seq arg1_as_seq arg2_as_seq))
-  )
-
-let p256_add arg1 arg2 out = 
-    push_frame();
-  let h0 = ST.get() in 
-
-  let a0 = index arg1 (size 0) in 
-  let a1 = index arg1 (size 1) in 
-  let a2 = index arg1 (size 2) in 
-  let a3 = index arg1 (size 3) in 
-
-  let b0 = index arg2 (size 0) in 
-  let b1 = index arg2 (size 1) in 
-  let b2 = index arg2 (size 2) in 
-  let b3 = index arg2 (size 3) in 
-
-  let r0 = sub out (size 0) (size 1) in 
-  let r1 = sub out (size 1) (size 1) in 
-  let r2 = sub out (size 2) (size 1) in 
-  let r3 = sub out (size 3) (size 1) in 
-  
-  let cc = add_carry (u64 0) a0 b0 r0 in 
-  let cc = add_carry cc a1 b1 r1 in 
-  let cc = add_carry cc a2 b2 r2 in 
-  let cc = add_carry cc a3 b3 r3 in 
-
-  let t = cc in 
-  let cc = add_carry cc (index r0 (size 0)) (u64 0) r0 in 
-  let cc = add_carry cc (index r1 (size 0)) ((u64 0) -. (t <<. (size 32))) r1 in 
-  let cc = add_carry cc (index r2 (size 0)) ((u64 0) -. t) r2 in 
-  let _  = add_carry cc (index r3 (size 0)) ((t <<. (size 32)) -. (t <<. (size 1))) r3 in 
-
-
-  let h1 = ST.get() in 
-  pop_frame();
-  admit();
-  assert(Lib.Sequence.equal (as_seq h1 out) (felem_add_seq (as_seq h0 arg1) (as_seq h0 arg2)));
-  ()
-
-
-val p256_sub: arg1: felem -> arg2: felem -> out: felem -> Stack unit 
-  (requires 
-    (fun h0 -> live h0 out /\ live h0 arg1 /\ live h0 arg2 /\ as_nat h0 arg1 < prime /\ as_nat h0 arg2 < prime))
-  (ensures 
-    (fun h0 _ h1 ->modifies1 out h0 h1 /\  as_nat h1 out < prime /\ as_seq h1 out == felem_sub_seq (as_seq h0 arg1) (as_seq h0 arg2)))
-
-let p256_sub arg1 arg2 out = 
-  let h0 = ST.get() in 
-        push_frame();
-  let h0 = ST.get() in 
-
-  let a0 = index arg1 (size 0) in 
-  let a1 = index arg1 (size 1) in 
-  let a2 = index arg1 (size 2) in 
-  let a3 = index arg1 (size 3) in 
-
-  let b0 = index arg2 (size 0) in 
-  let b1 = index arg2 (size 1) in 
-  let b2 = index arg2 (size 2) in 
-  let b3 = index arg2 (size 3) in 
-
-  let r0 = sub out (size 0) (size 1) in 
-  let r1 = sub out (size 1) (size 1) in 
-  let r2 = sub out (size 2) (size 1) in 
-  let r3 = sub out (size 3) (size 1) in 
-
-
-  let cc = sub_borrow (u64 0) a0 b0 r0 in 
-  let cc = sub_borrow cc a1 b1 r1 in 
-  let cc = sub_borrow cc a2 b2 r2 in 
-  let cc = sub_borrow cc a3 b3 r3 in 
-
-  let t = cc in 
-  let cc = add_carry (u64 0) (index r0 (size 0)) ((u64 0) -. t) r0 in 
-  let cc = add_carry cc (index r1 (size 0)) (((u64 0) -. t) >>. (size 32)) r1 in 
-  let cc = add_carry cc (index r2 (size 0)) (u64 0) r2 in 
-  let _ = add_carry cc (index r3 (size 0)) (t -. (t <<. (size 32))) r3 in 
-
-admit();
-    let h1 = ST.get() in 
-  assert(Lib.Sequence.equal (as_seq h1 out) (felem_sub_seq (as_seq h0 arg1) (as_seq h0 arg2)));
-    pop_frame();
-  ()
 
 
 #set-options "--z3rlimit 100"
@@ -253,26 +129,90 @@ let quatre a result =
     let h1 = ST.get() in 
   assert(Lib.Sequence.equal (mm_quatre_seq (as_seq h0 a))  (as_seq h1 result))
 
+(* val reduction_prime_2prime_b: carry3: uint64 -> out: felem -> 
+  Stack unit
+    (requires fun h -> True)
+    (ensures fun h0 _ h1 -> True)
+
+let reduction_prime_2prime_b carry out = 
+  let r0 = sub out (size 0) (size 1) in 
+  let r1 = sub out (size 1) (size 1) in 
+  let r2 = sub out (size 2) (size 1) in 
+  let r3 = sub out (size 3) (size 1) in 
+  
+  let t = carry in 
+  let cc = add_carry carry (index r0 (size 0)) (u64 0) r0 in 
+  let cc = add_carry carry (index r1 (size 0)) ((u64 0) -. (t <<. (size 32))) r1 in 
+  let cc = add_carry carry (index r2 (size 0)) ((u64 0) -. t) r2 in 
+  let _  = add_carry carry (index r3 (size 0)) ((t <<. (size 32)) -. (t <<. (size 1))) r3 in 
+  ()
+
+
+ *)
+
+
+(* val shift_left_felem_b: a: felem -> dst: felem -> Stack unit
+  (requires fun h -> True)
+  (ensures fun h0 _ h1 -> True)
+
+let shift_left_felem_b i dst = 
+  let mask = u64 0x7fffffffffffffff in   
+  let a0 = index i (size 0) in 
+  let a1 = index i (size 1) in 
+  let a2 = index i (size 2) in 
+  let a3 = index i (size 3) in 
+
+  let carry0 = gt #U64 a0 mask in 
+  let carry1 = gt #U64 a1 mask in 
+  let carry2 = gt #U64 a2 mask in 
+  let carry3 = gt #U64 a3 mask in
+
+  let a0_updated = shift_carry a0 (u64 0) in 
+  let a1_updated = shift_carry a1 carry0 in 
+  let a2_updated = shift_carry a2 carry1 in 
+  let a3_updated = shift_carry a3 carry2 in 
+
+  upd dst (size 0) a0_updated;
+  upd dst (size 1) a1_updated;
+  upd dst (size 2) a2_updated;
+  upd dst (size 3) a3_updated;
+
+  reduction_prime_2prime_b carry3 dst
+ *)
 
 val multByTwo: a: felem -> result: felem -> Stack unit 
   (requires fun h -> live h a /\ live h result /\ disjoint a result /\ as_nat h a < prime )
   (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\ as_seq h1 result == mm_byTwo_seq (as_seq h0 a) /\ as_nat h1 result < prime)
 
-let multByTwo a result = 
-  let h0 = ST.get() in 
-    let a0 = index a (size 0) in 
-    let a1 = index a (size 1) in 
-    let a2 = index a (size 2) in 
-    let a3 = index a (size 3) in 
+let multByTwo a out = 
+    push_frame();
+    
+  let a0 = index a (size 0) in 
+  let a1 = index a (size 1) in 
+  let a2 = index a (size 2) in 
+  let a3 = index a (size 3) in 
 
-    let (r0, r1, r2, r3) = shift_left_felem (a0, a1, a2, a3) in 
+  let r0 = sub out (size 0) (size 1) in 
+  let r1 = sub out (size 1) (size 1) in 
+  let r2 = sub out (size 2) (size 1) in 
+  let r3 = sub out (size 3) (size 1) in 
+  
+  let cc = add_carry (u64 0) a0 a0 r0 in 
+  let cc = add_carry cc a1 a1 r1 in 
+  let cc = add_carry cc a2 a2 r2 in 
+  let cc = add_carry cc a3 a3 r3 in 
 
-    upd result (size 0) r0;
-    upd result (size 1) r1;
-    upd result (size 2) r2;
-    upd result (size 3) r3;
+  let t = cc in 
+  let cc = add_carry cc (index r0 (size 0)) (u64 0) r0 in 
+  let cc = add_carry cc (index r1 (size 0)) ((u64 0) -. (t <<. (size 32))) r1 in 
+  let cc = add_carry cc (index r2 (size 0)) ((u64 0) -. t) r2 in 
+  let _  = add_carry cc (index r3 (size 0)) ((t <<. (size 32)) -. (t <<. (size 1))) r3 in 
+
   let h1 = ST.get() in 
-    assert(Lib.Sequence.equal (mm_byTwo_seq (as_seq h0 a)) (as_seq h1 result))
+  pop_frame();
+  admit();
+  ()
+
 
 
 val multByThree: a: felem -> result: felem -> Stack unit 
@@ -280,20 +220,8 @@ val multByThree: a: felem -> result: felem -> Stack unit
   (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\ as_nat h1 result < prime /\as_seq h1 result == mm_byThree_seq (as_seq h0 a))
 
 let multByThree a result = 
-  let h0 = ST.get() in 
-    let a0 = index a (size 0) in 
-    let a1 = index a (size 1) in 
-    let a2 = index a (size 2) in 
-    let a3 = index a (size 3) in 
-
-    let (r0, r1, r2, r3) = multByThree_tuple (a0, a1, a2, a3) in 
-
-    upd result (size 0) r0;
-    upd result (size 1) r1;
-    upd result (size 2) r2;
-    upd result (size 3) r3;
-  let h1 = ST.get() in 
-    assert(Lib.Sequence.equal (mm_byThree_seq (as_seq h0 a)) (as_seq h1 result))
+  multByTwo a result;
+  p256_add a result result
 
 
 val multByFour: a: felem -> result: felem -> Stack unit 
@@ -301,20 +229,8 @@ val multByFour: a: felem -> result: felem -> Stack unit
   (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\ as_nat h1 result < prime /\ as_seq h1 result == mm_byFour_seq (as_seq h0 a))
 
 let multByFour a result  = 
-  let h0 = ST.get() in 
-    let a0 = index a (size 0) in 
-    let a1 = index a (size 1) in 
-    let a2 = index a (size 2) in 
-    let a3 = index a (size 3) in 
-
-    let (r0, r1, r2, r3) = multByFour_tuple(a0, a1, a2, a3) in 
-
-    upd result (size 0) r0;
-    upd result (size 1) r1;
-    upd result (size 2) r2;
-    upd result (size 3) r3;
-   let h1 = ST.get() in 
-    assert(Lib.Sequence.equal (mm_byFour_seq (as_seq h0 a)) (as_seq h1 result))
+  multByTwo a result;
+  multByTwo result result
 
 
 val multByEight: a: felem -> result: felem -> Stack unit 
@@ -322,20 +238,9 @@ val multByEight: a: felem -> result: felem -> Stack unit
   (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\ as_nat h1 result < prime /\ as_seq h1 result == mm_byEight_seq (as_seq h0 a))
 
 let multByEight a result  = 
-  let h0 = ST.get() in 
-    let a0 = index a (size 0) in 
-    let a1 = index a (size 1) in 
-    let a2 = index a (size 2) in 
-    let a3 = index a (size 3) in 
-
-    let (r0, r1, r2, r3) = multByEight_tuple(a0, a1, a2, a3) in 
-
-    upd result (size 0) r0;
-    upd result (size 1) r1;
-    upd result (size 2) r2;
-    upd result (size 3) r3;
-  let h1 = ST.get() in 
-    assert(Lib.Sequence.equal (mm_byEight_seq (as_seq h0 a)) (as_seq h1 result))
+  multByTwo a result;
+  multByTwo result result;
+  multByTwo result result
 
 
 val multByMinusThree: a: felem -> result: felem -> Stack unit 
@@ -343,20 +248,11 @@ val multByMinusThree: a: felem -> result: felem -> Stack unit
   (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\ as_nat h1 result < prime /\ as_seq h1 result == mm_byMinusThree_seq (as_seq h0 a))
 
 let multByMinusThree a result  = 
-  let h0 = ST.get() in 
-    let a0 = index a (size 0) in 
-    let a1 = index a (size 1) in 
-    let a2 = index a (size 2) in 
-    let a3 = index a (size 3) in 
-
-    let (r0, r1, r2, r3) = multByMinusThree_tuple(a0, a1, a2, a3) in 
-
-    upd result (size 0) r0;
-    upd result (size 1) r1;
-    upd result (size 2) r2; 
-    upd result (size 3) r3;
- let h1 = ST.get() in 
-   assert(Lib.Sequence.equal (mm_byMinusThree_seq (as_seq h0 a)) (as_seq h1 result))
+  push_frame();
+    multByThree a result;
+    let zeros = create (size 4) (u64 0) in 
+    p256_sub zeros result result;
+  pop_frame()  
 
 
 val isZero_uint64:  f: felem -> Stack uint64
