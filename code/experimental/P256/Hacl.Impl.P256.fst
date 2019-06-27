@@ -124,62 +124,12 @@ val quatre: a: felem -> result: felem -> Stack unit
 
 let quatre a result = 
     let h0 = ST.get() in 
-  montgomery_multiplication_buffer a a result;
-  montgomery_multiplication_buffer result result result;
+  montgomery_square a result;  
+  montgomery_square result result;
     let h1 = ST.get() in 
   assert(Lib.Sequence.equal (mm_quatre_seq (as_seq h0 a))  (as_seq h1 result))
 
-(* val reduction_prime_2prime_b: carry3: uint64 -> out: felem -> 
-  Stack unit
-    (requires fun h -> True)
-    (ensures fun h0 _ h1 -> True)
-
-let reduction_prime_2prime_b carry out = 
-  let r0 = sub out (size 0) (size 1) in 
-  let r1 = sub out (size 1) (size 1) in 
-  let r2 = sub out (size 2) (size 1) in 
-  let r3 = sub out (size 3) (size 1) in 
-  
-  let t = carry in 
-  let cc = add_carry carry (index r0 (size 0)) (u64 0) r0 in 
-  let cc = add_carry carry (index r1 (size 0)) ((u64 0) -. (t <<. (size 32))) r1 in 
-  let cc = add_carry carry (index r2 (size 0)) ((u64 0) -. t) r2 in 
-  let _  = add_carry carry (index r3 (size 0)) ((t <<. (size 32)) -. (t <<. (size 1))) r3 in 
-  ()
-
-
- *)
-
-
-(* val shift_left_felem_b: a: felem -> dst: felem -> Stack unit
-  (requires fun h -> True)
-  (ensures fun h0 _ h1 -> True)
-
-let shift_left_felem_b i dst = 
-  let mask = u64 0x7fffffffffffffff in   
-  let a0 = index i (size 0) in 
-  let a1 = index i (size 1) in 
-  let a2 = index i (size 2) in 
-  let a3 = index i (size 3) in 
-
-  let carry0 = gt #U64 a0 mask in 
-  let carry1 = gt #U64 a1 mask in 
-  let carry2 = gt #U64 a2 mask in 
-  let carry3 = gt #U64 a3 mask in
-
-  let a0_updated = shift_carry a0 (u64 0) in 
-  let a1_updated = shift_carry a1 carry0 in 
-  let a2_updated = shift_carry a2 carry1 in 
-  let a3_updated = shift_carry a3 carry2 in 
-
-  upd dst (size 0) a0_updated;
-  upd dst (size 1) a1_updated;
-  upd dst (size 2) a2_updated;
-  upd dst (size 3) a3_updated;
-
-  reduction_prime_2prime_b carry3 dst
- *)
-
+ 
 val multByTwo: a: felem -> result: felem -> Stack unit 
   (requires fun h -> live h a /\ live h result /\ disjoint a result /\ as_nat h a < prime )
   (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\ as_seq h1 result == mm_byTwo_seq (as_seq h0 a) /\ as_nat h1 result < prime)
@@ -214,7 +164,7 @@ let multByTwo a out =
   ()
 
 
-
+inline_for_extraction noextract 
 val multByThree: a: felem -> result: felem -> Stack unit 
   (requires fun h -> live h a /\ live h result /\ disjoint a result /\ as_nat h a < prime )
   (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\ as_nat h1 result < prime /\as_seq h1 result == mm_byThree_seq (as_seq h0 a))
@@ -223,7 +173,7 @@ let multByThree a result =
   multByTwo a result;
   p256_add a result result
 
-
+inline_for_extraction noextract 
 val multByFour: a: felem -> result: felem -> Stack unit 
   (requires fun h -> live h a /\ live h result /\ disjoint a result /\ as_nat h a < prime )
   (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\ as_nat h1 result < prime /\ as_seq h1 result == mm_byFour_seq (as_seq h0 a))
@@ -232,7 +182,7 @@ let multByFour a result  =
   multByTwo a result;
   multByTwo result result
 
-
+inline_for_extraction noextract 
 val multByEight: a: felem -> result: felem -> Stack unit 
   (requires fun h -> live h a /\ live h result /\ disjoint a result /\ as_nat h a < prime )
   (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\ as_nat h1 result < prime /\ as_seq h1 result == mm_byEight_seq (as_seq h0 a))
@@ -242,7 +192,7 @@ let multByEight a result  =
   multByTwo result result;
   multByTwo result result
 
-
+inline_for_extraction noextract 
 val multByMinusThree: a: felem -> result: felem -> Stack unit 
   (requires fun h -> live h a /\ live h result /\ disjoint a result /\ as_nat h a < prime )
   (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\ as_nat h1 result < prime /\ as_seq h1 result == mm_byMinusThree_seq (as_seq h0 a))
@@ -309,13 +259,13 @@ let point_double_compute_s_m p s m tempBuffer =
     let xx = sub tempBuffer (size 16) (size 4) in 
     let threeXx = sub tempBuffer (size 20) (size 4) in 
 
-    montgomery_multiplication_buffer py py yy; 
+    montgomery_square py yy; 
     montgomery_multiplication_buffer px yy xyy;
     multByFour xyy s;
 
     quatre pz zzzz; 
     multByMinusThree zzzz minThreeZzzz;
-    montgomery_multiplication_buffer px px xx;
+    montgomery_square px xx;
     multByThree xx threeXx;
     p256_add minThreeZzzz threeXx m;
   let h1 = ST.get() in 
@@ -340,7 +290,7 @@ let point_double_compute_x3 x3 s m tempBuffer =
    let twoS = sub tempBuffer (size 0) (size 4) in 
    let mm = sub tempBuffer (size 4) (size 4) in 
     multByTwo s twoS;
-    Hacl.Spec.P256.MontgomeryMultiplication.montgomery_multiplication_buffer m m mm;
+    montgomery_square m mm;
     p256_sub mm twoS x3
 
 
@@ -588,8 +538,8 @@ let move_from_jacobian_coordinates u1 u2 s1 s2 p q tempBuffer =
    let z2Cube = sub tempBuffer (size 8) (size 4) in 
    let z1Cube = sub tempBuffer (size 12) (size 4) in  
 
-   montgomery_multiplication_buffer z2 z2 z2Square;
-   montgomery_multiplication_buffer z1 z1 z1Square;
+   montgomery_square z2 z2Square;
+   montgomery_square z1 z1Square;
    montgomery_multiplication_buffer z2Square z2 z2Cube;
    montgomery_multiplication_buffer z1Square z1 z1Cube;
 
@@ -625,7 +575,7 @@ let compute_common_params_point_add h r uh hCube u1 u2 s1 s2 tempBuffer =
       let temp = sub tempBuffer (size 0) (size 4) in 
       p256_sub u2 u1 h; 
       p256_sub s2 s1 r; 
-      montgomery_multiplication_buffer h h temp;
+      montgomery_square h temp;
       montgomery_multiplication_buffer u1 temp uh;
       montgomery_multiplication_buffer h temp hCube
 
@@ -645,7 +595,7 @@ let computeX3_point_add x3 hCube uh r tempBuffer =
     let r_h = sub tempBuffer (size 4) (size 4) in 
     let twouh = sub tempBuffer (size 8) (size 4) in 
 
-    montgomery_multiplication_buffer r r rSquare; 
+    montgomery_square r rSquare; 
     p256_sub rSquare hCube r_h;
     multByTwo uh twouh;
     p256_sub r_h twouh x3
@@ -841,7 +791,7 @@ let norm p resultPoint tempBuffer =
   let tempBuffer20 = sub tempBuffer (size 12) (size 20) in 
 
     let h0 = ST.get() in 
-  Hacl.Spec.P256.MontgomeryMultiplication.montgomery_multiplication_buffer zf zf z2f;
+  montgomery_square zf z2f;
   Hacl.Spec.P256.MontgomeryMultiplication.montgomery_multiplication_buffer z2f zf z3f;
 
   Hacl.Spec.P256.MontgomeryMultiplication.exponent z2f z2f tempBuffer20;

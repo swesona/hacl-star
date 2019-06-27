@@ -11,7 +11,10 @@ open Hacl.Impl.Curve25519.Field64.Core
 open Hacl.Spec.P256.Core
 open Hacl.Spec.P256.Lemmas
 open Hacl.Spec.P256.Definitions
- 
+open Hacl.Spec.Curve25519.Field64.Core 
+open Hacl.Impl.Curve25519.Field64.Core
+open Hacl.Spec.Curve25519.Field64.Definition
+
 open FStar.Math.Lemmas
 
 
@@ -72,25 +75,15 @@ let p256_add arg1 arg2 out =
     push_frame();
   let h0 = ST.get() in 
 
-  let a0 = index arg1 (size 0) in 
-  let a1 = index arg1 (size 1) in 
-  let a2 = index arg1 (size 2) in 
-  let a3 = index arg1 (size 3) in 
-
-  let b0 = index arg2 (size 0) in 
-  let b1 = index arg2 (size 1) in 
-  let b2 = index arg2 (size 2) in 
-  let b3 = index arg2 (size 3) in 
-
   let r0 = sub out (size 0) (size 1) in 
   let r1 = sub out (size 1) (size 1) in 
   let r2 = sub out (size 2) (size 1) in 
   let r3 = sub out (size 3) (size 1) in 
   
-  let cc = add_carry (u64 0) a0 b0 r0 in 
-  let cc = add_carry cc a1 b1 r1 in 
-  let cc = add_carry cc a2 b2 r2 in 
-  let cc = add_carry cc a3 b3 r3 in 
+  let cc = add_carry (u64 0) arg1.(0ul) arg2.(0ul) r0 in 
+  let cc = add_carry cc arg1.(1ul) arg2.(1ul)  r1 in 
+  let cc = add_carry cc arg1.(2ul) arg2.(2ul)  r2 in 
+  let cc = add_carry cc arg1.(3ul) arg2.(3ul)  r3 in 
 
   let t = cc in 
   let cc = add_carry cc (index out (size 0)) (u64 0) r0 in 
@@ -117,26 +110,16 @@ let p256_sub arg1 arg2 out =
         push_frame();
   let h0 = ST.get() in 
 
-  let a0 = index arg1 (size 0) in 
-  let a1 = index arg1 (size 1) in 
-  let a2 = index arg1 (size 2) in 
-  let a3 = index arg1 (size 3) in 
-
-  let b0 = index arg2 (size 0) in 
-  let b1 = index arg2 (size 1) in 
-  let b2 = index arg2 (size 2) in 
-  let b3 = index arg2 (size 3) in 
-
   let r0 = sub out (size 0) (size 1) in 
   let r1 = sub out (size 1) (size 1) in 
   let r2 = sub out (size 2) (size 1) in 
   let r3 = sub out (size 3) (size 1) in 
 
 
-  let cc = sub_borrow (u64 0) a0 b0 r0 in 
-  let cc = sub_borrow cc a1 b1 r1 in 
-  let cc = sub_borrow cc a2 b2 r2 in 
-  let cc = sub_borrow cc a3 b3 r3 in 
+  let cc = sub_borrow (u64 0) arg1.(0ul) arg2.(0ul)  r0 in 
+  let cc = sub_borrow cc arg1.(1ul) arg2.(1ul)  r1 in 
+  let cc = sub_borrow cc arg1.(2ul) arg2.(2ul)  r2 in 
+  let cc = sub_borrow cc arg1.(3ul) arg2.(3ul)  r3 in 
 
   let t = cc in 
   let cc = add_carry (u64 0) (index out (size 0)) ((u64 0) -. t) r0 in 
@@ -148,3 +131,358 @@ admit();
     let h1 = ST.get() in 
     pop_frame();
   ()
+
+
+
+val mm_round1: a: felem -> t4: uint64 -> tempBuffer: lbuffer uint64 (size 16) -> 
+  Stack uint64
+  (requires fun h -> True)
+  (ensures fun h0 _ h1 -> True)
+
+
+let mm_round1 a t4 tempBuffer =  
+  let open Lib.Buffer in 
+  push_frame();
+
+  let tempBufferLocal = create (size 2) (u64 0) in 
+  let temp_zl = sub tempBufferLocal (size 0) (size 1) in 
+  let temp_zh = sub tempBufferLocal (size 1) (size 1) in 
+
+  let x = a.(1ul) in 
+
+  let t0_b = sub tempBuffer (size 0) (size 1) in 
+  let t1_b = sub tempBuffer (size 1) (size 1) in 
+  let t2_b = sub tempBuffer (size 2) (size 1) in 
+  let t3_b = sub tempBuffer (size 3) (size 1) in 
+
+  let k = add_carry (u64 0) tempBuffer.(4ul) tempBuffer.(0ul) temp_zl in 
+  let f = index temp_zl (size 0) in 
+  let _ = add_carry k tempBuffer.(5ul) (u64 0) t0_b in
+
+  let zl, zh = mul64 x x in 
+  let k = add_carry (u64 0) zl tempBuffer.(0ul) temp_zl in 
+  let _ = add_carry k zh (u64 0) temp_zh in 
+  let k = add_carry (u64 0) (index temp_zl (size 0)) tempBuffer.(1ul) t0_b in 
+  let _ = add_carry k (index temp_zh (size 0)) (u64 0) t1_b in
+
+  let zl, zh = mul64 x a.(2ul) in 
+  upd tempBuffer (size 10) zl;
+  upd tempBuffer (size 11) zh;
+
+  let k = add_carry (u64 0) zl tempBuffer.(1ul) temp_zl in 
+  let _ = add_carry k zh (u64 0) temp_zh in 
+  let k = add_carry (u64 0) (index temp_zl (size 0)) tempBuffer.(2ul) t1_b in 
+  let _ = add_carry k (index temp_zh (size 0)) (u64 0) t2_b in
+
+  let zl, zh = mul64 x a.(3ul) in 
+  upd tempBuffer (size 12) zl;
+  upd tempBuffer (size 13) zh;
+
+  let k = add_carry (u64 0) zl tempBuffer.(2ul) temp_zl in 
+  let _ = add_carry k zh (u64 0) temp_zh in 
+  let k = add_carry (u64 0) (index temp_zl (size 0)) tempBuffer.(3ul) t2_b in 
+  let _ = add_carry k (index temp_zh (size 0)) (u64 0) t3_b in
+  
+  let t4 = add_carry (u64 0) tempBuffer.(3ul) t4 t3_b in 
+  let k = add_carry (u64 0) tempBuffer.(0ul) (f <<. (size 32)) t0_b in 
+  let k = add_carry k tempBuffer.(1ul) (f >>. (size 32)) t1_b in 
+
+  let m = sub_borrow (u64 0) f (f <<. (size 32)) temp_zl in 
+  let _ = sub_borrow m f (f >>. (size 32)) temp_zh in 
+
+  let k = add_carry k tempBuffer.(2ul) (index temp_zl (size 0)) t2_b in 
+  let k = add_carry k tempBuffer.(3ul) (index temp_zh (size 0)) t3_b in 
+  let _ = add_carry k t4 (u64 0) temp_zl in 
+  let t4 = index temp_zl (size 0) in 
+
+
+   pop_frame();
+   admit();
+   t4
+
+
+val mm_round2: a: felem -> t4: uint64 -> result: felem -> 
+  Stack uint64
+  (requires fun h -> True)
+  (ensures fun h0 _ h1 -> True)
+
+
+let mm_round2 a t4 tempBuffer =  
+  let open Lib.Buffer in 
+  push_frame();
+
+  let tempBufferLocal = create (size 2) (u64 0) in 
+  let temp_zl = sub tempBufferLocal (size 0) (size 1) in 
+  let temp_zh = sub tempBufferLocal (size 1) (size 1) in 
+  let temp_zl_el = index temp_zl (size 0) in 
+  let temp_zh_el = index temp_zh (size 0) in 
+
+  let x = index a (size 2) in 
+  let a3 = index a (size 3) in 
+  
+  let t0 = index tempBuffer (size 0) in 
+  let t1 = index tempBuffer (size 1) in 
+  let t2 = index tempBuffer (size 2) in 
+  let t3 = index tempBuffer (size 3) in 
+
+  let t0_b = sub tempBuffer (size 0) (size 1) in 
+  let t1_b = sub tempBuffer (size 1) (size 1) in 
+  let t2_b = sub tempBuffer (size 2) (size 1) in 
+  let t3_b = sub tempBuffer (size 3) (size 1) in 
+
+  let zl = index tempBuffer (size 6) in 
+  let zh = index tempBuffer (size 7) in
+  
+  let k = add_carry (u64 0) zl t0 temp_zl in 
+  let f = index temp_zl (size 0) in 
+  let _ = add_carry k zh (u64 0) t0_b in
+
+  let zl = index tempBuffer (size 10) in 
+  let zh = index tempBuffer (size 11) in
+
+
+    let t0 = index t0_b (size 0) in 
+  let k = add_carry (u64 0) zl t0 temp_zl in 
+  let _ = add_carry k zh (u64 0) temp_zh in 
+  let k = add_carry (u64 0) (index temp_zl (size 0)) t1 t0_b in 
+  let _ = add_carry k (index temp_zh (size 0)) (u64 0) t1_b in
+
+
+  let zl, zh = mul64 x x in 
+     let t1 = index t1_b (size 0) in         
+  let k = add_carry (u64 0) zl t1 temp_zl in 
+  let _ = add_carry k zh (u64 0) temp_zh in 
+  let k = add_carry (u64 0) (index temp_zl (size 0)) t2 t1_b in 
+  let _ = add_carry k (index temp_zh (size 0)) (u64 0) t2_b in
+
+
+  let zl, zh = mul64 x a3 in 
+  upd tempBuffer (size 14) zl;
+  upd tempBuffer (size 15) zh;
+
+
+     let t2 = index t2_b (size 0) in 
+  let k = add_carry (u64 0) zl t2 temp_zl in 
+   let _ = add_carry k zh (u64 0) temp_zh in 
+  let k = add_carry (u64 0) (index temp_zl (size 0)) t3 t2_b in 
+  let _ = add_carry k (index temp_zh (size 0)) (u64 0) t3_b in
+
+    let t3 = index t3_b (size 0) in 
+    let t0 = index t0_b (size 0) in 
+    let t1 = index t1_b (size 0) in 
+  
+  let t4 = add_carry (u64 0) t3 t4 t3_b in 
+  let k = add_carry (u64 0) t0 (f <<. (size 32)) t0_b in 
+  let k = add_carry k t1 (f >>. (size 32)) t1_b in 
+
+
+  let m = sub_borrow (u64 0) f (f <<. (size 32)) temp_zl in 
+  let _ = sub_borrow m f (f >>. (size 32)) temp_zh in 
+    let t2 = index t2_b (size 0) in 
+    let t3 = index t3_b (size 0) in 
+  
+  let k = add_carry k t2 (index temp_zl (size 0)) t2_b in 
+  let k = add_carry k t3 (index temp_zh (size 0)) t3_b in 
+  let _ = add_carry k t4 (u64 0) temp_zl in 
+  let t4 = index temp_zl (size 0) in 
+
+
+   pop_frame();
+   admit();
+   t4
+
+
+val mm_round3: a: felem -> t4: uint64 -> tempBuffer: lbuffer uint64 (size 16) -> 
+  Stack uint64
+  (requires fun h -> True)
+  (ensures fun h0 _ h1 -> True)
+
+
+let mm_round3 a t4 tempBuffer =  
+  let open Lib.Buffer in 
+  push_frame();
+
+  let tempBufferLocal = create (size 2) (u64 0) in 
+  let temp_zl = sub tempBufferLocal (size 0) (size 1) in 
+  let temp_zh = sub tempBufferLocal (size 1) (size 1) in 
+  let temp_zl_el = index temp_zl (size 0) in 
+  let temp_zh_el = index temp_zh (size 0) in 
+
+  let x = index a (size 3) in 
+
+  let t0 = index tempBuffer (size 0) in 
+  let t1 = index tempBuffer (size 1) in 
+  let t2 = index tempBuffer (size 2) in 
+  let t3 = index tempBuffer (size 3) in 
+
+  let t0_b = sub tempBuffer (size 0) (size 1) in 
+  let t1_b = sub tempBuffer (size 1) (size 1) in 
+  let t2_b = sub tempBuffer (size 2) (size 1) in 
+  let t3_b = sub tempBuffer (size 3) (size 1) in 
+
+  let zl = index tempBuffer (size 8) in 
+  let zh = index tempBuffer (size 9) in 
+
+
+  let k = add_carry (u64 0) zl t0 temp_zl in 
+  let f = index temp_zl (size 0) in 
+  let _ = add_carry k zh (u64 0) t0_b in
+
+
+  let zl = index tempBuffer (size 12) in 
+  let zh = index tempBuffer (size 13) in 
+  
+
+    let t0 = index t0_b (size 0) in 
+  let k = add_carry (u64 0) zl t0 temp_zl in 
+  let _ = add_carry k zh (u64 0) temp_zh in 
+  let k = add_carry (u64 0) (index temp_zl (size 0)) t1 t0_b in 
+  let _ = add_carry k (index temp_zh (size 0)) (u64 0) t1_b in
+
+
+  let zl = index tempBuffer (size 14) in 
+  let zh = index tempBuffer (size 15) in 
+  
+     let t1 = index t1_b (size 0) in         
+  let k = add_carry (u64 0) zl t1 temp_zl in 
+  let _ = add_carry k zh (u64 0) temp_zh in 
+  let k = add_carry (u64 0) (index temp_zl (size 0)) t2 t1_b in 
+  let _ = add_carry k (index temp_zh (size 0)) (u64 0) t2_b in
+
+
+  let zl, zh = mul64 x x in 
+     let t2 = index t2_b (size 0) in 
+  let k = add_carry (u64 0) zl t2 temp_zl in 
+   let _ = add_carry k zh (u64 0) temp_zh in 
+  let k = add_carry (u64 0) (index temp_zl (size 0)) t3 t2_b in 
+  let _ = add_carry k (index temp_zh (size 0)) (u64 0) t3_b in
+
+    let t3 = index t3_b (size 0) in 
+    let t0 = index t0_b (size 0) in 
+    let t1 = index t1_b (size 0) in 
+  
+  let t4 = add_carry (u64 0) t3 t4 t3_b in 
+  let k = add_carry (u64 0) t0 (f <<. (size 32)) t0_b in 
+  let k = add_carry k t1 (f >>. (size 32)) t1_b in 
+
+
+  let m = sub_borrow (u64 0) f (f <<. (size 32)) temp_zl in 
+  let _ = sub_borrow m f (f >>. (size 32)) temp_zh in 
+    let t2 = index t2_b (size 0) in 
+    let t3 = index t3_b (size 0) in 
+  
+  let k = add_carry k t2 (index temp_zl (size 0)) t2_b in 
+  let k = add_carry k t3 (index temp_zh (size 0)) t3_b in 
+  let _ = add_carry k t4 (u64 0) temp_zl in 
+  let t4 = index temp_zl (size 0) in 
+
+
+   pop_frame();
+   admit();
+   t4
+
+
+
+
+
+   
+val montgomery_square: a: felem ->  tempBuffer: lbuffer uint64 (size 16)->  Stack unit
+  (requires (fun h ->  True)) 
+  (ensures (fun h0 _ h1 -> True))
+
+
+
+let montgomery_square a result = 
+  let open Lib.Buffer in 
+
+    push_frame();
+    let tempBuffer = create (size 20) (u64 0) in 
+      let temp_zl = sub tempBuffer (size 0) (size 1) in 
+      let temp_zh = sub tempBuffer (size 1) (size 1) in 
+      let t0_buffer = sub tempBuffer (size 2) (size 1) in 
+      let t1_buffer = sub tempBuffer (size 3) (size 1) in 
+      let t2_buffer = sub tempBuffer (size 4) (size 1) in 
+      let t3_buffer = sub tempBuffer (size 5) (size 1) in 
+      let t_buffer = sub tempBuffer (size 2) (size 18) in 
+
+  let x  = index a (size 0) in 
+  let a1 = index a (size 1) in 
+  let a2 = index a (size 2) in 
+  let a3 = index a (size 3) in 
+
+  let f, t0 = mul64 x x in  
+
+
+  let zl, zh = mul64 a1 x in 
+  upd tempBuffer (size 6) zl;
+  upd tempBuffer (size 7) zh;
+
+  let k = add_carry (u64 0)  zl t0 temp_zl in 
+  let _ = add_carry k zh (u64 0) temp_zh in  
+  let k = add_carry (u64 0) (index temp_zl (size 0)) (f <<. (size 32)) temp_zl in 
+  let _ = add_carry k (index temp_zh (size 0)) (u64 0) temp_zh in 
+  let t0 = index temp_zl (size 0) in 
+  let t1 = index temp_zh (size 0) in 
+
+
+  let zl, zh = mul64 a2 x in 
+  upd tempBuffer (size 8) zl;
+  upd tempBuffer (size 9) zh;
+
+  let k = add_carry  (u64 0)  zl t1 temp_zl  in 
+  let _ = add_carry k zh (u64 0) temp_zh in 
+  let k = add_carry  (u64 0) (index temp_zl (size 0)) (f >>. (size 32)) temp_zl in 
+  let _ = add_carry k (index temp_zh (size 0)) (u64 0) temp_zh in 
+  let t1 = (index temp_zl (size 0)) in 
+  let t2 = (index temp_zh (size 0)) in 
+
+
+  let zl, zh = mul64 a3 x in 
+  upd tempBuffer (size 10) zl;
+  upd tempBuffer (size 11) zh;
+  
+
+  let k = add_carry (u64 0) zl t2 temp_zl in 
+  let _ = add_carry k zh (u64 0) temp_zh in 
+  let k = add_carry (u64 0) (index temp_zl (size 0)) f temp_zl in 
+  let _  = add_carry k (index temp_zh (size 0)) (u64 0) temp_zh in 
+  let t2 = index temp_zl (size 0) in 
+  let t3 = index temp_zh (size 0) in 
+
+  let t4 = add_carry (u64 0) t3 f temp_zl in 
+  let k  = sub_borrow (u64 0) t2 (f <<. (size 32)) temp_zh in 
+    let t3 = index temp_zl (size 0) in 
+    let t2 = index temp_zh (size 0) in 
+  let k = sub_borrow k t3 (f >>. (size 32)) temp_zl in 
+    let t3 = index temp_zl (size 0) in 
+  let _ = sub_borrow k t4 (u64 0) temp_zh in  
+    let t4 = (index temp_zh (size 0)) in  
+
+  upd t_buffer (size 0) t0;
+  upd t_buffer (size 1) t1; 
+  upd t_buffer (size 2) t2;
+  upd t_buffer (size 3) t3;
+
+  let t4 = mm_round1 a t4 t_buffer in 
+  let t4 = mm_round2 a t4 t_buffer in 
+  let t4 = mm_round3 a t4 t_buffer in 
+
+  let r0 = sub result (size 0) (size 1) in 
+  let r1 = sub result (size 1) (size 1) in  
+  let r2 = sub result (size 2) (size 1) in 
+  let r3 = sub result (size 3) (size 1) in 
+
+  let t0 = index t_buffer (size 0) in 
+  let t1 = index t_buffer (size 1) in 
+  let t2 = index t_buffer (size 2) in 
+  let t3 = index t_buffer (size 3) in 
+
+
+  let k = add_carry  (u64 0) t0 t4 r0 in 
+  let k = add_carry k t1 ((u64 0) -.(t4 <<. (size 32))) r1 in 
+  let k = add_carry k t2 ((u64 0) -. t4) r2 in 
+  let _ = add_carry k t3 ((t4 <<. (size 32)) -. (t4 <<. (size 1))) r3 in
+
+  admit();
+  pop_frame() 
+
