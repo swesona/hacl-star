@@ -15,6 +15,13 @@ let prime:pos =
   assert_norm (pow2 256 - pow2 224 + pow2 192 + pow2 96 -1 > 0);
   pow2 256 - pow2 224 + pow2 192 + pow2 96 -1
 
+inline_for_extraction
+let p256_prime_list : x:list uint64{List.Tot.length x == 4} =
+  [@inline_let]
+  let l =
+    [(u64 0xffffffffffffffff); (u64 0xffffffff); (u64 0); (u64 0xffffffff00000001)] in
+  l
+  
 
 
 open Hacl.Spec.Curve25519.Field64.Definition
