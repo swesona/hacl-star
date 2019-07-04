@@ -486,17 +486,19 @@ val compare_felem: a: felem -> b: felem -> Stack uint64
   (ensures fun h0 r h1 -> modifies0 h0 h1 /\ r == compare_felem_seq (as_seq h0 a) (as_seq h0 b)) 
 
 let compare_felem a b = 
-  let a_0 = index a (size 0) in 
-  let a_1 = index a (size 1) in 
-  let a_2 = index a (size 2) in 
-  let a_3 = index a (size 3) in 
-
-  let b_0 = index b (size 0) in 
-  let b_1 = index b (size 1) in 
-  let b_2 = index b (size 2) in 
-  let b_3 = index b (size 3) in 
-
-  equalFelem(a_0, a_1, a_2, a_3) (b_0, b_1, b_2, b_3)
+  let r0 = eq_mask a.(size 0) b.(size 0) in 
+  let r1 = eq_mask a.(size 1) b.(size 1) in 
+  let r2 = eq_mask a.(size 2) b.(size 2) in 
+  let r3 = eq_mask a.(size 3) b.(size 3) in 
+  eq_mask_lemma a.(size 0) b.(size 0);
+  eq_mask_lemma a.(size 1) b.(size 1);
+  eq_mask_lemma a.(size 2) b.(size 2);
+  eq_mask_lemma a.(size 3) b.(size 3);
+  let r = logand (logand r0 r1) (logand r2 r3) in 
+  logand_lemma (logand r0 r1) (logand r2 r3);      
+  lemma_equality (a.(size 0), a.(size 1), a.(size 2), a.(size 3)) (b.(size 0), b.(size 1), b.(size 2), b.(size 3));
+  r
+  
 
 inline_for_extraction noextract 
 val move_from_jacobian_coordinates: u1: felem -> u2: felem -> s1: felem -> s2: felem ->  p: point -> q: point -> 

@@ -156,14 +156,32 @@ let shift_carry x cin =
 
 val shift_256_impl: i: felem -> o: lbuffer uint64 (size 8) -> 
   Stack unit 
-    (requires fun h -> live h i /\ live h o)
-    (ensures fun h0 _ h1 -> modifies1 o h0 h1)
+    (requires fun h -> live h i /\ live h o /\ disjoint i o)
+    (ensures fun h0 _ h1 -> modifies1 o h0 h1 /\ 
+      (
+	let i = as_seq h0 i in 
+	let o = as_seq h1 o in 
+	felem_seq_as_nat_8 o == felem_seq_as_nat i * pow2 256 
+      )
+    )
 
 let shift_256_impl i o = 
+  upd o (size 0) (u64 0);
+  upd o (size 1) (u64 0);
+  upd o (size 2) (u64 0);
+  upd o (size 3) (u64 0);
   upd o (size 4) i.(size 0);
   upd o (size 5) i.(size 1);
   upd o (size 6) i.(size 2);
-  upd o (size 7) i.(size 3)
+  upd o (size 7) i.(size 3);
+
+  assert_norm(pow2 64 * pow2 64 = pow2 128);
+  assert_norm(pow2 64 * pow2 64 * pow2 64 = pow2 192);
+  assert_norm(pow2 64 * pow2 64 * pow2 64 * pow2 64 = pow2 256);
+  assert_norm(pow2 64 * pow2 64 * pow2 64  * pow2 64 * pow2 64= pow2 (5 * 64));
+  assert_norm(pow2 64 * pow2 64 * pow2 64  * pow2 64 * pow2 64 * pow2 64 = pow2 (6 * 64));
+  assert_norm(pow2 64 * pow2 64 * pow2 64  * pow2 64 * pow2 64* pow2 64 * pow2 64 = pow2 (7 * 64));
+  assert_norm(pow2 64 * pow2 64 * pow2 64  * pow2 64 * pow2 64* pow2 64 * pow2 64 * pow2 64 = pow2 (8 * 64))
 
 
 #set-options "--z3rlimit 500" 
