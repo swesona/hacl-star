@@ -133,6 +133,24 @@ static void Hacl_Impl_Gen_p256_add(uint64_t *arg1, uint64_t *arg2, uint64_t *out
   uu____0 = Hacl_Impl_Gen_add_carry(cc6, out[3U], (t << (uint32_t)32U) - (t << (uint32_t)1U), r3);
 }
 
+static void Hacl_Impl_Gen_p256_double(uint64_t *arg1, uint64_t *out)
+{
+  uint64_t *r0 = out;
+  uint64_t *r1 = out + (uint32_t)1U;
+  uint64_t *r2 = out + (uint32_t)2U;
+  uint64_t *r3 = out + (uint32_t)3U;
+  uint64_t cc = Hacl_Impl_Gen_add_carry((uint64_t)0U, arg1[0U], arg1[0U], r0);
+  uint64_t cc1 = Hacl_Impl_Gen_add_carry(cc, arg1[1U], arg1[1U], r1);
+  uint64_t cc2 = Hacl_Impl_Gen_add_carry(cc1, arg1[2U], arg1[2U], r2);
+  uint64_t cc3 = Hacl_Impl_Gen_add_carry(cc2, arg1[3U], arg1[3U], r3);
+  uint64_t t = cc3;
+  uint64_t cc4 = Hacl_Impl_Gen_add_carry(cc3, out[0U], (uint64_t)0U, r0);
+  uint64_t cc5 = Hacl_Impl_Gen_add_carry(cc4, out[1U], (uint64_t)0U - (t << (uint32_t)32U), r1);
+  uint64_t cc6 = Hacl_Impl_Gen_add_carry(cc5, out[2U], (uint64_t)0U - t, r2);
+  uint64_t
+  uu____0 = Hacl_Impl_Gen_add_carry(cc6, out[3U], (t << (uint32_t)32U) - (t << (uint32_t)1U), r3);
+}
+
 static void Hacl_Impl_Gen_p256_sub(uint64_t *arg1, uint64_t *arg2, uint64_t *out)
 {
   uint64_t *r0 = out;
@@ -865,8 +883,8 @@ static void solinas_reduction_impl(uint64_t *i, uint64_t *o)
   upl_six_buffer(c9, c11, c12, c13, c14, c15, redBuffer, t6);
   upl_sev_buffer(c8, c9, c10, c12, c13, c14, c15, redBuffer, t7);
   upl_eig_buffer(c9, c10, c11, c12, c13, c14, c15, redBuffer, t8);
-  Hacl_Impl_Gen_p256_add(t2, t2, t2);
-  Hacl_Impl_Gen_p256_add(t1, t1, t1);
+  Hacl_Impl_Gen_p256_double(t2, t2);
+  Hacl_Impl_Gen_p256_double(t1, t1);
   Hacl_Impl_Gen_p256_add(t0, t1, o);
   Hacl_Impl_Gen_p256_add(t2, o, o);
   Hacl_Impl_Gen_p256_add(t3, o, o);

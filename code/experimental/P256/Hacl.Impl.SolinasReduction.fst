@@ -361,8 +361,9 @@ let solinas_reduction_impl i o =
   upl_sev_buffer c8 c9 c10 c12 c13 c14 c15 redBuffer t7;
   upl_eig_buffer c9 c10 c11 c12 c13 c14 c15 redBuffer t8;
 
-  p256_add t2 t2 t2; 
-  p256_add t1 t1 t1;
+  p256_double t2 t2; 
+  p256_double t1 t1;
+  
   p256_add t0 t1 o;
   p256_add t2 o o;
   p256_add t3 o o;
