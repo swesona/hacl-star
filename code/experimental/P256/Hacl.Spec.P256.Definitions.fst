@@ -9,6 +9,7 @@ open FStar.HyperStack.All
 open Lib.Sequence
 open Lib.Buffer
 
+ 
 
 noextract
 let prime:pos =
@@ -16,12 +17,32 @@ let prime:pos =
   pow2 256 - pow2 224 + pow2 192 + pow2 96 -1
 
 inline_for_extraction
-let p256_prime_list : x:list uint64{List.Tot.length x == 4} =
+let p256_prime_list : x:list uint64{List.Tot.length x == 4 /\ 
+  (
+    let open FStar.Mul in 
+    let l0 = uint_v (List.Tot.index x 0) in 
+    let l1 = uint_v (List.Tot.index x 1) in 
+    let l2 = uint_v (List.Tot.index x 2) in 
+    let l3 = uint_v (List.Tot.index x 3) in 
+    l0 + l1 * pow2 64 + l2 * pow2 128 + l3 * pow2 192 == prime)
+
+} =
+  let open FStar.Mul in 
   [@inline_let]
-  let l =
-    [(u64 0xffffffffffffffff); (u64 0xffffffff); (u64 0); (u64 0xffffffff00000001)] in
-  l
+  let x =
+    [ (u64 0xffffffffffffffff);  (u64 0xffffffff); (u64 0);  (u64 0xffffffff00000001);] in
+    assert_norm(0xffffffffffffffff + 0xffffffff * pow2 64 + 0xffffffff00000001 * pow2 192 == prime);
+  x
   
+noextract
+let as_nat_il (h:mem) (e:ilbuffer uint64 (size 4)) : GTot nat =
+  let open Hacl.Spec.Curve25519.Field64.Definition in 
+  let s = as_seq h e in
+  let s0 = s.[0] in
+  let s1 = s.[1] in
+  let s2 = s.[2] in
+  let s3 = s.[3] in
+  as_nat4 (s0, s1, s2, s3)
 
 
 open Hacl.Spec.Curve25519.Field64.Definition

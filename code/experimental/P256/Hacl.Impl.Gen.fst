@@ -20,8 +20,8 @@ open FStar.Math.Lemmas
 module Seq = Lib.Sequence
 
 inline_for_extraction
-let prime_buffer: x: ilbuffer uint64 4ul = 
-  createL_global p256_prime_list
+let prime_buffer: x: ilbuffer uint64 (size 4) {witnessed #uint64 #(size 4) x (Lib.Sequence.of_list p256_prime_list) /\ recallable x /\ felem_seq_as_nat (Lib.Sequence.of_list (p256_prime_list)) == prime} = 
+createL_global p256_prime_list
 
 open FStar.Mul
 
@@ -54,7 +54,7 @@ val sub_borrow: cin: uint64{uint_v cin <= 1} -> x: uint64 -> y: uint64 -> r: lbu
 	let r = as_seq h1 r in 
 	let r = Seq.index r 0 in 
 	v r - v c * pow2 64 == v x - v y - v cin)
-)
+      )
 
 
 let sub_borrow cin x y result1 = 
@@ -68,11 +68,17 @@ let sub_borrow cin x y result1 =
   Lib.Buffer.upd result1 (size 0) res;
   c
 
-
-val sub4: x: felem -> y: felem -> result: felem -> 
+val sub4: x: felem -> y: ilbuffer uint64 (size 4) -> result: felem -> 
   Stack uint64
-    (requires fun h -> live h result)
-    (ensures fun h0 _ h1 -> True)
+    (requires fun h -> live h x /\ live h y /\ live h result /\ disjoint x result /\ disjoint y result)
+    (ensures fun h0 c h1 -> modifies1 result h0 h1 /\ v c <= 1 /\
+      (
+	let result = as_seq h1 result in 
+	let x = as_seq h0 x in 
+	let y = as_seq h0 y in 
+	felem_seq_as_nat result - v c * pow2 256 == felem_seq_as_nat x - felem_seq_as_nat y
+      )
+   )
 
 let sub4 x y result = 
     let r0 = sub result (size 0) (size 1) in 
@@ -89,31 +95,54 @@ let sub4 x y result =
 
 val cmovznz4: cin: uint64 -> x: felem -> y: felem -> result: felem ->
   Stack unit
-    (requires fun h -> live h result)
-    (ensures fun h0 _ h1 -> True)
+    (requires fun h -> live h x /\ live h y /\ live h result /\ disjoint x result /\ disjoint y result)
+    (ensures fun h0 _ h1 -> modifies1 result h0 h1 /\ 
+      (
+	let r = as_seq h1 result in 
+	let x = as_seq h0 x in 
+	let y = as_seq h0 y in 
+	if uint_v cin = 0 then felem_seq_as_nat r == felem_seq_as_nat x else felem_seq_as_nat r == felem_seq_as_nat y
+      )
+    )
 
-let cmovznz4 cin x y r = 
+let cmovznz4 cin x y r =  
   let mask = neq_mask cin (u64 0) in 
   let r0 = logor (logand y.(size 0) mask) (logand x.(size 0) (lognot mask)) in 
   let r1 = logor (logand y.(size 1) mask) (logand x.(size 1) (lognot mask)) in 
   let r2 = logor (logand y.(size 2) mask) (logand x.(size 2) (lognot mask)) in 
   let r3 = logor (logand y.(size 3) mask) (logand x.(size 3) (lognot mask)) in 
+  
   upd r (size 0) r0;
   upd r (size 1) r1;
   upd r (size 2) r2;
-  upd r (size 3) r3
-
+  upd r (size 3) r3;
+  
+  let h1 = ST.get() in 
+  let x = as_seq h1 x in 
+  let y = as_seq h1 y in 
+    cmovznz4_lemma cin (Seq.index x 0) (Seq.index y 0);
+    cmovznz4_lemma cin (Seq.index x 1) (Seq.index y 1);
+    cmovznz4_lemma cin (Seq.index x 2) (Seq.index y 2);
+    cmovznz4_lemma cin (Seq.index x 3) (Seq.index y 3)
+    
 
 val reduction_prime_2prime_impl: x: felem -> result: felem -> 
   Stack unit
-    (requires fun h -> live h result)
-    (ensures fun h0 _ h1 -> True)
+    (requires fun h -> live h x /\ live h result /\ disjoint x result)
+    (ensures fun h0 _ h1 -> modifies1 result h0 h1 /\ 
+      (
+	let r = as_seq h1 result in 
+	let x = as_seq h0 x in 
+	felem_seq_as_nat r == felem_seq_as_nat x % prime
+      )
+    )
 
 let reduction_prime_2prime_impl x result = 
   push_frame();
   let tempBuffer = create (size 4) (u64 0) in 
+    recall_contents prime_buffer (Lib.Sequence.of_list p256_prime_list);
     let c = sub4 x prime_buffer tempBuffer in 
-    cmovznz4 c x tempBuffer result;
+    cmovznz4 c tempBuffer x result;
   pop_frame()  
 
 
@@ -127,8 +156,8 @@ let shift_carry x cin =
 
 val shift_256_impl: i: felem -> o: lbuffer uint64 (size 8) -> 
   Stack unit 
-    (requires fun h -> True)
-    (ensures fun h0 _ h1 -> True)
+    (requires fun h -> live h i /\ live h o)
+    (ensures fun h0 _ h1 -> modifies1 o h0 h1)
 
 let shift_256_impl i o = 
   upd o (size 4) i.(size 0);

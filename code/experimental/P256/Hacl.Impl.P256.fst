@@ -17,21 +17,13 @@ open Hacl.Spec.P256.MontgomeryMultiplication.PointDouble
 open Hacl.Spec.P256.MontgomeryMultiplication.PointAdd
 open Hacl.Spec.P256.Normalisation 
 open Hacl.Impl.Gen
+open Hacl.Impl.SolinasReduction
  
 open FStar.Math.Lemmas
 
 friend Hacl.Spec.P256.MontgomeryMultiplication
 open FStar.Mul
 
-
-inline_for_extraction
-let prime_buffer : x:list uint64 =
-  [@inline_let]
-  let l =
-    [0xffffffffffffffff; 0xffffffff; 0; 0xffffffff00000001]
-  in
-
-  l
 
 
 #set-options "--z3rlimit 100"
@@ -47,18 +39,18 @@ let solinas_fast_reduction_partially_opened c result =
   upd result (size 2) r2;
   upd result (size 3) r3
 
+
 inline_for_extraction noextract 
 val toDomain: value: felem -> result: felem ->  Stack unit 
   (requires fun h ->  as_nat h value < prime /\ live h value /\live h result /\ eq_or_disjoint value result)
   (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\ as_nat h1 result = toDomain_ (as_nat h0 value)) 
  
 let toDomain value result = 
-  let value0 = index value (size 0) in 
-  let value1 = index value (size 1) in 
-  let value2 = index value (size 2) in 
-  let value3 = index value (size 3) in 
-  let multipliedByPow256 = shift_256 (value0, value1, value2, value3) in 
-  solinas_fast_reduction_partially_opened multipliedByPow256 result 
+  push_frame();
+    let multBuffer = create (size 8) (u64 0) in 
+    shift_256_impl value multBuffer;
+    solinas_reduction_impl multBuffer result;
+  pop_frame()  
 
 
 let pointToDomain p result = 
@@ -99,7 +91,11 @@ val fromDomain: f: felem-> result: felem-> Stack unit
   (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\ as_nat h1 result = (as_nat h0 f * modp_inv2(pow2 256)) % prime/\ as_nat h1 result = fromDomain_ (as_nat h0 f))
 
 let fromDomain f result = 
-  multiplication_partially_opened ((u64 1), (u64 0), u64 0, u64 0) f result
+  push_frame();
+    let one = create (size 4) (u64 0) in 
+    upd one (size 0) (u64 1);
+    montgomery_multiplication_buffer f one result;
+  pop_frame()  
     
 
 let pointFromDomain p result = 

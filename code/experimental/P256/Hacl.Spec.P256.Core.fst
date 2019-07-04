@@ -11,25 +11,6 @@ open Hacl.Spec.P256.Lemmas
 
 open FStar.Mul
 
-(*
-inline_for_extraction noextract
-val sub4_prime:
-    f1:felem4
-  -> Pure (uint64 & felem4)
-    (requires True)
-    (ensures fun (c, r) -> True)
-
-
-let sub4_prime (f10, f11, f12, f13)  =
-  let o0, c0 = subborrow f10 (u64 0xffffffffffffffff) (u64 0) in
-  let o1, c1 = subborrow f11 (u64 0xffffffff) c0 in
-  let o2, c2 = subborrow f12 (u64 0) c1 in
-  let o3, c3 = subborrow f13 (u64 0xffffffff00000001) c2 in
-  (*!!!!*)
-  (*lemma_mul_assos_5 (v c3) (pow2 64) (pow2 64) (pow2 64) (pow2 64); *)
-  assert_norm (pow2 64 * pow2 64 * pow2 64 * pow2 64 = pow2 256);
-  c3, (o0, o1, o2, o3)
-*) 
 
 let lt_u64 a b =
   let open Lib.RawIntTypes in
@@ -48,42 +29,38 @@ let eq_u64 a b =
   FStar.UInt64.(u64_to_UInt64 a =^ u64_to_UInt64 b)
 
 
-let eq_0_u64 a = 
-  let b = u64 0 in 
-  eq_u64 a b
 
 inline_for_extraction noextract
-val cmovznz: mask : uint64 ->  x: uint64 -> y: uint64 -> 
+val cmovznz: cin : uint64 ->  x: uint64 -> y: uint64 -> 
   Pure uint64
   (requires True)
-  (ensures fun r ->(* if uint_v cin = 0 then uint_v r == uint_v x else uint_v r == uint_v y) *) True)
+  (ensures fun r -> if uint_v cin = 0 then uint_v r == uint_v x else uint_v r == uint_v y)
 
 #reset-options "--z3refresh --z3rlimit 100"
 
-(* reprove!  *)
 let cmovznz cin x y  = 
     let x2 = neq_mask cin (u64 0) in 
     let x3 = logor (logand y x2) (logand x (lognot x2)) in
     let ln = lognot (neq_mask cin (u64 0)) in 
-    log_and y x2; 
-    log_not_lemma x2;
-    log_and x ln;
-    log_or (logand y x2) (logand x (lognot (x2)));
-    admit();
+    cmovznz4_lemma cin x y;
     x3
 
 
 inline_for_extraction noextract
-val cmovznz4: cin: uint64{uint_v cin <=1} -> x: felem4 -> y: felem4 -> Pure (r: felem4)
+val cmovznz4: cin: uint64 -> x: felem4 -> y: felem4 -> Pure (r: felem4)
 (requires True)
 (ensures fun r -> if uint_v cin = 0 then as_nat4 r == as_nat4 x else as_nat4 r == as_nat4 y)
 
 let cmovznz4 cin (x0, x1, x2, x3) (y0, y1, y2, y3) = 
   let mask = neq_mask cin (u64 0) in 
   let r0 = logor (logand y0 mask) (logand x0 (lognot mask)) in 
+        cmovznz4_lemma cin x0 y0;
   let r1 = logor (logand y1 mask) (logand x1 (lognot mask)) in 
+        cmovznz4_lemma cin x1 y1;
   let r2 = logor (logand y2 mask) (logand x2 (lognot mask))  in 
+        cmovznz4_lemma cin x2 y2;
   let r3 = logor (logand y3 mask) (logand x3 (lognot mask))  in 
+        cmovznz4_lemma cin x3 y3;
   (r0, r1, r2, r3)
 
 

@@ -9,9 +9,9 @@ open Lib.Sequence
 
 open Hacl.Spec.P256.Core
 
+
 #reset-options " --z3rlimit 300"
 
-let prime:pos = pow2 256 - pow2 224 + pow2 192 + pow2 96 -1 
 type _uint32 = a: nat {a < pow2 32}
 
 
