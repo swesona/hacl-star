@@ -146,14 +146,6 @@ let reduction_prime_2prime_impl x result =
   pop_frame()  
 
 
-
-inline_for_extraction noextract
-val shift_carry: x: uint64 -> cin: uint64{uint_v cin <=1} -> Tot (r: uint64)
-
-let shift_carry x cin = 
-  add (Lib.IntTypes.shift_left x (size 1)) cin
-
-
 val shift_256_impl: i: felem -> o: lbuffer uint64 (size 8) -> 
   Stack unit 
     (requires fun h -> live h i /\ live h o /\ disjoint i o)
