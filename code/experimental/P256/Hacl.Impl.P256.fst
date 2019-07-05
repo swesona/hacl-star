@@ -11,7 +11,6 @@ open Hacl.Impl.Curve25519.Field64.Core
 open Hacl.Spec.P256.Core
 open Hacl.Spec.P256.Lemmas
 open Hacl.Spec.P256.Definitions
-open Hacl.Spec.P256.SolinasReduction
 open Hacl.Spec.P256.MontgomeryMultiplication
 open Hacl.Spec.P256.MontgomeryMultiplication.PointDouble
 open Hacl.Spec.P256.MontgomeryMultiplication.PointAdd
@@ -23,22 +22,6 @@ open FStar.Math.Lemmas
 
 friend Hacl.Spec.P256.MontgomeryMultiplication
 open FStar.Mul
-
-
-
-#set-options "--z3rlimit 100"
-inline_for_extraction noextract 
-val solinas_fast_reduction_partially_opened: c: felem8 ->result : felem ->   Stack unit   
-  (requires (fun h ->  live h result)) 
-  (ensures (fun h0 _ h1 -> modifies (loc result) h0 h1 /\ as_nat h1 result == D.wide_as_nat4 c % prime ))
-
-let solinas_fast_reduction_partially_opened c result = 
-  let (r0, r1, r2, r3) = solinas_reduction c in 
-  upd result (size 0) r0;
-  upd result (size 1) r1;
-  upd result (size 2) r2;
-  upd result (size 3) r3
-
 
 inline_for_extraction noextract 
 val toDomain: value: felem -> result: felem ->  Stack unit 
@@ -66,24 +49,6 @@ let pointToDomain p result =
     toDomain p_y r_y;
     toDomain p_z r_z
 
-inline_for_extraction noextract 
-val multiplication_partially_opened: a: felem4 -> b: felem -> result: felem ->Stack unit
-  (requires fun h -> D.as_nat4 a < prime /\ as_nat h b < prime /\ live h b /\ live h result)
-  (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\ as_nat h1 result = (D.as_nat4 a * as_nat h0 b * modp_inv2(pow2 256)) % prime)
-
-let multiplication_partially_opened (a0, a1, a2, a3) b result = 
-  let b0 = index b (size 0) in 
-  let b1 = index b (size 1) in 
-  let b2 = index b (size 2) in 
-  let b3 = index b (size 3) in 
-
-  let (r0, r1, r2, r3) = montgomery_multiplication (a0, a1, a2, a3) (b0, b1, b2, b3) in 
-  assert(D.as_nat4 (r0, r1, r2, r3) = D.as_nat4 (a0, a1, a2, a3) * D.as_nat4 (b0, b1, b2, b3) * modp_inv2(pow2 256) % prime);
- 
-  upd result (size 0) r0;
-  upd result (size 1) r1;
-  upd result (size 2) r2;
-  upd result (size 3) r3
 
 
 val fromDomain: f: felem-> result: felem-> Stack unit 
@@ -315,56 +280,7 @@ let point_double_compute_y3 p_y y3 x3 s m tempBuffer =
     Hacl.Spec.P256.MontgomeryMultiplication.montgomery_multiplication_buffer m sx3 msx3; 
     p256_sub msx3 eightYyyy y3
 
-(*
-let point_double p tempBuffer = 
-	let h0 = ST.get() in  
-    let s = sub tempBuffer (size 0) (size 4) in 
-    let m = sub tempBuffer (size 4) (size 4) in 
-    let buffer_for_s_m = sub tempBuffer (size 8) (size 24) in 
-
-    let buffer_for_x3 = sub tempBuffer (size 32) (size 8) in 
-    let buffer_for_y3 = sub tempBuffer (size 40) (size 16) in 
-
-    let pypz = sub tempBuffer (size 56) (size 4) in 
-
-    let x3= sub tempBuffer (size 60) (size 4) in 
-    let y3 = sub tempBuffer (size 64) (size 4) in 
-    let z3 = sub tempBuffer (size 68) (size 4) in 
-
-    let p_x = sub p (size 0) (size 4) in 
-    let p_y = sub p (size 4) (size 4) in 
-    let p_z = sub p (size 8) (size 4) in 
-
-   (*assert(LowStar.Monotonic.Buffer.all_disjoint [loc s; loc m; loc buffer_for_s_m; loc buffer_for_x3; loc buffer_for_y3; 
-   loc pypz; loc x3; loc y3; loc z3; loc p_x; loc p_y; loc p_z]); *)
-
-     let h1 = ST.get() in 
-   point_double_compute_s_m p s m buffer_for_s_m;
-     let h2 = ST.get() in 
-     assert(modifies1 tempBuffer h1 h2);
-   point_double_compute_x3 x3 s m buffer_for_x3;
-     let h3 = ST.get() in 
-     assert(modifies1 tempBuffer h2 h3); 
-   point_double_compute_y3 p_y y3 x3 s m buffer_for_y3;
-     let h4 = ST.get() in 
-     assert(modifies1 tempBuffer h3 h4);
-   Hacl.Spec.P256.MontgomeryMultiplication.montgomery_multiplication_buffer p_y p_z pypz;
-   multByTwo pypz z3;
-     let h5 = ST.get() in 
-     
-     assert(modifies1 tempBuffer h4 h5);
-     concat3 #MUT #MUT #MUT  (size 4) x3 (size 4) y3 (size 4) z3 p;
-   let hend = ST.get() in 
-   assert(as_seq hend p == point_double_seq (as_seq h0 p))
-*)
-
 #reset-options "--z3refresh --z3rlimit 500"
-
-
-val lemma_twelve: unit -> Lemma ((size 12) == (size 4) +! (size 4) +! (size 4))
-
-let lemma_twelve () = 
-  assert(uint_v ((size 4) +! (size 4) +! (size 4)) == 12)
 
 
 let point_double p result tempBuffer = 
@@ -404,18 +320,6 @@ let point_double p result tempBuffer =
    assert(modifies1 tempBuffer h0 h5);
    assert(modifies2 tempBuffer result h0 hend)
 
-
-
-val inverse_mod_prime: value: felem -> result: felem -> tempBuffer: lbuffer uint64 (size 24) ->
-  Stack unit (requires fun h -> as_nat h value < prime /\ live h value /\ live h result /\ live h tempBuffer /\ disjoint value tempBuffer /\ disjoint result tempBuffer)
-  (ensures fun h0 _ h1 -> as_nat h1 result = (pow (as_nat h0 value) (prime -2)) % prime )
-
-let inverse_mod_prime value result tempBuffer = 
-    let resultForDomain = sub tempBuffer (size 0) (size 4) in 
-    let tempBufferForExponent = sub tempBuffer (size 4) (size 20) in 
-    toDomain value resultForDomain;
-    Hacl.Spec.P256.MontgomeryMultiplication.exponent resultForDomain result tempBufferForExponent;
-    fromDomain result result
 
 inline_for_extraction noextract 
 val copy_conditional: out: felem -> x: felem -> mask: uint64{uint_v mask = 0 \/ uint_v mask = pow2 64 - 1} -> Stack unit 
@@ -557,6 +461,7 @@ let move_from_jacobian_coordinates u1 u2 s1 s2 p q tempBuffer =
       assert(modifies2 s1 s2 h2 h3);
      assert(let u1_, u2_, s1_, s2_ = move_from_jacobian_coordinates_seq (as_seq h0 p) (as_seq h0 q) in 
       as_seq h3 u1 == u1_ /\ as_seq h3 u2 == u2_ /\ as_seq h3 s1 == s1_ /\ as_seq h3 s2 == s2_)
+      
       
 inline_for_extraction noextract 
 val compute_common_params_point_add: h: felem -> r: felem -> uh: felem -> hCube: felem -> 

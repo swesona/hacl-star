@@ -4,6 +4,7 @@ open Lib.IntTypes
 open FStar.Math.Lemmas
 open FStar.Math.Lib
 module D = Hacl.Spec.Curve25519.Field64.Definition
+open Hacl.Spec.P256.Definitions
 open FStar.Mul
 open Lib.Sequence
 
@@ -450,6 +451,7 @@ let reduce_brackets r0 r1 r2 r3 r4 r5 r6 r7 r8  =
 
 #reset-options " --z3rlimit 200 --z3refresh"
 
+val solinas_reduction: f: felem8 -> Tot (r: felem4 {D.as_nat4 r = (D.wide_as_nat4 f) % prime})
 
 let solinas_reduction (f0, f1, f2, f3, f4, f5, f6, f7) = 
     assert_norm (pow2 64 * pow2 64 = pow2 (2 * 64));

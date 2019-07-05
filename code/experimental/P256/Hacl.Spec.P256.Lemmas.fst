@@ -421,3 +421,9 @@ let cmovznz4_lemma cin x y =
     log_not_lemma x2;
     log_and x ln;
     log_or (logand y x2) (logand x (lognot (x2)))
+
+
+val lemma_twelve: unit -> Lemma ((size 12) == (size 4) +! (size 4) +! (size 4))
+
+let lemma_twelve () = 
+  assert(uint_v ((size 4) +! (size 4) +! (size 4)) == 12)

@@ -574,7 +574,6 @@ let multByMinusThree_tuple (a0, a1, a2, a3) =
   (c0, c1, c2, c3)
 
  
-(* takes felem4 and returns boolean *)
 let isOne_tuple (a0, a1, a2, a3) = 
   let r0 = eq_mask a0 (u64 1) in 
   let r1 = eq_mask a1 (u64 0) in 
