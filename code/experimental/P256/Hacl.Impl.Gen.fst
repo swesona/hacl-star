@@ -45,6 +45,78 @@ let add_carry cin x y result1 =
   Lib.Buffer.upd result1 (size 0) res;
   c
 
+#reset-options "--z3refresh --z3rlimit 200"
+
+inline_for_extraction noextract
+val add4: x: felem -> y: felem -> result: felem -> 
+  Stack uint64
+    (requires fun h -> live h x /\ live h y /\ live h result /\ eq_or_disjoint x result /\eq_or_disjoint y result )
+    (ensures fun h0 c h1 -> modifies (loc result) h0 h1 /\ v c <= 1 /\
+      (
+	let result = as_seq h1 result in 
+	let x = as_seq h0 x in 
+	let y = as_seq h0 y in 
+	felem_seq_as_nat result + v c * pow2 256 == felem_seq_as_nat x + felem_seq_as_nat y
+      )
+   )   
+
+
+let add4 x y result = 
+    let r0 = sub result (size 0) (size 1) in 
+    let r1 = sub result (size 1) (size 1) in 
+    let r2 = sub result (size 2) (size 1) in 
+    let r3 = sub result (size 3) (size 1) in 
+
+      let h0 = ST.get() in 
+    let cc = add_carry (u64 0) x.(0ul) y.(0ul) r0 in 
+    let cc = add_carry cc x.(1ul) y.(1ul) r1 in 
+    let cc = add_carry cc x.(2ul) y.(2ul) r2 in 
+    let cc = add_carry cc x.(3ul) y.(3ul) r3 in 
+      
+    assert(let r1_0 = as_seq h0 r1 in let r0_ = as_seq h0 result in Seq.index r0_ 1 == Seq.index r1_0 0);
+    assert(let r2_0 = as_seq h0 r2 in let r0_ = as_seq h0 result in Seq.index r0_ 2 == Seq.index r2_0 0);
+    assert(let r3_0 = as_seq h0 r3 in let r0_ = as_seq h0 result in Seq.index r0_ 3 == Seq.index r3_0 0);
+  cc
+
+
+inline_for_extraction noextract
+val add4_variables: x: felem -> cin: uint64 {uint_v cin <=1} ->  y0: uint64 -> y1: uint64 -> y2: uint64 -> y3: uint64 -> result: felem -> 
+  Stack uint64
+    (requires fun h -> live h x /\ live h result /\ eq_or_disjoint x result )
+    (ensures fun h0 c h1 -> modifies (loc result) h0 h1 /\ v c <= 1 /\  
+      (
+	let result = as_seq h1 result in 
+	let x = as_seq h0 x in 
+	let y = uint_v y0 + uint_v y1 * pow2 64 + uint_v y2 * pow2 128 + uint_v y3 * pow2 192 in 
+	felem_seq_as_nat result + uint_v c * pow2 256 == felem_seq_as_nat x + y + uint_v cin 
+      )
+   )   
+
+
+let add4_variables x cin y0 y1 y2 y3 result = 
+	let h0 = ST.get() in 
+    let r0 = sub result (size 0) (size 1) in  	  
+    let r1 = sub result (size 1) (size 1) in 
+    let r2 = sub result (size 2) (size 1) in 
+    let r3 = sub result (size 3) (size 1) in 
+
+    let cc0 = add_carry cin x.(0ul) y0 r0 in 
+      let h1 = ST.get() in 
+    let cc1 = add_carry cc0 x.(1ul) y1 r1 in 
+      let h2 = ST.get() in 
+    let cc = add_carry cc1 x.(2ul) y2 r2 in 
+      let h3 = ST.get() in 
+    let cc = add_carry cc x.(3ul) y3 r3 in 
+      
+    assert_norm (pow2 64 * pow2 64 = pow2 128);
+    assert_norm (pow2 64 * pow2 64 * pow2 64 = pow2 192);
+    
+    assert(let r1_0 = as_seq h0 r1 in let r0_ = as_seq h0 result in Seq.index r0_ 1 == Seq.index r1_0 0);
+    assert(let r2_0 = as_seq h0 r2 in let r0_ = as_seq h0 result in Seq.index r0_ 2 == Seq.index r2_0 0);
+    assert(let r3_0 = as_seq h0 r3 in let r0_ = as_seq h0 result in Seq.index r0_ 3 == Seq.index r3_0 0);
+    cc
+
+
 
 val sub_borrow: cin: uint64{uint_v cin <= 1} -> x: uint64 -> y: uint64 -> r: lbuffer uint64 (size 1) -> 
   Stack uint64
@@ -68,9 +140,36 @@ let sub_borrow cin x y result1 =
   Lib.Buffer.upd result1 (size 0) res;
   c
 
-val sub4: x: felem -> y: ilbuffer uint64 (size 4) -> result: felem -> 
+inline_for_extraction noextract
+val sub4_il: x: felem -> y: ilbuffer uint64 (size 4) -> result: felem -> 
   Stack uint64
     (requires fun h -> live h x /\ live h y /\ live h result /\ disjoint x result /\ disjoint y result)
+    (ensures fun h0 c h1 -> modifies1 result h0 h1 /\ v c <= 1 /\
+      (
+	let result = as_seq h1 result in 
+	let x = as_seq h0 x in 
+	let y = as_seq h0 y in 
+	felem_seq_as_nat result - v c * pow2 256 == felem_seq_as_nat x - felem_seq_as_nat y
+      )
+   )
+
+let sub4_il x y result = 
+    let r0 = sub result (size 0) (size 1) in 
+    let r1 = sub result (size 1) (size 1) in 
+    let r2 = sub result (size 2) (size 1) in 
+    let r3 = sub result (size 3) (size 1) in 
+
+    let cc = sub_borrow (u64 0) x.(size 0) y.(size 0) r0 in 
+    let cc = sub_borrow cc x.(size 1) y.(size 1) r1 in 
+    let cc = sub_borrow cc x.(size 2) y.(size 2) r2 in 
+    let cc = sub_borrow cc x.(size 3) y.(size 3) r3 in 
+    cc
+
+
+inline_for_extraction noextract
+val sub4: x: felem -> y:felem -> result: felem -> 
+  Stack uint64
+    (requires fun h -> live h x /\ live h y /\ live h result /\ disjoint x result /\ eq_or_disjoint y result)
     (ensures fun h0 c h1 -> modifies1 result h0 h1 /\ v c <= 1 /\
       (
 	let result = as_seq h1 result in 
@@ -85,17 +184,23 @@ let sub4 x y result =
     let r1 = sub result (size 1) (size 1) in 
     let r2 = sub result (size 2) (size 1) in 
     let r3 = sub result (size 3) (size 1) in 
-
+      
+      let h0 = ST.get() in 
     let cc = sub_borrow (u64 0) x.(size 0) y.(size 0) r0 in 
     let cc = sub_borrow cc x.(size 1) y.(size 1) r1 in 
     let cc = sub_borrow cc x.(size 2) y.(size 2) r2 in 
     let cc = sub_borrow cc x.(size 3) y.(size 3) r3 in 
+    
+    assert(let r1_0 = as_seq h0 r1 in let r0_ = as_seq h0 result in Seq.index r0_ 1 == Seq.index r1_0 0);
+    assert(let r2_0 = as_seq h0 r2 in let r0_ = as_seq h0 result in Seq.index r0_ 2 == Seq.index r2_0 0);
+    assert(let r3_0 = as_seq h0 r3 in let r0_ = as_seq h0 result in Seq.index r0_ 3 == Seq.index r3_0 0);
     cc
+
 
 
 val cmovznz4: cin: uint64 -> x: felem -> y: felem -> result: felem ->
   Stack unit
-    (requires fun h -> live h x /\ live h y /\ live h result /\ disjoint x result /\ disjoint y result)
+    (requires fun h -> live h x /\ live h y /\ live h result /\ disjoint x result /\ eq_or_disjoint y result)
     (ensures fun h0 _ h1 -> modifies1 result h0 h1 /\ 
       (
 	let r = as_seq h1 result in 
@@ -106,6 +211,7 @@ val cmovznz4: cin: uint64 -> x: felem -> y: felem -> result: felem ->
     )
 
 let cmovznz4 cin x y r =  
+  let h0 = ST.get() in 
   let mask = neq_mask cin (u64 0) in 
   let r0 = logor (logand y.(size 0) mask) (logand x.(size 0) (lognot mask)) in 
   let r1 = logor (logand y.(size 1) mask) (logand x.(size 1) (lognot mask)) in 
@@ -116,19 +222,19 @@ let cmovznz4 cin x y r =
   upd r (size 1) r1;
   upd r (size 2) r2;
   upd r (size 3) r3;
-  
-  let h1 = ST.get() in 
-  let x = as_seq h1 x in 
-  let y = as_seq h1 y in 
+
+  let x = as_seq h0 x in 
+  let y = as_seq h0 y in 
+    
     cmovznz4_lemma cin (Seq.index x 0) (Seq.index y 0);
     cmovznz4_lemma cin (Seq.index x 1) (Seq.index y 1);
     cmovznz4_lemma cin (Seq.index x 2) (Seq.index y 2);
     cmovznz4_lemma cin (Seq.index x 3) (Seq.index y 3)
-    
+
 
 val reduction_prime_2prime_impl: x: felem -> result: felem -> 
   Stack unit
-    (requires fun h -> live h x /\ live h result /\ disjoint x result)
+    (requires fun h -> live h x /\ live h result /\ eq_or_disjoint x result)
     (ensures fun h0 _ h1 -> modifies1 result h0 h1 /\ 
       (
 	let r = as_seq h1 result in 
@@ -141,9 +247,35 @@ let reduction_prime_2prime_impl x result =
   push_frame();
   let tempBuffer = create (size 4) (u64 0) in 
     recall_contents prime_buffer (Lib.Sequence.of_list p256_prime_list);
-    let c = sub4 x prime_buffer tempBuffer in 
+    let c = sub4_il x prime_buffer tempBuffer in 
     cmovznz4 c tempBuffer x result;
   pop_frame()  
+
+
+inline_for_extraction noextract
+val reduction_prime_2prime_with_carry_impl: cin: uint64 -> x: felem -> result: felem ->
+  Stack unit 
+    (requires fun h -> live h x /\ live h result /\  eq_or_disjoint x result /\ 
+      (let x = as_seq h x in  felem_seq_as_nat x + uint_v cin * pow2 256) < 2 * prime)
+    (ensures fun h0 _ h1 -> modifies1 result h0 h1 /\ 
+      (
+	let r = as_seq h1 result in 
+	let x = as_seq h0 x in 
+	felem_seq_as_nat r = (felem_seq_as_nat x + uint_v cin * pow2 256) % prime
+      )
+    )  
+
+let reduction_prime_2prime_with_carry_impl cin x result = 
+  push_frame();
+    let tempBuffer = create (size 4) (u64 0) in 
+    let tempBufferForSubborrow = create (size 1) (u64 0) in 
+    recall_contents prime_buffer (Lib.Sequence.of_list p256_prime_list);
+    let c = sub4_il x prime_buffer tempBuffer in
+    let carry = sub_borrow c cin (u64 0) tempBufferForSubborrow in 
+    assert(if uint_v cin > 0 then uint_v carry == 0 else if uint_v c = 0 then uint_v carry = 0 else uint_v carry = 1);
+    cmovznz4 carry tempBuffer x result;
+ pop_frame()   
+
 
 
 val shift_256_impl: i: felem -> o: lbuffer uint64 (size 8) -> 
@@ -167,7 +299,6 @@ let shift_256_impl i o =
   upd o (size 6) i.(size 2);
   upd o (size 7) i.(size 3);
 
-  assert_norm(pow2 64 * pow2 64 = pow2 128);
   assert_norm(pow2 64 * pow2 64 * pow2 64 = pow2 192);
   assert_norm(pow2 64 * pow2 64 * pow2 64 * pow2 64 = pow2 256);
   assert_norm(pow2 64 * pow2 64 * pow2 64  * pow2 64 * pow2 64= pow2 (5 * 64));
@@ -175,116 +306,167 @@ let shift_256_impl i o =
   assert_norm(pow2 64 * pow2 64 * pow2 64  * pow2 64 * pow2 64* pow2 64 * pow2 64 = pow2 (7 * 64));
   assert_norm(pow2 64 * pow2 64 * pow2 64  * pow2 64 * pow2 64* pow2 64 * pow2 64 * pow2 64 = pow2 (8 * 64))
 
+val lemma_t_computation: t: uint64{uint_v t == 0 \/ uint_v t == 1} -> 
+  Lemma
+    (
+        let t0 = u64 0 in 
+	let t1 = (u64 0) -. (t <<. (size 32)) in 
+	let t2 = (u64 0) -. t in 
+	let t3 = (t <<. (size 32)) -. (t <<. (size 1)) in 
+	let s = uint_v t0 + uint_v t1 * pow2 64 + uint_v t2 * pow2 128 + uint_v t3 * pow2 192 in 
+	if uint_v t = 1 then s == pow2 256 - prime - 1 else s == 0
+    )
+
+let lemma_t_computation t = 
+  let t0 = u64 0 in 
+  let t1 = (u64 0) -. (t <<. (size 32)) in 
+  let t2 = (u64 0) -. t in 
+  let t3 = (t <<. (size 32)) -. (t <<. (size 1)) in 
+
+  let s = uint_v t0 + uint_v t1 * pow2 64 + uint_v t2 * pow2 128 + uint_v t3 * pow2 192 in  
+
+  assert_norm(if uint_v t = 1 then uint_v t1 = 18446744069414584320 else uint_v t1 = 0);
+  assert_norm(if uint_v t = 1 then uint_v t2 = 18446744073709551615 else uint_v t2 = 0);
+  assert_norm(if uint_v t = 1 then uint_v t3 = 4294967294 else uint_v t3 = 0);
+ 
+  assert_norm(18446744069414584320 * pow2 64 + 18446744073709551615 * pow2 128 + 4294967294 * pow2 192 = pow2 256 - prime - 1)
+
+
+val lemma_t_computation2: t: uint64 {uint_v t == 0 \/ uint_v t == 1} ->
+  Lemma
+    (
+      let t0 = (u64 0) -. t in 
+      let t1 = ((u64 0) -. t) >>. (size 32) in 
+      let t2 = u64 0 in 
+      let t3 = t -. (t <<. (size 32)) in 
+      let s = uint_v t0 + uint_v t1 * pow2 64 + uint_v t2 * pow2 128 + uint_v t3 * pow2 192 in 
+	if uint_v t = 1 then s == prime else s == 0
+    )
+
+let lemma_t_computation2 t = 
+      let t0 = (u64 0) -. t in 
+      let t1 = ((u64 0) -. t) >>. (size 32) in 
+      let t2 = u64 0 in 
+      let t3 = t -. (t <<. (size 32)) in 
+
+  let s = uint_v t0 + uint_v t1 * pow2 64 + uint_v t2 * pow2 128 + uint_v t3 * pow2 192 in  
+
+  assert_norm(if uint_v t = 1 then uint_v t0 == 18446744073709551615 else uint_v t0 = 0);
+  assert_norm(if uint_v t = 1 then uint_v t1 == 4294967295 else uint_v t1 = 0);
+  assert_norm(if uint_v t = 1 then uint_v t3 == 18446744069414584321 else uint_v t3 = 0);
+
+  assert_norm(18446744073709551615 + 4294967295 * pow2 64 + 18446744069414584321 * pow2 192 = prime)
+
+
 
 #set-options "--z3rlimit 500" 
 val p256_add: arg1: felem -> arg2: felem ->  out: felem -> Stack unit 
   (requires (fun h0 ->  
-    (let arg1_as_seq = as_seq h0 arg1 in let arg2_as_seq = as_seq h0 arg2 in 
-    felem_seq_as_nat arg1_as_seq < prime /\ felem_seq_as_nat arg2_as_seq < prime /\
-    live h0 out /\ live h0 arg1 /\ live h0 arg2))
+    live h0 arg1 /\ live h0 arg2 /\ live h0 out /\ disjoint arg1 out /\ eq_or_disjoint arg2 out /\
+    (
+      let arg1_as_seq = as_seq h0 arg1 in let arg2_as_seq = as_seq h0 arg2 in 
+      felem_seq_as_nat arg1_as_seq < prime /\ felem_seq_as_nat arg2_as_seq < prime
+    )
+   )
   )
   (ensures (fun h0 _ h1 -> modifies1 out h0 h1 /\ 
-    (let arg1_as_seq = as_seq h0 arg1 in let arg2_as_seq = as_seq h0 arg2 in 
-    as_nat h1 out < prime (*/\ as_seq h1 out == felem_add_seq arg1_as_seq arg2_as_seq)) *) ))
-  )
+    (
+      let x = as_seq h0 arg1 in  
+      let y = as_seq h0 arg2 in 
+      let out = as_seq h1 out in 
+      felem_seq_as_nat out == (felem_seq_as_nat x + felem_seq_as_nat y) % prime
+    )
+  ))
 
 let p256_add arg1 arg2 out = 
     push_frame();
-  let h0 = ST.get() in 
-
-  let r0 = sub out (size 0) (size 1) in 
-  let r1 = sub out (size 1) (size 1) in 
-  let r2 = sub out (size 2) (size 1) in 
-  let r3 = sub out (size 3) (size 1) in 
-  
-  let cc = add_carry (u64 0) arg1.(0ul) arg2.(0ul) r0 in 
-  let cc = add_carry cc arg1.(1ul) arg2.(1ul)  r1 in 
-  let cc = add_carry cc arg1.(2ul) arg2.(2ul)  r2 in 
-  let cc = add_carry cc arg1.(3ul) arg2.(3ul)  r3 in 
-
-  let t = cc in 
-  let cc = add_carry cc (index out (size 0)) (u64 0) r0 in 
-  let cc = add_carry cc (index out (size 1)) ((u64 0) -. (t <<. (size 32))) r1 in 
-  let cc = add_carry cc (index out (size 2)) ((u64 0) -. t) r2 in 
-  let _  = add_carry cc (index out (size 3)) ((t <<. (size 32)) -. (t <<. (size 1))) r3 in 
-
-
-  let h1 = ST.get() in 
-  pop_frame();
-  admit();
-  (*assert(Lib.Sequence.equal (as_seq h1 out) (felem_add_seq (as_seq h0 arg1) (as_seq h0 arg2)));*)
-  ()
+    
+    let h0 = ST.get() in   
+  let t = add4 arg1 arg2 out in 
+    let h1 = ST.get() in 
+      assert(let out = as_seq h1 out in let x = as_seq h0 arg1 in let y = as_seq h0 arg2 in 
+      felem_seq_as_nat out + uint_v t * pow2 256 == felem_seq_as_nat x + felem_seq_as_nat y);
+  lemma_t_computation t;
+  reduction_prime_2prime_with_carry_impl t out out;
+  pop_frame()
 
 
 #set-options "--z3rlimit 500" 
 val p256_double: arg1: felem ->  out: felem -> Stack unit 
-  (requires (fun h0 ->  True)
-  )
-  (ensures (fun h0 _ h1 -> True))
+  (requires (fun h0 ->  live h0 arg1 /\ live h0 out /\  eq_or_disjoint arg1 out /\
+    (
+      let arg1_as_seq = as_seq h0 arg1 in felem_seq_as_nat arg1_as_seq < prime
+    )
+  ))
+  (ensures (fun h0 _ h1 -> modifies1 out h0 h1 /\ 
+    (
+      let x = as_seq h0 arg1 in 
+      let out = as_seq h1 out in 
+      felem_seq_as_nat out == (2 * felem_seq_as_nat x) % prime
+    )
+  ))
+
 
 let p256_double arg1 out = 
     push_frame();
   let h0 = ST.get() in 
-
-  let r0 = sub out (size 0) (size 1) in 
-  let r1 = sub out (size 1) (size 1) in 
-  let r2 = sub out (size 2) (size 1) in 
-  let r3 = sub out (size 3) (size 1) in 
-  
-  let cc = add_carry (u64 0) arg1.(0ul) arg1.(0ul) r0 in 
-  let cc = add_carry cc arg1.(1ul) arg1.(1ul)  r1 in 
-  let cc = add_carry cc arg1.(2ul) arg1.(2ul)  r2 in 
-  let cc = add_carry cc arg1.(3ul) arg1.(3ul)  r3 in 
-
-  let t = cc in 
-  let cc = add_carry cc (index out (size 0)) (u64 0) r0 in 
-  let cc = add_carry cc (index out (size 1)) ((u64 0) -. (t <<. (size 32))) r1 in 
-  let cc = add_carry cc (index out (size 2)) ((u64 0) -. t) r2 in 
-  let _  = add_carry cc (index out (size 3)) ((t <<. (size 32)) -. (t <<. (size 1))) r3 in 
-
-
-  let h1 = ST.get() in 
-  pop_frame();
-  admit();
-  (*assert(Lib.Sequence.equal (as_seq h1 out) (felem_add_seq (as_seq h0 arg1) (as_seq h0 arg2)));*)
-  ()
+  let t = add4 arg1 arg1 out in 
+    let h1 = ST.get() in 
+      assert(let out = as_seq h1 out in let x = as_seq h0 arg1 in 
+      felem_seq_as_nat out + uint_v t * pow2 256 == felem_seq_as_nat x + felem_seq_as_nat x);
+  lemma_t_computation t;
+  reduction_prime_2prime_with_carry_impl t out out;
+  pop_frame()
 
 
 
 val p256_sub: arg1: felem -> arg2: felem -> out: felem -> Stack unit 
   (requires 
-    (fun h0 -> live h0 out /\ live h0 arg1 /\ live h0 arg2 /\ as_nat h0 arg1 < prime /\ as_nat h0 arg2 < prime))
-  (ensures 
-    (fun h0 _ h1 ->modifies1 out h0 h1 /\  as_nat h1 out < prime ))
+    (fun h0 -> live h0 out /\ live h0 arg1 /\ live h0 arg2 /\ disjoint arg1 out /\ disjoint arg2 out /\
+    
+    
+    as_nat h0 arg1 < prime /\ as_nat h0 arg2 < prime))
+    (ensures (fun h0 _ h1 -> modifies1 out h0 h1 /\ 
+      (
+	let x = as_seq h0 arg1 in 
+	let y = as_seq h0 arg2 in 
+	let out = as_seq h1 out in 
+	felem_seq_as_nat out == (felem_seq_as_nat x - felem_seq_as_nat y) % prime
+      )
+  ))
 
 let p256_sub arg1 arg2 out = 
-  let h0 = ST.get() in 
-        push_frame();
-  let h0 = ST.get() in 
-
-  let r0 = sub out (size 0) (size 1) in 
-  let r1 = sub out (size 1) (size 1) in 
-  let r2 = sub out (size 2) (size 1) in 
-  let r3 = sub out (size 3) (size 1) in 
-
-
-  let cc = sub_borrow (u64 0) arg1.(0ul) arg2.(0ul)  r0 in 
-  let cc = sub_borrow cc arg1.(1ul) arg2.(1ul)  r1 in 
-  let cc = sub_borrow cc arg1.(2ul) arg2.(2ul)  r2 in 
-  let cc = sub_borrow cc arg1.(3ul) arg2.(3ul)  r3 in 
-
-  let t = cc in 
-  let cc = add_carry (u64 0) (index out (size 0)) ((u64 0) -. t) r0 in 
-  let cc = add_carry cc (index out (size 1)) (((u64 0) -. t) >>. (size 32)) r1 in 
-  let cc = add_carry cc (index out (size 2)) (u64 0) r2 in 
-  let _ = add_carry cc (index out (size 3)) (t -. (t <<. (size 32))) r3 in 
-
-admit();
+    push_frame();
+    let h0 = ST.get() in 
+  let t = sub4 arg1 arg2 out in 
     let h1 = ST.get() in 
-    pop_frame();
-  ()
+    lemma_t_computation2 t;
+    assert(let out = as_seq h1 out in let x = as_seq h0 arg1 in let y = as_seq h0 arg2 in 
+      felem_seq_as_nat out - uint_v t * pow2 256 == felem_seq_as_nat x - felem_seq_as_nat y);
+
+  let t0 = (u64 0) -. t in 
+  let t1 = ((u64 0) -. t) >>. (size 32) in 
+  let t2 = u64 0 in 
+  let t3 = t -. (t <<. (size 32)) in 
 
 
+  let c = add4_variables out (u64 0)  t0 t1 t2 t3 out in 
+    let h2 = ST.get() in 
+      assert(
+      let result = as_seq h2 out in 
+      let x = as_seq h0 arg1 in let y = as_seq h0 arg2 in 
+      let s = uint_v t0 + uint_v t1 * pow2 64 + uint_v t2 * pow2 128 + uint_v t3 * pow2 192 in 
+      if felem_seq_as_nat x - felem_seq_as_nat y >= 0 then 
+	begin
+	modulo_lemma (felem_seq_as_nat x - felem_seq_as_nat y) prime;
+	felem_seq_as_nat result == (felem_seq_as_nat x - felem_seq_as_nat y) % prime
+	end
+      else
+	felem_seq_as_nat result == (felem_seq_as_nat x - felem_seq_as_nat y) % prime 
+	);
+
+    pop_frame()
+    
 
 val mm_round1: a: felem -> t4: uint64 -> tempBuffer: lbuffer uint64 (size 16) -> 
   Stack uint64

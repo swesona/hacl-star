@@ -70,19 +70,6 @@ Hacl_Impl_Gen_sub_borrow(uint64_t cin, uint64_t x, uint64_t y, uint64_t *result1
   return c;
 }
 
-static uint64_t Hacl_Impl_Gen_sub4(uint64_t *x, uint64_t *y, uint64_t *result)
-{
-  uint64_t *r0 = result;
-  uint64_t *r1 = result + (uint32_t)1U;
-  uint64_t *r2 = result + (uint32_t)2U;
-  uint64_t *r3 = result + (uint32_t)3U;
-  uint64_t cc = Hacl_Impl_Gen_sub_borrow((uint64_t)0U, x[0U], y[0U], r0);
-  uint64_t cc1 = Hacl_Impl_Gen_sub_borrow(cc, x[1U], y[1U], r1);
-  uint64_t cc2 = Hacl_Impl_Gen_sub_borrow(cc1, x[2U], y[2U], r2);
-  uint64_t cc3 = Hacl_Impl_Gen_sub_borrow(cc2, x[3U], y[3U], r3);
-  return cc3;
-}
-
 static void Hacl_Impl_Gen_cmovznz4(uint64_t cin, uint64_t *x, uint64_t *y, uint64_t *r)
 {
   uint64_t mask = ~FStar_UInt64_eq_mask(cin, (uint64_t)0U);
@@ -99,7 +86,16 @@ static void Hacl_Impl_Gen_cmovznz4(uint64_t cin, uint64_t *x, uint64_t *y, uint6
 static void Hacl_Impl_Gen_reduction_prime_2prime_impl(uint64_t *x, uint64_t *result)
 {
   uint64_t tempBuffer[4U] = { 0U };
-  uint64_t c = Hacl_Impl_Gen_sub4(x, Hacl_Impl_Gen_prime_buffer, tempBuffer);
+  uint64_t *r0 = tempBuffer;
+  uint64_t *r1 = tempBuffer + (uint32_t)1U;
+  uint64_t *r2 = tempBuffer + (uint32_t)2U;
+  uint64_t *r3 = tempBuffer + (uint32_t)3U;
+  uint64_t
+  cc = Hacl_Impl_Gen_sub_borrow((uint64_t)0U, x[0U], Hacl_Impl_Gen_prime_buffer[0U], r0);
+  uint64_t cc1 = Hacl_Impl_Gen_sub_borrow(cc, x[1U], Hacl_Impl_Gen_prime_buffer[1U], r1);
+  uint64_t cc2 = Hacl_Impl_Gen_sub_borrow(cc1, x[2U], Hacl_Impl_Gen_prime_buffer[2U], r2);
+  uint64_t cc3 = Hacl_Impl_Gen_sub_borrow(cc2, x[3U], Hacl_Impl_Gen_prime_buffer[3U], r3);
+  uint64_t c = cc3;
   Hacl_Impl_Gen_cmovznz4(c, tempBuffer, x, result);
 }
 
@@ -117,55 +113,78 @@ static void Hacl_Impl_Gen_shift_256_impl(uint64_t *i, uint64_t *o)
 
 static void Hacl_Impl_Gen_p256_add(uint64_t *arg1, uint64_t *arg2, uint64_t *out)
 {
-  uint64_t *r0 = out;
-  uint64_t *r1 = out + (uint32_t)1U;
-  uint64_t *r2 = out + (uint32_t)2U;
-  uint64_t *r3 = out + (uint32_t)3U;
-  uint64_t cc = Hacl_Impl_Gen_add_carry((uint64_t)0U, arg1[0U], arg2[0U], r0);
-  uint64_t cc1 = Hacl_Impl_Gen_add_carry(cc, arg1[1U], arg2[1U], r1);
-  uint64_t cc2 = Hacl_Impl_Gen_add_carry(cc1, arg1[2U], arg2[2U], r2);
-  uint64_t cc3 = Hacl_Impl_Gen_add_carry(cc2, arg1[3U], arg2[3U], r3);
+  uint64_t *r00 = out;
+  uint64_t *r10 = out + (uint32_t)1U;
+  uint64_t *r20 = out + (uint32_t)2U;
+  uint64_t *r30 = out + (uint32_t)3U;
+  uint64_t cc0 = Hacl_Impl_Gen_add_carry((uint64_t)0U, arg1[0U], arg2[0U], r00);
+  uint64_t cc1 = Hacl_Impl_Gen_add_carry(cc0, arg1[1U], arg2[1U], r10);
+  uint64_t cc2 = Hacl_Impl_Gen_add_carry(cc1, arg1[2U], arg2[2U], r20);
+  uint64_t cc3 = Hacl_Impl_Gen_add_carry(cc2, arg1[3U], arg2[3U], r30);
   uint64_t t = cc3;
-  uint64_t cc4 = Hacl_Impl_Gen_add_carry(cc3, out[0U], (uint64_t)0U, r0);
-  uint64_t cc5 = Hacl_Impl_Gen_add_carry(cc4, out[1U], (uint64_t)0U - (t << (uint32_t)32U), r1);
-  uint64_t cc6 = Hacl_Impl_Gen_add_carry(cc5, out[2U], (uint64_t)0U - t, r2);
+  uint64_t tempBuffer[4U] = { 0U };
+  uint64_t tempBufferForSubborrow = (uint64_t)0U;
+  uint64_t *r0 = tempBuffer;
+  uint64_t *r1 = tempBuffer + (uint32_t)1U;
+  uint64_t *r2 = tempBuffer + (uint32_t)2U;
+  uint64_t *r3 = tempBuffer + (uint32_t)3U;
   uint64_t
-  uu____0 = Hacl_Impl_Gen_add_carry(cc6, out[3U], (t << (uint32_t)32U) - (t << (uint32_t)1U), r3);
+  cc = Hacl_Impl_Gen_sub_borrow((uint64_t)0U, out[0U], Hacl_Impl_Gen_prime_buffer[0U], r0);
+  uint64_t cc10 = Hacl_Impl_Gen_sub_borrow(cc, out[1U], Hacl_Impl_Gen_prime_buffer[1U], r1);
+  uint64_t cc20 = Hacl_Impl_Gen_sub_borrow(cc10, out[2U], Hacl_Impl_Gen_prime_buffer[2U], r2);
+  uint64_t cc30 = Hacl_Impl_Gen_sub_borrow(cc20, out[3U], Hacl_Impl_Gen_prime_buffer[3U], r3);
+  uint64_t c = cc30;
+  uint64_t carry = Hacl_Impl_Gen_sub_borrow(c, t, (uint64_t)0U, &tempBufferForSubborrow);
+  Hacl_Impl_Gen_cmovznz4(carry, tempBuffer, out, out);
 }
 
 static void Hacl_Impl_Gen_p256_double(uint64_t *arg1, uint64_t *out)
 {
+  uint64_t *r00 = out;
+  uint64_t *r10 = out + (uint32_t)1U;
+  uint64_t *r20 = out + (uint32_t)2U;
+  uint64_t *r30 = out + (uint32_t)3U;
+  uint64_t cc = Hacl_Impl_Gen_add_carry((uint64_t)0U, arg1[0U], arg1[0U], r00);
+  uint64_t cc1 = Hacl_Impl_Gen_add_carry(cc, arg1[1U], arg1[1U], r10);
+  uint64_t cc2 = Hacl_Impl_Gen_add_carry(cc1, arg1[2U], arg1[2U], r20);
+  uint64_t cc3 = Hacl_Impl_Gen_add_carry(cc2, arg1[3U], arg1[3U], r30);
+  uint64_t t = cc3;
   uint64_t *r0 = out;
   uint64_t *r1 = out + (uint32_t)1U;
   uint64_t *r2 = out + (uint32_t)2U;
   uint64_t *r3 = out + (uint32_t)3U;
-  uint64_t cc = Hacl_Impl_Gen_add_carry((uint64_t)0U, arg1[0U], arg1[0U], r0);
-  uint64_t cc1 = Hacl_Impl_Gen_add_carry(cc, arg1[1U], arg1[1U], r1);
-  uint64_t cc2 = Hacl_Impl_Gen_add_carry(cc1, arg1[2U], arg1[2U], r2);
-  uint64_t cc3 = Hacl_Impl_Gen_add_carry(cc2, arg1[3U], arg1[3U], r3);
-  uint64_t t = cc3;
-  uint64_t cc4 = Hacl_Impl_Gen_add_carry(cc3, out[0U], (uint64_t)0U, r0);
-  uint64_t cc5 = Hacl_Impl_Gen_add_carry(cc4, out[1U], (uint64_t)0U - (t << (uint32_t)32U), r1);
-  uint64_t cc6 = Hacl_Impl_Gen_add_carry(cc5, out[2U], (uint64_t)0U - t, r2);
+  uint64_t cc0 = Hacl_Impl_Gen_add_carry(t, out[0U], (uint64_t)0U, r0);
+  uint64_t cc10 = Hacl_Impl_Gen_add_carry(cc0, out[1U], (uint64_t)0U - (t << (uint32_t)32U), r1);
+  uint64_t cc4 = Hacl_Impl_Gen_add_carry(cc10, out[2U], (uint64_t)0U - t, r2);
   uint64_t
-  uu____0 = Hacl_Impl_Gen_add_carry(cc6, out[3U], (t << (uint32_t)32U) - (t << (uint32_t)1U), r3);
+  cc20 = Hacl_Impl_Gen_add_carry(cc4, out[3U], (t << (uint32_t)32U) - (t << (uint32_t)1U), r3);
+  uint64_t uu____0 = cc20;
 }
 
 static void Hacl_Impl_Gen_p256_sub(uint64_t *arg1, uint64_t *arg2, uint64_t *out)
 {
+  uint64_t *r00 = out;
+  uint64_t *r10 = out + (uint32_t)1U;
+  uint64_t *r20 = out + (uint32_t)2U;
+  uint64_t *r30 = out + (uint32_t)3U;
+  uint64_t cc = Hacl_Impl_Gen_sub_borrow((uint64_t)0U, arg1[0U], arg2[0U], r00);
+  uint64_t cc1 = Hacl_Impl_Gen_sub_borrow(cc, arg1[1U], arg2[1U], r10);
+  uint64_t cc2 = Hacl_Impl_Gen_sub_borrow(cc1, arg1[2U], arg2[2U], r20);
+  uint64_t cc3 = Hacl_Impl_Gen_sub_borrow(cc2, arg1[3U], arg2[3U], r30);
+  uint64_t t = cc3;
+  uint64_t t0 = (uint64_t)0U - t;
+  uint64_t t1 = (uint64_t)0U - t >> (uint32_t)32U;
+  uint64_t t2 = (uint64_t)0U;
+  uint64_t t3 = t - (t << (uint32_t)32U);
   uint64_t *r0 = out;
   uint64_t *r1 = out + (uint32_t)1U;
   uint64_t *r2 = out + (uint32_t)2U;
   uint64_t *r3 = out + (uint32_t)3U;
-  uint64_t cc = Hacl_Impl_Gen_sub_borrow((uint64_t)0U, arg1[0U], arg2[0U], r0);
-  uint64_t cc1 = Hacl_Impl_Gen_sub_borrow(cc, arg1[1U], arg2[1U], r1);
-  uint64_t cc2 = Hacl_Impl_Gen_sub_borrow(cc1, arg1[2U], arg2[2U], r2);
-  uint64_t cc3 = Hacl_Impl_Gen_sub_borrow(cc2, arg1[3U], arg2[3U], r3);
-  uint64_t t = cc3;
-  uint64_t cc4 = Hacl_Impl_Gen_add_carry((uint64_t)0U, out[0U], (uint64_t)0U - t, r0);
-  uint64_t cc5 = Hacl_Impl_Gen_add_carry(cc4, out[1U], (uint64_t)0U - t >> (uint32_t)32U, r1);
-  uint64_t cc6 = Hacl_Impl_Gen_add_carry(cc5, out[2U], (uint64_t)0U, r2);
-  uint64_t uu____0 = Hacl_Impl_Gen_add_carry(cc6, out[3U], t - (t << (uint32_t)32U), r3);
+  uint64_t cc0 = Hacl_Impl_Gen_add_carry((uint64_t)0U, out[0U], t0, r0);
+  uint64_t cc10 = Hacl_Impl_Gen_add_carry(cc0, out[1U], t1, r1);
+  uint64_t cc4 = Hacl_Impl_Gen_add_carry(cc10, out[2U], t2, r2);
+  uint64_t cc20 = Hacl_Impl_Gen_add_carry(cc4, out[3U], t3, r3);
+  uint64_t c = cc20;
 }
 
 static uint64_t Hacl_Impl_Gen_mm_round1(uint64_t *a, uint64_t t4, uint64_t *tempBuffer)

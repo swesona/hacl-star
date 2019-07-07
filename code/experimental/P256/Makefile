@@ -91,9 +91,10 @@ KREMLIN=$(KREMLIN_HOME)/krml
 $(GENERATED_DIR)/Makefile.include: $(ALL_KRML_FILES) | .depend
 	$(KREMLIN) $(KREMLIN_TESTLIB) -skip-compilation \
 	-no-prefix 'Hacl.Impl.P256' \
+	-no-prefix 'Hacl.Impl.SolinasReduction' \
 	-bundle 'Lib.*' \
 	-bundle 'Spec.*' \
-	-bundle 'Hacl.Impl.P256=Hacl.Impl.P256,Hacl.Impl.Gen,Hacl.Spec.P256.*,Hacl.Spec.Curve25519.*,Hacl.Impl.Curve25519.*' \
+	-bundle 'Hacl.Impl.P256=Hacl.Impl.*,Hacl.Spec.P256.*,Hacl.Spec.Curve25519.*,Hacl.Impl.Curve25519.*' \
 	-library 'C,FStar' \
 	-drop 'LowStar,Spec,Prims,Lib,C.Loops.*,Hacl.Spec.P256.Lemmas' \
 	-add-include '"c/Lib_PrintBuffer.h"' \
