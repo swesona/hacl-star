@@ -25,7 +25,7 @@ let _point_double  (p:point_nat) :  (p:point_nat) =
   let z3 = (2 * y * z) % prime in 
   (x3, y3, z3)
 
-
+(*)
 val computeS:
   px: felem_seq_prime -> 
   py: felem_seq_prime -> 
@@ -276,3 +276,4 @@ let point_double_seq p =
   lemma_zToSpecification (fromDomain_ (felem_seq_as_nat px)) (fromDomain_ (felem_seq_as_nat py)) (fromDomain_ (felem_seq_as_nat pz)) z3;
   r
  
+*)

@@ -345,6 +345,10 @@ let shortened_mul u =
   l0, o1, o2, l3, h3, (u64 0), (u64 0), (u64 0)
 
 
+noextract 
+val mod64_spec: a: nat -> Tot (r: nat {r < pow2 64 /\ r = a % pow2 64})
+
+let mod64_spec a = a % pow2 64
 
 inline_for_extraction noextract
 val mod_64: a: felem8 -> Tot (r: uint64 {wide_as_nat4 a % pow2 64 = uint_v r})
@@ -637,3 +641,7 @@ let isZero_tuple_b (a0, a1, a2, a3)  =
   let f = eq_u64 r (u64 0xffffffffffffffff) in  
    f
    
+
+let felem_add_spec a b = (a + b) % prime
+
+let felem_sub_spec a b = (a - b) % prime

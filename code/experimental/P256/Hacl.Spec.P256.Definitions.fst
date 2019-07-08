@@ -35,6 +35,10 @@ let p256_prime_list : x:list uint64{List.Tot.length x == 4 /\
   x
 
 
+noextract 
+let nat_mod_prime = (a: nat{a < prime})
+
+
 inline_for_extraction noextract
 let felem4 = uint64 * uint64 * uint64 * uint64
 inline_for_extraction noextract
@@ -45,7 +49,7 @@ inline_for_extraction noextract
 let felem9 = uint64 * uint64  * uint64  * uint64 * uint64 * uint64 * uint64 * uint64 * uint64
 
 noextract
-let point_nat = nat * nat * nat
+let point_nat = nat_mod_prime * nat_mod_prime * nat_mod_prime
 
 inline_for_extraction
 let felem = lbuffer uint64 (size 4)

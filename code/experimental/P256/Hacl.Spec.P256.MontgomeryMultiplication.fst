@@ -29,30 +29,29 @@ open Lib.Loops
 
 let fromDomain_ a = (a * modp_inv2 (pow2 256)) % prime
 
-
 let fromDomainPoint a = 
   let x, y, z = a in 
   fromDomain_ x, fromDomain_ y, fromDomain_ z
 
 
-val fromDomain: a: felem4{as_nat4 a < prime} -> Tot (result: felem4 {as_nat4 result = fromDomain_ (as_nat4 a)})
+assume val fromDomain: a: felem4{as_nat4 a < prime} -> Tot (result: felem4 {as_nat4 result = fromDomain_ (as_nat4 a)})
 
-let fromDomain a =  
+(*let fromDomain a =  
   let one = ((u64 1), (u64 0), u64 0, u64 0) in
     assert_norm (as_nat4 one = 1);
   Core.montgomery_multiplication one a
-
+*)
 
 let toDomain_ a = (a * pow2 256) % prime
 
 
-val toDomain: a: felem4{as_nat4 a < prime} -> Tot (result: felem4 {as_nat4 result = toDomain_ (as_nat4 a)})
-
+assume val toDomain: a: felem4{as_nat4 a < prime} -> Tot (result: felem4 {as_nat4 result = toDomain_ (as_nat4 a)})
+(*
 let toDomain a = 
   let open Hacl.Spec.P256.SolinasReduction  in 
   let multiplied = Core.shift_256 a in 
   solinas_reduction multiplied
-
+*)
 
 let lemmaFromDomain a = ()
 
@@ -82,7 +81,6 @@ let lemmaFromDomainToDomainModuloPrime a =
   assert_norm (pow2 256 * modp_inv2 (pow2 256) % prime = 1);
   modulo_distributivity_mult_last_two a 1 1 (pow2 256) (modp_inv2 (pow2 256)) prime
 
-(* it is the key lemma of Montgomery Multiplication, showing that it's correct (i.e. mm(a, b) = a * b * 2^-256 *)
 val lemmaMontgomeryMultiplicationCorrect: a: felem4{as_nat4 a < prime} -> b: felem4{as_nat4 b < prime} -> Lemma (
   let aDomain = toDomain a in 
   let bDomain = toDomain b in 
@@ -146,8 +144,27 @@ let additionInDomain #k #l a b =
   modulo_distributivity (k * pow2 256) (l *pow2 256) prime;
   assert(as_nat4 result = toDomain_ (k + l))
 
+#reset-options "--z3refresh --z3rlimit  100"
 
-(* the lemma shows that the result of addition in domain (moved out of domain) is the same if the variables were out of domain *)
+
+val additionInDomain_spec: #k: nat -> #l: nat -> a: nat_mod_prime{a == toDomain_ k} -> b: nat_mod_prime {b == toDomain_ l} -> 
+  Lemma 
+    (let result = felem_add_spec a b in result == toDomain_ (k + l))
+
+let additionInDomain_spec #k #l a b = 
+    modulo_distributivity (k * pow2 256) (l * pow2 256) prime
+
+val additionInDomain2_spec: a: nat_mod_prime -> b: nat_mod_prime -> Lemma 
+  (let result = felem_add_spec a b in result = toDomain_ (fromDomain_ a + fromDomain_ b))
+
+let additionInDomain2_spec a b = 
+  let k = fromDomain_ a in 
+  let l = fromDomain_ b in 
+  lemmaFromDomainToDomain a;
+  lemmaFromDomainToDomain b;
+  additionInDomain_spec #k #l a b
+
+
 val additionInDomain2: a: felem4{as_nat4 a < prime} -> b: felem4 {as_nat4 b < prime} -> Lemma (let result = felem_add a b in 
   as_nat4 result = toDomain_ (fromDomain_ (as_nat4 a) + fromDomain_ (as_nat4 b)))
 
@@ -280,14 +297,160 @@ let felem_sub_seq a b =
   inDomain_mod_is_not_mod (fromDomain_ (as_nat4 (a0, a1, a2, a3)) - fromDomain_ (as_nat4 (b0, b1, b2, b3)));
   r
 
+val lemma_size_uint64: a0: uint64 -> a1: uint64 -> Lemma
+    (uint_v a0 * uint_v a1 < pow2 128 - 2 * pow2 64 + 2)
 
+let lemma_size_uint64 a b = 
+  assert(uint_v a <= pow2 64 - 1);
+  assert(uint_v b <= pow2 64 - 1);
+  assert(uint_v a * uint_v b <= (pow2 64 - 1) * (pow2 64 - 1));
+  assert_norm ((pow2 64 -1) * (pow2 64 - 1) = pow2 128 - 2 * pow2 64  + 1);
+  assert(uint_v a * uint_v b < pow2 128 - 2 * pow2 64 + 2)
 
-#reset-options "--z3refresh --z3rlimit 500"
+val lemma_mult_plus_two: a0: uint64 -> a1: uint64 -> a2: uint64 -> a3: uint64 -> 
+  Lemma 
+    (uint_v a0 * uint_v a1 + uint_v a2 + uint_v a3 < pow2 128)
 
-val mm_round: x: uint64 -> b: felem -> t4: uint64 -> result: felem -> 
+let lemma_mult_plus_two a0 a1 a2 a3 = 
+  lemma_size_uint64 a0 a1
+
+inline_for_extraction noextract
+val multMM1: x: uint64 -> b0: uint64 ->t0: uint64 ->  t0b: lbuffer uint64  (size 1) -> tempBuffer: lbuffer uint64 (size 1) ->
   Stack uint64
-  (requires fun h -> live h b /\ live h result)
-  (ensures fun h0 _ h1 -> True)
+    (requires fun h -> live h t0b /\ live h tempBuffer /\ disjoint t0b tempBuffer)
+    (ensures fun h0 f h1 -> modifies2 t0b tempBuffer h0 h1  /\
+      (
+	let t0Updated = Seq.index (as_seq h1 t0b) 0 in 
+	uint_v f + uint_v t0Updated * pow2 64 = uint_v x * uint_v b0 + uint_v t0
+      )
+    )
+    
+
+let multMM1 x b0 t0 t0_b temp_zl = 
+  let zl, zh = mul64 x b0 in 
+    assert(uint_v zl == (uint_v x * uint_v b0) % pow2 64);
+    let h0 = ST.get() in 
+  let k = add_carry (u64 0) zl t0 temp_zl in
+    let h1 = ST.get() in 
+    lemma_mod_add_distr (uint_v t0) (uint_v x * uint_v b0) (pow2 64);
+    assert(if uint_v zl + uint_v t0 >= pow2 64 then uint_v k = 1 else uint_v k = 0);
+  let c = add_carry k zh (u64 0) t0_b in
+  Lib.Buffer.index temp_zl (size 0)
+
+
+#reset-options "--z3refresh --z3rlimit 200"
+
+
+inline_for_extraction noextract
+val add2: a: uint64 -> b: uint64 -> c: uint64 -> temp_zl: lbuffer uint64 (size 1) -> temp_zh: lbuffer uint64 (size 1) -> 
+  Stack unit
+    (requires fun h -> live h temp_zl /\ live h temp_zh 
+      /\ disjoint temp_zl temp_zh 
+      /\ uint_v a +  uint_v b * pow2 64 < pow2 128 - pow2 64 + 1)
+    (ensures fun h0 _ h1 -> modifies2 temp_zl temp_zh h0 h1 /\ 
+      (
+      let temp_zl = Seq.index (as_seq h1 temp_zl) 0 in 
+      let temp_zh = Seq.index (as_seq h1 temp_zh) 0 in 
+      uint_v temp_zh * pow2 64 + uint_v temp_zl == uint_v a +  uint_v b * pow2 64 + uint_v c
+      )
+    )  
+
+let add2 a b c temp_zl temp_zh = 
+  let k = add_carry (u64 0) a c temp_zl in 
+  let _ = add_carry k b (u64 0) temp_zh in  ()
+
+
+inline_for_extraction noextract
+val multMM2: x: uint64 -> b: uint64 ->t: uint64 -> t_curr: lbuffer uint64 (size 1) -> t_next: lbuffer uint64 (size 1) -> temp: lbuffer uint64 (size 2) -> 
+  Stack unit 
+    (requires fun h -> live h t_curr /\ live h t_next /\ live h temp /\ disjoint t_curr t_next /\ disjoint t_curr temp /\ disjoint t_next temp)
+    (ensures fun h0 _ h1 -> modifies3 t_curr t_next temp h0 h1 /\
+      (
+	let t_curr_before = Seq.index (as_seq h0 t_curr) 0 in 
+	let t_curr = Seq.index (as_seq h1 t_curr ) 0 in 
+	let t_next = Seq.index (as_seq h1 t_next) 0 in 
+	uint_v t_curr + uint_v t_next * pow2 64 == uint_v x * uint_v b + uint_v t + uint_v t_curr_before
+    )
+)
+
+
+let multMM2 x b t t_curr t_next temp = 
+  let open Lib.Buffer in 
+  let temp_zl = sub temp (size 0) (size 1) in 
+  let temp_zh = sub temp (size 1) (size 1) in 
+  let zl, zh = mul64 x b in 
+  lemma_size_uint64 x b;  
+  add2 zl zh t_curr.(size 0) temp_zl temp_zh;
+  add2 temp_zl.(size 0) temp_zh.(size 0) t t_curr t_next
+
+
+
+inline_for_extraction noextract
+val montgomery_multiplication_round_1: x: uint64 -> b: felem -> t4_prev: uint64 -> t_buffer: lbuffer uint64 (size 4) -> tempBufferLocal: lbuffer uint64 (size 2) -> 
+  Stack uint64 
+    (requires fun h -> live h t_buffer /\ live h tempBufferLocal /\ live h b /\ disjoint b t_buffer /\ disjoint b tempBufferLocal /\ disjoint t_buffer tempBufferLocal)
+    (ensures fun h0 f h1 -> modifies2 t_buffer tempBufferLocal h0 h1 
+      /\
+	(
+	  let b = as_seq h0 b in 
+	  let t_buffer_pr = as_seq h0 t_buffer in 
+	  let t_buffer = as_seq h1 t_buffer in 
+	  
+	  let t4 = Seq.index (as_seq h1 tempBufferLocal) 0 in 
+	  let b0 = Seq.index b 0 in 
+	  let t0 = Seq.index t_buffer_pr 0 in 
+
+	  uint_v f = (uint_v b0 * uint_v x + uint_v t0) % pow2 64 /\
+
+	  felem_seq_as_nat t_buffer + uint_v t4 * pow2 256 == 
+	  (felem_seq_as_nat t_buffer_pr + uint_v t4_prev * pow2 256 + uint_v x * felem_seq_as_nat b - uint_v f) / pow2 64 
+    )
+)
+
+
+let montgomery_multiplication_round_1 x b t4 t_buffer tempBufferLocal = 
+  let open Lib.Buffer in 
+  let temp_zl = sub tempBufferLocal (size 0) (size 1) in 
+
+  let t0 = t_buffer.(size 0) in 
+  let t1 = t_buffer.(size 1) in 
+  let t2 = t_buffer.(size 2) in 
+  let t3 = t_buffer.(size 3) in 
+
+  (*not to delete - stops passing *)
+  let t0_b = sub t_buffer (size 0) (size 1) in 
+  let t1_b = sub t_buffer (size 1) (size 1) in 
+  let t2_b = sub t_buffer (size 2) (size 1) in 
+  let t3_b = sub t_buffer (size 3) (size 1) in 
+
+  let f = multMM1 x b.(size 0) t0 t0_b temp_zl in 
+  multMM2 x b.(size 1) t1 t0_b t1_b tempBufferLocal;
+  multMM2 x b.(size 2) t2 t1_b t2_b tempBufferLocal;
+  multMM2 x b.(size 3) t3 t2_b t3_b tempBufferLocal;
+  let t4 = add_carry (u64 0) t3_b.(size 0) t4 t3_b in 
+  upd tempBufferLocal (size 0) t4;
+  f
+    
+  
+
+val mm_round: x: uint64 -> b: felem -> t4_pr: uint64 -> t_buffer: felem -> 
+  Stack uint64
+  (requires fun h -> live h b /\ live h t_buffer /\ disjoint b t_buffer)
+  (ensures fun h0 t4 h1 -> modifies1 t_buffer h0 h1 /\ 
+    (
+      let t_buffer_pr = as_seq h0 t_buffer in 
+      let t_buffer = as_seq h1 t_buffer in 
+      let b = as_seq h0 b in 
+      let b0 = Seq.index b 0 in 
+      let t0 = Seq.index t_buffer_pr 0 in 
+      let f = (uint_v b0 * uint_v x + uint_v t0) % pow2 64 in 
+
+      let t_pr = felem_seq_as_nat t_buffer_pr + uint_v t4_pr * pow2 256 in 
+      let t = felem_seq_as_nat t_buffer + uint_v t4 * pow2 256 in 
+      t = t_pr + uint_v x * felem_seq_as_nat b + f * prime
+    )
+  )
+
 
 
 let mm_round x b t4 tempBuffer =  
@@ -297,76 +460,30 @@ let mm_round x b t4 tempBuffer =
   let tempBufferLocal = create (size 2) (u64 0) in 
   let temp_zl = sub tempBufferLocal (size 0) (size 1) in 
   let temp_zh = sub tempBufferLocal (size 1) (size 1) in 
-  let temp_zl_el = index temp_zl (size 0) in 
-  let temp_zh_el = index temp_zh (size 0) in 
-
-  let b0 = index b (size 0) in 
-  let b1 = index b (size 1) in 
-  let b2 = index b (size 2) in 
-  let b3 = index b (size 3) in 
-  
-  let t0 = index tempBuffer (size 0) in 
-  let t1 = index tempBuffer (size 1) in 
-  let t2 = index tempBuffer (size 2) in 
-  let t3 = index tempBuffer (size 3) in 
 
   let t0_b = sub tempBuffer (size 0) (size 1) in 
   let t1_b = sub tempBuffer (size 1) (size 1) in 
   let t2_b = sub tempBuffer (size 2) (size 1) in 
   let t3_b = sub tempBuffer (size 3) (size 1) in 
 
-  let zl, zh = mul64 x b0 in 
-  let k = add_carry (u64 0) zl t0 temp_zl in 
-  let f = index temp_zl (size 0) in 
-  let _ = add_carry k zh (u64 0) t0_b in
+  let f = montgomery_multiplication_round_1 x b t4 tempBuffer tempBufferLocal in 
+  let t4 = index tempBufferLocal (size 0) in 
 
-
-  let zl, zh = mul64 x b1 in 
-    let t0 = index t0_b (size 0) in 
-  let k = add_carry (u64 0) zl t0 temp_zl in 
-  let _ = add_carry k zh (u64 0) temp_zh in 
-  let k = add_carry (u64 0) (index temp_zl (size 0)) t1 t0_b in 
-  let _ = add_carry k (index temp_zh (size 0)) (u64 0) t1_b in
-
-
-  let zl, zh = mul64 x b2 in 
-     let t1 = index t1_b (size 0) in         
-  let k = add_carry (u64 0) zl t1 temp_zl in 
-  let _ = add_carry k zh (u64 0) temp_zh in 
-  let k = add_carry (u64 0) (index temp_zl (size 0)) t2 t1_b in 
-  let _ = add_carry k (index temp_zh (size 0)) (u64 0) t2_b in
-
-
-  let zl, zh = mul64 x b3 in 
-     let t2 = index t2_b (size 0) in 
-  let k = add_carry (u64 0) zl t2 temp_zl in 
-   let _ = add_carry k zh (u64 0) temp_zh in 
-  let k = add_carry (u64 0) (index temp_zl (size 0)) t3 t2_b in 
-  let _ = add_carry k (index temp_zh (size 0)) (u64 0) t3_b in
-
-    let t3 = index t3_b (size 0) in 
-    let t0 = index t0_b (size 0) in 
-    let t1 = index t1_b (size 0) in 
-  
-  let t4 = add_carry (u64 0) t3 t4 t3_b in 
-  let k = add_carry (u64 0) t0 (f <<. (size 32)) t0_b in 
-  let k = add_carry k t1 (f >>. (size 32)) t1_b in 
-
+  let k = add_carry (u64 0) (t0_b.(size 0)) (f <<. (size 32)) t0_b in 
+  let k = add_carry k (t1_b.(size 0)) (f >>. (size 32)) t1_b in 
 
   let m = sub_borrow (u64 0) f (f <<. (size 32)) temp_zl in 
   let _ = sub_borrow m f (f >>. (size 32)) temp_zh in 
-    let t2 = index t2_b (size 0) in 
-    let t3 = index t3_b (size 0) in 
-  
-  let k = add_carry k t2 (index temp_zl (size 0)) t2_b in 
-  let k = add_carry k t3 (index temp_zh (size 0)) t3_b in 
+
+
+  let k = add_carry k t2_b.(size 0) (index temp_zl (size 0)) t2_b in 
+  let k = add_carry k t3_b.(size 0) (index temp_zh (size 0)) t3_b in 
   let _ = add_carry k t4 (u64 0) temp_zl in 
+
   let t4 = index temp_zl (size 0) in 
-
-
+  
    pop_frame();
-   admit();
-   t4
+  t4
 
 
 

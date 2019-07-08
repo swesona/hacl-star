@@ -76,3 +76,11 @@ val isZero_tuple_u: a: felem4 -> Tot (r: uint64 {if as_nat4 a = 0 then uint_v r 
 
 inline_for_extraction noextract 
 val isZero_tuple_b: a: felem4 ->  Tot (r: bool {if as_nat4 a = 0 then r == true else r == false})
+
+
+noextract 
+val felem_add_spec: a: nat_mod_prime -> b: nat_mod_prime -> Tot (r: nat_mod_prime {r = (a + b) % prime})
+
+noextract
+val felem_sub_spec: a: nat_mod_prime -> b: nat_mod_prime -> Tot (r: nat_mod_prime {r = (a - b) % prime})
+

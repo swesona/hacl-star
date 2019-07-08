@@ -68,7 +68,7 @@ let _point_add (p:point_nat) (q:point_nat) : point_nat =
 	(x3, y3, z3)
     end	
 
-
+(*
 val move_from_jacobian_coordinates_lemma: 
   p: point_prime ->
   q: point_prime -> 
@@ -388,7 +388,7 @@ let point_double_condition_seq u1 u2 s1 s2 z1 z2 =
     lemmaFromDomain (felem_seq_as_nat z1);
     lemmaFromDomain (felem_seq_as_nat z2);
     eq_u64 result (u64 0xffffffffffffffff)     
-
+*) 
 
 inline_for_extraction noextract
 val copy_conditional_tuple: 
@@ -420,7 +420,7 @@ let copy_conditional_tuple out x mask =
   lemma_xor_copy_cond out_3 x_3 mask;
   (r_0, r_1, r_2, r_3)
 
-
+(*)
 noextract
 val copy_conditional_seq: 
   out: felem_seq_prime -> 
@@ -861,3 +861,4 @@ let point_add_seq p q =
       lemma_xToSpecification_after_double p q result u1 u2 s1 s2 h r;
       result
   end
+*)

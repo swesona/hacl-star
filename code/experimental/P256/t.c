@@ -4370,7 +4370,7 @@ void Test52()
    }   
   else 
   { 
-   printf("%s\n ", "The test 51has not passed"); 
+   printf("%s\n ", "The test 52 has not passed"); 
    printf("%s\n ", "The expectedPoint:"); 
    print_uu_l(expectedPoint, 12, false); 
    printf("%s\n ", "The computed result"); 

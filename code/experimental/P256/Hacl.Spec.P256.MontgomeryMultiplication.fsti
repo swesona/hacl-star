@@ -22,10 +22,10 @@ open Lib.Sequence
 
 
 noextract
-val fromDomain_: a: int -> Tot (r: nat (*{ r = a * modp_inv2 (pow2 256) % prime}*))
+val fromDomain_: a: nat_mod_prime -> Tot nat_mod_prime
 
 noextract
-val fromDomainPoint: a: tuple3 nat nat nat -> Tot (r: tuple3 nat nat nat 
+val fromDomainPoint: a: point_nat -> Tot (r: point_nat
   {
     let x, y, z = a in
     let x3, y3, z3 = r in 
@@ -33,18 +33,17 @@ val fromDomainPoint: a: tuple3 nat nat nat -> Tot (r: tuple3 nat nat nat
   }
 )
 
-
 noextract
-val toDomain_: a: int -> Tot (r: nat (*{r =  a * pow2 256 % prime}*))
+val toDomain_: a: nat_mod_prime -> Tot nat_mod_prime
 
-val lemmaFromDomain: a: int -> Lemma (fromDomain_ (a) == a * modp_inv2 (pow2 256) % prime)
+val lemmaFromDomain: a: nat_mod_prime -> Lemma (fromDomain_ (a) == a * modp_inv2 (pow2 256) % prime)
 
-val lemmaToDomain: a: int -> Lemma (toDomain_(a) == a * (pow2 256) % prime)
+val lemmaToDomain: a: nat_mod_prime -> Lemma (toDomain_(a) == a * (pow2 256) % prime)
 
-val lemmaToDomainAndBackIsTheSame: a: nat { a < prime} -> Lemma (fromDomain_ (toDomain_ a) == a)
+val lemmaToDomainAndBackIsTheSame: a: nat_mod_prime -> Lemma (fromDomain_ (toDomain_ a) == a)
   [SMTPat (fromDomain_ (toDomain_ a))]
 
-val lemmaFromDomainToDomain: a: nat { a < prime} -> Lemma (toDomain_ (fromDomain_ a) == a)
+val lemmaFromDomainToDomain: a: nat_mod_prime -> Lemma (toDomain_ (fromDomain_ a) == a)
 
 noextract
 val pow: a:nat -> b:nat -> res:nat

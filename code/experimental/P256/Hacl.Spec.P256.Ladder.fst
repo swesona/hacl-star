@@ -74,12 +74,12 @@ val montgomery_ladder_step0: p: point_prime -> q: point_prime ->
     } 
  )   
     
-
+(*
 let montgomery_ladder_step0 r0 r1 = 
   let r0 = point_add_seq r0 r1 in 
   let r1 = point_double_seq r1 in 
   (r0, r1)
-
+*)
 
 val montgomery_ladder_step1: p: point_prime -> q: point_prime -> 
   Tot (r: tuple2 point_prime point_prime 
@@ -128,13 +128,14 @@ val montgomery_ladder_step1: p: point_prime -> q: point_prime ->
         R1 ← point_double(R1)
   return R0 *)
 
-
+(*
 let montgomery_ladder_step1 r0 r1 = 
   let r1 = point_add_seq r1 r0 in 
   let r0 = point_double_seq r0 in  
   (r0, r1)
+*)
 
-
+(*
 val montgomery_ladder_step: p: point_prime -> q: point_prime -> 
   k: scalar -> i: nat {i < 256} -> Tot (tuple2 point_prime point_prime)
 
@@ -147,3 +148,4 @@ let montgomery_ladder_step p q k i =
   else   
     montgomery_ladder_step1 p q
     
+*)
