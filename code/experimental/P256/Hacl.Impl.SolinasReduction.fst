@@ -308,36 +308,7 @@ let upl_eig_buffer c9 c10 c11 c12 c13 c14 c15 temp o =
     reduction_prime_2prime_impl temp o
 
 
-val solinas_reduction_mod: 
-  c0_n: _uint32-> 
-  c1_n: _uint32 -> 
-  c2_n: _uint32 -> 
-  c3_n: _uint32 -> 
-  c4_n: _uint32 -> 
-  c5_n: _uint32 -> 
-  c6_n: _uint32 -> 
-  c7_n: _uint32 -> 
-  c8_n: _uint32 -> 
-  c9_n: _uint32 -> 
-  c10_n: _uint32 -> 
-  c11_n: _uint32 -> 
-  c12_n: _uint32 -> 
-  c13_n: _uint32 -> 
-  c14_n: _uint32 -> 
-  c15_n: _uint32->
-  s0: int {s0 = (c0_n + c1_n * pow2 32 + c2_n * pow2 (2 * 32) + c3_n * pow2 (3 * 32) + c4_n * pow2 (4 * 32) + c5_n * pow2 (5 * 32) + c6_n * pow2 (6 * 32) + c7_n * pow2 (7 * 32)) % prime} -> 
-  s1: int {s1 = (c11_n * pow2 (3 * 32) + c12_n * pow2 (4 * 32) + c13_n * pow2 (5 * 32) + c14_n * pow2 (6 * 32) + c15_n * pow2 (7 * 32)) % prime} ->
-  s2: int {s2 = (c12_n * pow2 (3 * 32) + c13_n * pow2 (4 * 32) + c14_n * pow2 (5* 32) + c15_n * pow2 (6 * 32)) % prime} -> 
-  s3: int {s3 = (c8_n + c9_n * pow2 32 + c10_n * pow2 (2 * 32) + c14_n * pow2 (6 * 32) + c15_n * pow2 (7 * 32)) % prime} ->
-  s4: int {s4 = (c9_n + c10_n * pow2 32 + c11_n * pow2 (2 * 32) + c13_n * pow2 (3 * 32) + c14_n * pow2 (4 * 32) + c15_n * pow2 (5 * 32) + c13_n * pow2 (6 * 32) + c8_n * pow2 (7 * 32)) % prime} -> 
-  s5: int {s5 = (c11_n + c12_n * pow2 32 + c13_n * pow2 (2 * 32) + c8_n * pow2 (6 * 32) + c10_n * pow2 (7 * 32)) % prime} ->
-  s6: int {s6 = (c12_n + c13_n * pow2 32 + c14_n * pow2 (2 * 32) + c15_n * pow2 (3 * 32) + c9_n * pow2 (6 * 32) + c11_n * pow2 (7 * 32)) % prime} ->
-  s7: int {s7 = (c13_n + c14_n * pow2 32 + c15_n * pow2 (2 * 32) + c8_n * pow2 (3* 32) + c9_n * pow2 (4 * 32) + c10_n * pow2 (5 * 32) + c12_n * pow2 (7 * 32)) % prime} ->
-  s8: int {s8 = (c14_n + c15_n * pow2 32 + c9_n * pow2 (3 * 32) + c10_n * pow2 (4* 32) + c11_n * pow2 (5 * 32) + c13_n * pow2 (7 * 32)) % prime} -> 
-  n: int {n = (s0 + 2 * s1 + 2 * s2 + s3 + s4 - s5 - s6 - s7 - s8) % prime} -> 
-Lemma (n % prime == (c0_n + c1_n * pow2 32 + c2_n * pow2 (2 * 32) + c3_n * pow2 (3 * 32) + c4_n * pow2 (4 * 32) + c5_n * pow2 (5 * 32) + c6_n * pow2 (6 * 32) + c7_n * pow2 (7 * 32) + c8_n * pow2 256 + c9_n * pow2 288 + c10_n * pow2 (10 * 32)  + c11_n * pow2 (11 * 32) + c12_n * pow2 (12 * 32) + c13_n* pow2 (13 * 32) + c14_n * pow2 (14 * 32) + c15_n * pow2 (15 * 32)) % prime)
-
-
+inline_for_extraction noextract
 val solinas_reduction_upload0: c0: uint32 -> c1: uint32 -> c2: uint32 -> c3: uint32 -> c4: uint32 -> c5: uint32 -> 
   c6: uint32 -> c7: uint32 -> c8: uint32 -> c9: uint32 -> c10: uint32 -> c11: uint32 -> c12: uint32 -> c13: uint32 -> 
   c14: uint32 -> c15: uint32 -> tempBuffer: lbuffer uint64 (size 36) -> redBuffer: felem ->
@@ -376,6 +347,7 @@ let solinas_reduction_upload0 c0 c1 c2 c3 c4 c5 c6 c7 c8 c9 c10 c11 c12 c13 c14 
   upl_for_buffer c8 c9 c10 c11 c13 c14 c15 redBuffer t4;
   upl_fif_buffer c8 c10 c11 c12 c13 redBuffer  t5
 
+inline_for_extraction noextract
 val solinas_reduction_upload: c0: uint32 -> c1: uint32 -> c2: uint32 -> c3: uint32 -> c4: uint32 -> c5: uint32 -> 
   c6: uint32 -> c7: uint32 -> c8: uint32 -> c9: uint32 -> c10: uint32 -> c11: uint32 -> c12: uint32 -> c13: uint32 -> 
   c14: uint32 -> c15: uint32 -> tempBuffer: lbuffer uint64 (size 36) -> 
@@ -418,16 +390,45 @@ let solinas_reduction_upload c0 c1 c2 c3 c4 c5 c6 c7 c8 c9 c10 c11 c12 c13 c14 c
     upl_sev_buffer c8 c9 c10 c12 c13 c14 c15 redBuffer t7;
     upl_eig_buffer c9 c10 c11 c12 c13 c14 c15 redBuffer t8;
   pop_frame()
-  
 
-val solinas_reduction_impl: i: lbuffer uint64 (size 8) -> o: lbuffer uint64 (size 4) -> 
+
+inline_for_extraction noextract
+val solinas_reduction_operations: tempBuffer: lbuffer uint64 (size 36) ->  o: lbuffer uint64 (size 4) -> 
   Stack unit
-    (requires fun h -> live h i /\ live h o /\ disjoint i o)
-    (ensures fun h0 _ h1 -> True)
+    (requires fun h -> live h o /\ live h tempBuffer /\ disjoint tempBuffer o /\
+      (
+      	  let t0 = felem_seq_as_nat (as_seq h (gsub tempBuffer (size 0) (size 4))) in 
+	  let t1 = felem_seq_as_nat (as_seq h (gsub tempBuffer (size 4) (size 4))) in 
+	  let t2 = felem_seq_as_nat (as_seq h (gsub tempBuffer (size 8) (size 4))) in 
+	  let t3 = felem_seq_as_nat (as_seq h (gsub tempBuffer (size 12) (size 4))) in 
+	  let t4 = felem_seq_as_nat (as_seq h (gsub tempBuffer (size 16) (size 4))) in 
+	  let t5 = felem_seq_as_nat (as_seq h (gsub tempBuffer (size 20) (size 4))) in 
+	  let t6 = felem_seq_as_nat (as_seq h (gsub tempBuffer (size 24) (size 4))) in 
+	  let t7 = felem_seq_as_nat (as_seq h (gsub tempBuffer (size 28) (size 4))) in 
+	  let t8 = felem_seq_as_nat (as_seq h (gsub tempBuffer (size 32) (size 4))) in 
+	  t0 < prime /\ t1 < prime /\ t2 < prime /\ t3 < prime /\ t4 < prime /\
+	  t5 < prime /\ t6 < prime /\ t7 < prime /\ t8 < prime
+      )
+    )
+    (ensures fun h0 _ h1 -> modifies2 tempBuffer o h0 h1 /\ 
+       (
+      	  let t0 = felem_seq_as_nat (as_seq h0 (gsub tempBuffer (size 0) (size 4))) in 
+	  let t1 = felem_seq_as_nat (as_seq h0 (gsub tempBuffer (size 4) (size 4))) in 
+	  let t2 = felem_seq_as_nat (as_seq h0 (gsub tempBuffer (size 8) (size 4))) in 
+	  let t3 = felem_seq_as_nat (as_seq h0 (gsub tempBuffer (size 12) (size 4))) in 
+	  let t4 = felem_seq_as_nat (as_seq h0 (gsub tempBuffer (size 16) (size 4))) in 
+	  let t5 = felem_seq_as_nat (as_seq h0 (gsub tempBuffer (size 20) (size 4))) in 
+	  let t6 = felem_seq_as_nat (as_seq h0 (gsub tempBuffer (size 24) (size 4))) in 
+	  let t7 = felem_seq_as_nat (as_seq h0 (gsub tempBuffer (size 28) (size 4))) in 
+	  let t8 = felem_seq_as_nat (as_seq h0 (gsub tempBuffer (size 32) (size 4))) in 
+	  felem_seq_as_nat (as_seq h1 o) == ((t0 + 2 * t1 + 2 * t2  + t3 + t4 - t5  - t6 - t7 - t8) % prime
+       )
+    )
+    )
 
-let solinas_reduction_impl i o = 
-  push_frame();
-    let tempBuffer = create (size 44) (u64 0) in 
+
+let solinas_reduction_operations tempBuffer o =  
+    let h0 = ST.get() in 
     let t0 = sub tempBuffer (size 0) (size 4) in
     let t1 = sub tempBuffer (size 4) (size 4) in 
     let t2 = sub tempBuffer (size 8) (size 4) in 
@@ -436,9 +437,128 @@ let solinas_reduction_impl i o =
     let t5 = sub tempBuffer (size 20) (size 4) in 
     let t6 = sub tempBuffer (size 24) (size 4) in 
     let t7 = sub tempBuffer (size 28) (size 4) in 
-    let t8 = sub tempBuffer (size 32) (size 4) in 
-    let t11 = sub tempBuffer (size 36) (size 4) in 
-    let t22 = sub tempBuffer (size 40) (size 4) in 
+    let t8 = sub tempBuffer (size 32) (size 4) in  
+
+    assert(LowStar.Monotonic.Buffer.all_disjoint [loc t0; loc t1; loc t2; loc t3; loc t4; loc t5; loc t6; loc t7; loc t8; loc o]);
+
+    p256_double t2 t2;  
+    p256_double t1 t1;
+    p256_add t0 t1 o; 
+    p256_add t2 o o;
+    p256_add t3 o o;
+    p256_add t4 o o; 
+    p256_sub o t5 o;
+    p256_sub o t6 o;
+    p256_sub o t7 o;
+    p256_sub o t8 o;
+
+    reduce_brackets 
+      (felem_seq_as_nat (as_seq h0 t0)) 
+      (felem_seq_as_nat (as_seq h0 t1)) 
+      (felem_seq_as_nat (as_seq h0 t2))
+      (felem_seq_as_nat (as_seq h0 t3)) 
+      (felem_seq_as_nat (as_seq h0 t4))
+      (felem_seq_as_nat (as_seq h0 t5)) 
+      (felem_seq_as_nat (as_seq h0 t6)) 
+      (felem_seq_as_nat (as_seq h0 t7)) 
+      (felem_seq_as_nat (as_seq h0 t8))
+
+val lemma_opened: i: Lib.Sequence.lseq uint64 8 -> Lemma
+  ( 
+    let open Lib.Sequence in 
+
+     let i0 = index i 0 in let i1 = index i 1 in let i2 = index i 2 in let i3 = index i 3 in 
+     let i4 = index i 4 in let i5 = index i 5 in let i6 = index i 6 in let i7 = index i 7 in 
+  
+     let c0 = get_low_part i0 in let c1 = get_high_part i0 in let c2 = get_low_part i1 in 
+     let c3 = get_high_part i1 in  let c4 = get_low_part i2 in let c5 = get_high_part i2 in   
+     let c6 = get_low_part i3 in let c7 = get_high_part i3 in  let c8 = get_low_part i4 in 
+     let c9 = get_high_part i4 in let c10 = get_low_part i5 in let c11 = get_high_part i5 in   
+     let c12 = get_low_part i6 in let c13 = get_high_part i6 in  let c14 = get_low_part i7 in 
+     let c15 = get_high_part i7 in
+
+    felem_seq_as_nat_8 i =  uint_v c0 + uint_v c1 * pow2 32 + uint_v c2 * pow2 (2 * 32) + uint_v c3 * pow2 (3 * 32) + uint_v c4 * pow2 (4 * 32) + 
+    uint_v c5 * pow2 (5 * 32) + uint_v c6 * pow2 (6 * 32) + uint_v c7 * pow2 (7 * 32) + uint_v c8 * pow2 (8 * 32) + 
+    uint_v c9 * pow2 (9 * 32) + uint_v c10 * pow2 (10 * 32) +  uint_v c11 * pow2 (11 * 32) + uint_v c12 * pow2 (12 * 32) + 
+    uint_v c13 * pow2 (13 * 32) + uint_v c14 * pow2 (14 * 32) + uint_v c15 * pow2 (15 * 32)
+    )
+
+
+#reset-options " --z3rlimit 300 --z3refresh"
+
+let lemma_opened i = 
+     let open Lib.Sequence in 
+
+    assert_norm (pow2 64 * pow2 64 = pow2 (2 * 64));
+    assert_norm (pow2 64 * pow2 64 * pow2 64 = pow2 (3 * 64));
+    assert_norm (pow2 64 * pow2 64 * pow2 64 * pow2 64 = pow2 (4 * 64));
+    assert_norm (pow2 64 * pow2 64 * pow2 64 * pow2 64 * pow2 64 = pow2 (5 * 64));
+    assert_norm (pow2 64 * pow2 64 * pow2 64 * pow2 64 * pow2 64 * pow2 64  = pow2 (6 * 64));
+    assert_norm (pow2 64 * pow2 64 * pow2 64 * pow2 64 * pow2 64 * pow2 64 * pow2 64 = pow2 (7 * 64));
+
+
+     let i0 = index i 0 in let i1 = index i 1 in let i2 = index i 2 in let i3 = index i 3 in 
+     let i4 = index i 4 in let i5 = index i 5 in let i6 = index i 6 in let i7 = index i 7 in 
+
+     assert(felem_seq_as_nat_8 i = uint_v i0 + uint_v i1 * pow2 64 + uint_v i2 * pow2 (2 * 64) + uint_v i3 * pow2 (3 * 64) + 
+       uint_v i4 * pow2 (4 * 64) + uint_v i5 * pow2 (5 * 64) + uint_v i6 * pow2 (6 * 64) + uint_v i7 * pow2 (7 * 64));
+  
+     let c0 = get_low_part i0 in let c1 = get_high_part i0 in let c2 = get_low_part i1 in 
+     let c3 = get_high_part i1 in  let c4 = get_low_part i2 in let c5 = get_high_part i2 in   
+     let c6 = get_low_part i3 in let c7 = get_high_part i3 in  let c8 = get_low_part i4 in 
+     let c9 = get_high_part i4 in let c10 = get_low_part i5 in let c11 = get_high_part i5 in   
+     let c12 = get_low_part i6 in let c13 = get_high_part i6 in  let c14 = get_low_part i7 in 
+     let c15 = get_high_part i7 in
+
+     assert(uint_v c0 + uint_v c1 * pow2 32 == uint_v i0);
+     assert(uint_v c2 + uint_v c3 * pow2 32 == uint_v i1);
+     assert(uint_v c4 + uint_v c5 * pow2 32 == uint_v i2);
+     assert(uint_v c6 + uint_v c7 * pow2 32 == uint_v i3);
+     assert(uint_v c8 + uint_v c9 * pow2 32 == uint_v i4);
+     assert(uint_v c10 + uint_v c11 * pow2 32 == uint_v i5);
+     assert(uint_v c12 + uint_v c13 * pow2 32 == uint_v i6);
+     assert(uint_v c14 + uint_v c15 * pow2 32 == uint_v i7);
+
+        assert_norm (pow2 (1 * 32) * pow2 64 = pow2 (3 * 32));
+  assert_norm (pow2 (2 * 32) * pow2 64 = pow2 (4 * 32));
+  assert_norm (pow2 (3 * 32) * pow2 64 = pow2 (5 * 32));
+  assert_norm (pow2 (4 * 32) * pow2 64 = pow2 (6 * 32));
+  assert_norm (pow2 (5 * 32) * pow2 64 = pow2 (7 * 32));
+  assert_norm (pow2 (6 * 32) * pow2 64 = pow2 (8 * 32));
+  assert_norm (pow2 (7 * 32) * pow2 64 = pow2 (9 * 32));
+  assert_norm (pow2 (8 * 32) * pow2 64 = pow2 (10 * 32));
+  assert_norm (pow2 (9 * 32) * pow2 64 = pow2 (11 * 32));
+  assert_norm (pow2 (10 * 32) * pow2 64 = pow2 (12 * 32));
+  assert_norm (pow2 (11 * 32) * pow2 64 = pow2 (13 * 32));
+
+  assert_norm (pow2 (12 * 32) * pow2 64 = pow2 (14 * 32));
+  assert_norm (pow2 (13 * 32) * pow2 64 = pow2 (15 * 32));
+
+  assert(felem_seq_as_nat_8 i =  uint_v c0 + uint_v c1 * pow2 32 + uint_v c2 * pow2 (2 * 32) + uint_v c3 * pow2 (3 * 32) + uint_v c4 * pow2 (4 * 32) + 
+    uint_v c5 * pow2 (5 * 32) + uint_v c6 * pow2 (6 * 32) + uint_v c7 * pow2 (7 * 32) + uint_v c8 * pow2 (8 * 32) + 
+    uint_v c9 * pow2 (9 * 32) + uint_v c10 * pow2 (10 * 32) +  uint_v c11 * pow2 (11 * 32) + uint_v c12 * pow2 (12 * 32) + 
+    uint_v c13 * pow2 (13 * 32) + uint_v c14 * pow2 (14 * 32) + uint_v c15 * pow2 (15 * 32))
+
+val solinas_reduction_impl: i: lbuffer uint64 (size 8) -> o: lbuffer uint64 (size 4) -> 
+  Stack unit
+    (requires fun h -> live h i /\ live h o /\ disjoint i o)
+    (ensures fun h0 _ h1 -> modifies1 o h0 h1 /\ felem_seq_as_nat_8 (as_seq h0 i) % prime == felem_seq_as_nat (as_seq h1 o))
+
+let solinas_reduction_impl i o = 
+  push_frame();
+  
+    let h0 = ST.get() in 
+    let tempBuffer = create (size 36) (u64 0) in 
+    
+    let t0 = sub tempBuffer (size 0) (size 4) in
+    let t1 = sub tempBuffer (size 4) (size 4) in 
+    let t2 = sub tempBuffer (size 8) (size 4) in 
+    let t3 = sub tempBuffer (size 12) (size 4) in 
+    let t4 = sub tempBuffer (size 16) (size 4) in 
+    let t5 = sub tempBuffer (size 20) (size 4) in 
+    let t6 = sub tempBuffer (size 24) (size 4) in 
+    let t7 = sub tempBuffer (size 28) (size 4) in 
+    let t8 = sub tempBuffer (size 32) (size 4) in  
 
     let i0 = i.(size 0) in 
     let i1 = i.(size 1) in 
@@ -448,6 +568,7 @@ let solinas_reduction_impl i o =
     let i5 = i.(size 5) in 
     let i6 = i.(size 6) in 
     let i7 = i.(size 7) in 
+    let i8 = i.(size 7) in 
 
     let c0 = get_low_part i0 in 
     let c1 = get_high_part i0 in 
@@ -459,44 +580,37 @@ let solinas_reduction_impl i o =
     let c7 = get_high_part i3 in   
     let c8 = get_low_part i4 in 
     let c9 = get_high_part i4 in   
-    let c10 = get_low_part i5 in 
+    let c10 = get_low_part i5 in  
     let c11 = get_high_part i5 in   
     let c12 = get_low_part i6 in 
     let c13 = get_high_part i6 in   
     let c14 = get_low_part i7 in 
     let c15 = get_high_part i7 in
 
-  upl_zer_buffer c0 c1 c2 c3 c4 c5 c6 c7 redBuffer t0; 
-  upl_fir_buffer c11 c12 c13 c14 c15 redBuffer t1;
-  upl_sec_buffer c12 c13 c14 c15 t2;
-  upl_thi_buffer c8 c9 c10 c14 c15 redBuffer  t3;
-  upl_for_buffer c8 c9 c10 c11 c13 c14 c15 redBuffer t4;
-  upl_fif_buffer c8 c10 c11 c12 c13 redBuffer  t5;
-  upl_six_buffer c9 c11 c12 c13 c14 c15 redBuffer  t6;
-  upl_sev_buffer c8 c9 c10 c12 c13 c14 c15 redBuffer t7;
-  upl_eig_buffer c9 c10 c11 c12 c13 c14 c15 redBuffer t8; 
-
-  assume(LowStar.Monotonic.Buffer.all_disjoint [loc t0; loc t1; loc t2; loc t3; loc t4; loc t5; loc t6; loc t7; loc t8; loc t11; loc t22; loc o]);
-
-  p256_double t2 t22;  
-  p256_double t1 t11;
-  p256_add t0 t11 o;
-  p256_add t22 o o;
-  p256_add t3 o o;
-  p256_add t4 o o;
-  p256_sub o t5 o;
-  p256_sub o t6 o;
-  p256_sub o t7 o;
-  p256_sub o t8 o;
-    let h1 = ST.get() in 
-
-  modulo_lemma (felem_seq_as_nat (as_seq h1 o)) prime;
-
-  reduce_brackets (felem_seq_as_nat(as_seq h1 t0)) (felem_seq_as_nat(as_seq h1 t1)) (felem_seq_as_nat(as_seq h1 t2)) (felem_seq_as_nat(as_seq h1 t3)) (felem_seq_as_nat(as_seq h1 t4)) (felem_seq_as_nat(as_seq h1 t5)) (felem_seq_as_nat(as_seq h1 t6)) (felem_seq_as_nat(as_seq h1 t7)) (felem_seq_as_nat(as_seq h1 t8));
-  solinas_reduction_mod (uint_v c0) (uint_v c1) (uint_v c2) (uint_v c3) (uint_v c4) (uint_v c5) (uint_v c6) (uint_v c7) (uint_v c8) (uint_v c9) (uint_v c10) (uint_v c11) (uint_v c12) (uint_v c13) (uint_v c14) (uint_v c15)
-  (felem_seq_as_nat (as_seq h1 t0)) (felem_seq_as_nat (as_seq h1 t1)) (felem_seq_as_nat (as_seq h1 t2)) (felem_seq_as_nat (as_seq h1 t3))  (felem_seq_as_nat(as_seq h1 t4)) (felem_seq_as_nat(as_seq h1 t5)) (felem_seq_as_nat(as_seq h1 t6)) (felem_seq_as_nat(as_seq h1 t7)) (felem_seq_as_nat(as_seq h1 t8)) (felem_seq_as_nat (as_seq h1 o));
+    lemma_opened (as_seq h0 i); 
   
-  admit();
+      let h0 = ST.get() in 
+    solinas_reduction_upload c0 c1 c2 c3 c4 c5 c6 c7 c8 c9 c10 c11 c12 c13 c14 c15 tempBuffer;
+      let h1 = ST.get() in 
+    solinas_reduction_operations tempBuffer o;
+    let h2 = ST.get() in 
+
+    solinas_reduction_mod 
+      (uint_v c0) (uint_v c1) (uint_v c2) (uint_v c3) (uint_v c4) (uint_v c5) (uint_v c6) (uint_v c7) (uint_v c8) (uint_v c9)   (uint_v c10) (uint_v c11) (uint_v c12) (uint_v c13) (uint_v c14) (uint_v c15)
+      (felem_seq_as_nat (as_seq h1 t0)) 
+      (felem_seq_as_nat (as_seq h1 t1)) 
+      (felem_seq_as_nat (as_seq h1 t2)) 
+      (felem_seq_as_nat (as_seq h1 t3))  
+      (felem_seq_as_nat (as_seq h1 t4)) 
+      (felem_seq_as_nat (as_seq h1 t5)) 
+      (felem_seq_as_nat (as_seq h1 t6)) 
+      (felem_seq_as_nat (as_seq h1 t7)) 
+      (felem_seq_as_nat (as_seq h1 t8)) 
+      (felem_seq_as_nat (as_seq h2 o));
+
+
+  modulo_lemma (felem_seq_as_nat(as_seq h2 o)) prime;
+  assert(felem_seq_as_nat_8 (as_seq h0 i) % prime == felem_seq_as_nat (as_seq h2 o));
 
     pop_frame() 
 
