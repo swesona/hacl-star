@@ -169,7 +169,7 @@ let sub4_il x y result =
 inline_for_extraction noextract
 val sub4: x: felem -> y:felem -> result: felem -> 
   Stack uint64
-    (requires fun h -> live h x /\ live h y /\ live h result /\ disjoint x result /\ eq_or_disjoint y result)
+    (requires fun h -> live h x /\ live h y /\ live h result /\ eq_or_disjoint x result /\ eq_or_disjoint y result)
     (ensures fun h0 c h1 -> modifies1 result h0 h1 /\ v c <= 1 /\
       (
 	let result = as_seq h1 result in 
@@ -380,16 +380,13 @@ val p256_add: arg1: felem -> arg2: felem ->  out: felem -> Stack unit
   ))
 
 let p256_add arg1 arg2 out = 
-    push_frame();
-    
-    let h0 = ST.get() in   
+  let h0 = ST.get() in   
   let t = add4 arg1 arg2 out in 
     let h1 = ST.get() in 
       assert(let out = as_seq h1 out in let x = as_seq h0 arg1 in let y = as_seq h0 arg2 in 
       felem_seq_as_nat out + uint_v t * pow2 256 == felem_seq_as_nat x + felem_seq_as_nat y);
   lemma_t_computation t;
-  reduction_prime_2prime_with_carry_impl t out out;
-  pop_frame()
+  reduction_prime_2prime_with_carry_impl t out out
 
 
 #set-options "--z3rlimit 500" 
@@ -404,7 +401,8 @@ val p256_double: arg1: felem ->  out: felem -> Stack unit
       let x = as_seq h0 arg1 in 
       let out = as_seq h1 out in 
       felem_seq_as_nat out == (2 * felem_seq_as_nat x) % prime /\
-      felem_seq_as_nat out = felem_add_spec (felem_seq_as_nat x) (felem_seq_as_nat x)
+      felem_seq_as_nat out = felem_add_spec (felem_seq_as_nat x) (felem_seq_as_nat x) /\
+      felem_seq_as_nat out < prime
     )
   ))
 
@@ -424,7 +422,7 @@ let p256_double arg1 out =
 
 val p256_sub: arg1: felem -> arg2: felem -> out: felem -> Stack unit 
   (requires 
-    (fun h0 -> live h0 out /\ live h0 arg1 /\ live h0 arg2 /\ disjoint arg1 out /\ disjoint arg2 out /\
+    (fun h0 -> live h0 out /\ live h0 arg1 /\ live h0 arg2 /\ eq_or_disjoint arg1 out /\ disjoint arg2 out /\
     as_nat h0 arg1 < prime /\ as_nat h0 arg2 < prime))
     (ensures (fun h0 _ h1 -> modifies1 out h0 h1 /\ 
       (
