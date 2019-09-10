@@ -6,28 +6,32 @@
  */
 
 #include "kremlib.h"
-#ifndef __FStar_H
-#define __FStar_H
+#ifndef __Hacl_Impl_ECDSA_MM_Exponent_H
+#define __Hacl_Impl_ECDSA_MM_Exponent_H
 
-
+#include "Hacl_Impl_ECDSA_MontgomeryMultiplication.h"
 #include "kremlib.h"
 #include "FStar_UInt_8_16_32_64.h"
 #include "c/Lib_PrintBuffer.h"
 #include "FStar_UInt_8_16_32_64.h"
 
-extern uint64_t FStar_UInt64_eq_mask(uint64_t a, uint64_t b);
+extern uint8_t Hacl_Impl_ECDSA_MM_Exponent_order_inverse_buffer[32U];
 
-extern uint128_t FStar_UInt128_add(uint128_t a, uint128_t b);
+extern uint8_t Hacl_Impl_ECDSA_MM_Exponent_order_buffer[32U];
 
-extern uint128_t FStar_UInt128_shift_left(uint128_t a, uint32_t s);
+void Hacl_Impl_ECDSA_MM_Exponent_montgomery_ladder_exponent(uint64_t *r);
 
-extern uint128_t FStar_UInt128_shift_right(uint128_t a, uint32_t s);
+void Hacl_Impl_ECDSA_MM_Exponent_fromDomainImpl(uint64_t *a, uint64_t *result);
 
-extern uint128_t FStar_UInt128_uint64_to_uint128(uint64_t a);
+void Hacl_Impl_ECDSA_MM_Exponent_multPower(uint64_t *a, uint64_t *b, uint64_t *result);
 
-extern uint64_t FStar_UInt128_uint128_to_uint64(uint128_t a);
+void
+Hacl_Impl_ECDSA_MM_Exponent_multPowerPartial(
+  uint64_t *s1,
+  uint64_t *a,
+  uint64_t *b,
+  uint64_t *result
+);
 
-extern uint128_t FStar_UInt128_mul_wide(uint64_t x, uint64_t y);
-
-#define __FStar_H_DEFINED
+#define __Hacl_Impl_ECDSA_MM_Exponent_H_DEFINED
 #endif

@@ -6,28 +6,30 @@
  */
 
 #include "kremlib.h"
-#ifndef __FStar_H
-#define __FStar_H
+#ifndef __Hacl_Impl_ECDSA_MontgomeryMultiplication_H
+#define __Hacl_Impl_ECDSA_MontgomeryMultiplication_H
 
-
+#include "Hacl_Impl_P256.h"
+#include "FStar.h"
 #include "kremlib.h"
 #include "FStar_UInt_8_16_32_64.h"
 #include "c/Lib_PrintBuffer.h"
 #include "FStar_UInt_8_16_32_64.h"
 
-extern uint64_t FStar_UInt64_eq_mask(uint64_t a, uint64_t b);
+extern uint64_t Hacl_Impl_ECDSA_MontgomeryMultiplication_prime256order_buffer[4U];
 
-extern uint128_t FStar_UInt128_add(uint128_t a, uint128_t b);
+void
+Hacl_Impl_ECDSA_MontgomeryMultiplication_reduction_prime_2prime_order(
+  uint64_t *x,
+  uint64_t *result
+);
 
-extern uint128_t FStar_UInt128_shift_left(uint128_t a, uint32_t s);
+void
+Hacl_Impl_ECDSA_MontgomeryMultiplication_montgomery_multiplication_ecdsa_module(
+  uint64_t *a,
+  uint64_t *b,
+  uint64_t *result
+);
 
-extern uint128_t FStar_UInt128_shift_right(uint128_t a, uint32_t s);
-
-extern uint128_t FStar_UInt128_uint64_to_uint128(uint64_t a);
-
-extern uint64_t FStar_UInt128_uint128_to_uint64(uint128_t a);
-
-extern uint128_t FStar_UInt128_mul_wide(uint64_t x, uint64_t y);
-
-#define __FStar_H_DEFINED
+#define __Hacl_Impl_ECDSA_MontgomeryMultiplication_H_DEFINED
 #endif

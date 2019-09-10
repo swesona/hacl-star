@@ -5,29 +5,107 @@
   KreMLin version: 27ce15c8
  */
 
-#include "kremlib.h"
-#ifndef __FStar_H
-#define __FStar_H
+#include "Hacl_Impl_ECDSA_MM_Exponent.h"
 
+uint8_t
+Hacl_Impl_ECDSA_MM_Exponent_order_inverse_buffer[32U] =
+  {
+    (uint8_t)79U, (uint8_t)37U, (uint8_t)99U, (uint8_t)252U, (uint8_t)194U, (uint8_t)202U,
+    (uint8_t)185U, (uint8_t)243U, (uint8_t)132U, (uint8_t)158U, (uint8_t)23U, (uint8_t)167U,
+    (uint8_t)173U, (uint8_t)250U, (uint8_t)230U, (uint8_t)188U, (uint8_t)255U, (uint8_t)255U,
+    (uint8_t)255U, (uint8_t)255U, (uint8_t)255U, (uint8_t)255U, (uint8_t)255U, (uint8_t)255U,
+    (uint8_t)0U, (uint8_t)0U, (uint8_t)0U, (uint8_t)0U, (uint8_t)255U, (uint8_t)255U, (uint8_t)255U,
+    (uint8_t)255U
+  };
 
-#include "kremlib.h"
-#include "FStar_UInt_8_16_32_64.h"
-#include "c/Lib_PrintBuffer.h"
-#include "FStar_UInt_8_16_32_64.h"
+uint8_t
+Hacl_Impl_ECDSA_MM_Exponent_order_buffer[32U] =
+  {
+    (uint8_t)81U, (uint8_t)37U, (uint8_t)99U, (uint8_t)252U, (uint8_t)194U, (uint8_t)202U,
+    (uint8_t)185U, (uint8_t)243U, (uint8_t)132U, (uint8_t)158U, (uint8_t)23U, (uint8_t)167U,
+    (uint8_t)173U, (uint8_t)250U, (uint8_t)230U, (uint8_t)188U, (uint8_t)255U, (uint8_t)255U,
+    (uint8_t)255U, (uint8_t)255U, (uint8_t)255U, (uint8_t)255U, (uint8_t)255U, (uint8_t)255U,
+    (uint8_t)0U, (uint8_t)0U, (uint8_t)0U, (uint8_t)0U, (uint8_t)255U, (uint8_t)255U, (uint8_t)255U,
+    (uint8_t)255U
+  };
 
-extern uint64_t FStar_UInt64_eq_mask(uint64_t a, uint64_t b);
+static void Hacl_Impl_ECDSA_MM_Exponent_cswap(uint64_t bit, uint64_t *p1, uint64_t *p2)
+{
+  uint64_t mask = (uint64_t)0U - bit;
+  uint32_t i;
+  for (i = (uint32_t)0U; i < (uint32_t)4U; i = i + (uint32_t)1U)
+  {
+    uint64_t dummy = mask & (p1[i] ^ p2[i]);
+    p1[i] = p1[i] ^ dummy;
+    p2[i] = p2[i] ^ dummy;
+  }
+}
 
-extern uint128_t FStar_UInt128_add(uint128_t a, uint128_t b);
+void Hacl_Impl_ECDSA_MM_Exponent_montgomery_ladder_exponent(uint64_t *r)
+{
+  uint64_t p[4U] = { 0U };
+  p[0U] = (uint64_t)884452912994769583U;
+  p[1U] = (uint64_t)4834901526196019579U;
+  p[2U] = (uint64_t)0U;
+  p[3U] = (uint64_t)4294967295U;
+  {
+    uint32_t i;
+    for (i = (uint32_t)0U; i < (uint32_t)256U; i = i + (uint32_t)1U)
+    {
+      uint32_t bit0 = (uint32_t)255U - i;
+      uint64_t
+      bit =
+        (uint64_t)(Hacl_Impl_ECDSA_MM_Exponent_order_inverse_buffer[bit0
+        / (uint32_t)8U]
+        >> bit0 % (uint32_t)8U
+        & (uint8_t)1U);
+      Hacl_Impl_ECDSA_MM_Exponent_cswap(bit, p, r);
+      Hacl_Impl_ECDSA_MontgomeryMultiplication_montgomery_multiplication_ecdsa_module(p, r, r);
+      Hacl_Impl_ECDSA_MontgomeryMultiplication_montgomery_multiplication_ecdsa_module(p, p, p);
+      Hacl_Impl_ECDSA_MM_Exponent_cswap(bit, p, r);
+    }
+  }
+  memcpy(r, p, (uint32_t)4U * sizeof p[0U]);
+}
 
-extern uint128_t FStar_UInt128_shift_left(uint128_t a, uint32_t s);
+void Hacl_Impl_ECDSA_MM_Exponent_fromDomainImpl(uint64_t *a, uint64_t *result)
+{
+  uint64_t one1[4U] = { 0U };
+  one1[0U] = (uint64_t)1U;
+  one1[1U] = (uint64_t)0U;
+  one1[2U] = (uint64_t)0U;
+  one1[3U] = (uint64_t)0U;
+  Hacl_Impl_ECDSA_MontgomeryMultiplication_montgomery_multiplication_ecdsa_module(one1,
+    a,
+    result);
+}
 
-extern uint128_t FStar_UInt128_shift_right(uint128_t a, uint32_t s);
+void Hacl_Impl_ECDSA_MM_Exponent_multPower(uint64_t *a, uint64_t *b, uint64_t *result)
+{
+  uint64_t tempB1[4U] = { 0U };
+  uint64_t buffFromDB[4U] = { 0U };
+  Hacl_Impl_ECDSA_MM_Exponent_fromDomainImpl(a, tempB1);
+  Hacl_Impl_ECDSA_MM_Exponent_fromDomainImpl(b, buffFromDB);
+  Hacl_Impl_ECDSA_MM_Exponent_fromDomainImpl(buffFromDB, buffFromDB);
+  Hacl_Impl_ECDSA_MM_Exponent_montgomery_ladder_exponent(tempB1);
+  Hacl_Impl_ECDSA_MontgomeryMultiplication_montgomery_multiplication_ecdsa_module(tempB1,
+    buffFromDB,
+    result);
+}
 
-extern uint128_t FStar_UInt128_uint64_to_uint128(uint64_t a);
+void
+Hacl_Impl_ECDSA_MM_Exponent_multPowerPartial(
+  uint64_t *s1,
+  uint64_t *a,
+  uint64_t *b,
+  uint64_t *result
+)
+{
+  uint64_t buffFromDB[4U] = { 0U };
+  Hacl_Impl_ECDSA_MM_Exponent_fromDomainImpl(b, buffFromDB);
+  Hacl_Impl_ECDSA_MM_Exponent_fromDomainImpl(buffFromDB, buffFromDB);
+  Hacl_Impl_ECDSA_MontgomeryMultiplication_montgomery_multiplication_ecdsa_module(a,
+    buffFromDB,
+    result);
+}
 
-extern uint64_t FStar_UInt128_uint128_to_uint64(uint128_t a);
-
-extern uint128_t FStar_UInt128_mul_wide(uint64_t x, uint64_t y);
-
-#define __FStar_H_DEFINED
-#endif
