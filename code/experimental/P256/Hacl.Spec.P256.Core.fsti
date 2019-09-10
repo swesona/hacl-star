@@ -17,10 +17,12 @@ val eq_u64:a:uint64 -> b:uint64 -> Tot (r: bool {if uint_v a = uint_v b then r =
 inline_for_extraction noextract
 val eq_0_u64: a: uint64 -> Tot (r: bool {if uint_v a = 0 then r == true else r == false})
 
-inline_for_extraction noextract
+(*This code is used only from proofs *) 
+noextract
 val felem_add: arg1: felem4 {as_nat4 arg1 < prime256} -> arg2: felem4{as_nat4 arg2 < prime256} -> Tot (r : felem4 {as_nat4 r == (as_nat4 arg1 + as_nat4 arg2) % prime256})
 
-inline_for_extraction noextract
+(*This code is used only for proofs *)
+noextract
 val felem_sub: arg1: felem4 {as_nat4 arg1 < prime256} -> arg2: felem4 {as_nat4 arg2 < prime256} -> Tot (r : felem4 {as_nat4 r < prime256 /\ as_nat4 r == (as_nat4 arg1 - as_nat4 arg2) % prime256})
 
 inline_for_extraction noextract

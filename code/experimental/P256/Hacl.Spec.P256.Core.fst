@@ -10,6 +10,8 @@ open Hacl.Spec.P256.Basic
 
 open FStar.Mul
 
+#set-options "--z3rlimit 300"
+
 (* This code is used only for proving, so the code is NOT side channel resistant *)
 inline_for_extraction noextract
 val gt: a: uint64 -> b: uint64 -> Tot uint64
@@ -25,7 +27,7 @@ let eq_u64 a b =
 let eq_0_u64 a = eq_u64 a (u64 0)
 
 
-inline_for_extraction noextract
+noextract
 val cmovznz: cin : uint64 ->  x: uint64 -> y: uint64 -> 
   Pure uint64
   (requires True)
@@ -38,7 +40,7 @@ let cmovznz cin x y  =
     cmovznz4_lemma cin x y;
     x3
 
-
+(* This code is udes only for proofs *)
 inline_for_extraction noextract
 val cmovznz4: cin: uint64 -> x: felem4 -> y: felem4 -> Pure (r: felem4)
   (requires True)
@@ -61,8 +63,6 @@ val reduction_prime_2prime_with_carry: carry: uint64{uint_v carry <= 1} ->
   a: felem4{as_nat4 a + uint_v carry * pow2 256 < 2 * prime256} -> 
   Tot (r: felem4 {as_nat4 r == (as_nat4 a + uint_v carry * pow2 256) % prime256})
 
-
-#set-options "--z3rlimit 300 --z3refresh"
 
 let reduction_prime_2prime_with_carry carry a = 
   lemma_nat_4 a;
@@ -95,24 +95,9 @@ val lemma_felem_sub: r: nat {r < pow2 256} -> r_: nat {r_ < pow2 256} -> a: nat 
       
 
 let lemma_felem_sub r r_ a b c0 c1 prime256_temp = 
-  assert(if c1 = 1 then c0 = 1 else True);
-
-  assert(if c0 = 0 then r = a - b  else r = a - b + prime256);
   modulo_addition_lemma (a - b) prime256 1;
-  assert((a - b + prime256) % prime256 == (a - b) % prime256);
+  modulo_lemma r prime256
 
-  assert(if c0 = 0 
-    then 
-      begin 
-      modulo_lemma r prime256;
-      r = (a - b) % prime256
-      end
-    else 
-      begin
-	modulo_lemma r prime256;
-	r = (a - b) % prime256
-
-      end )
 
 val lemma_felem_sub_types: r: felem4 -> r_: felem4 -> a: felem4{as_nat4 a < prime256} -> b: felem4{as_nat4 b < prime256} -> 
   c0: uint64 {uint_v c0 <= 1} -> c1: uint64 {uint_v c1 <= 1} -> 
@@ -123,22 +108,11 @@ val lemma_felem_sub_types: r: felem4 -> r_: felem4 -> a: felem4{as_nat4 a < prim
       (ensures (as_nat4 r == (as_nat4 a - as_nat4 b) % prime256))
 
 let lemma_felem_sub_types r r_ a b c0 c1 prime256_temp = 
-  let r = as_nat4 r in 
-  let r_ = as_nat4 r_ in 
-  let a = as_nat4 a in 
-  let b = as_nat4 b in 
-  let c0 = uint_v c0 in 
-  let c1 = uint_v c1 in 
-  let prime256_temp = as_nat4 prime256_temp in 
-  lemma_felem_sub r r_ a b c0 c1 prime256_temp
+  lemma_felem_sub (as_nat4 r) (as_nat4 r_) (as_nat4 a) (as_nat4 b) (uint_v c0) (uint_v c1) (as_nat4 prime256_temp)
 
 
-(*  opening anything calls growing up the code*)
-#reset-options "--z3rlimit 1000"
-let felem_sub (a0, a1, a2, a3) (b0, b1, b2, b3) = 
-  let (c0, (r_0, r_1, r_2, r_3)) = sub4  (a0, a1, a2, a3) (b0, b1, b2, b3) in 
-    assert(if as_nat4 (a0, a1, a2, a3) < as_nat4 (b0, b1, b2, b3) then uint_v c0 == 1 else uint_v c0 == 0);
-
+let felem_sub a b = 
+  let (c0, r) = sub4 a b in 
   let x9 = cmovznz c0 (u64 0) (u64 0xffffffffffffffff) in  
  
   let prime_temp_0 = logand (u64 0xffffffffffffffff) x9 in 
@@ -150,16 +124,11 @@ let felem_sub (a0, a1, a2, a3) (b0, b1, b2, b3) =
   log_and (u64 0xffffffffffffffff) x9;
   log_and (u64 0xffffffff) x9;
   log_and (u64 0xffffffff00000001) x9;
-  assert_norm (as_nat4 (u64 0xffffffffffffffff, u64 0xffffffff, u64 0, u64 0xffffffff00000001) == prime256);
+    assert_norm (as_nat4 (u64 0xffffffffffffffff, u64 0xffffffff, u64 0, u64 0xffffffff00000001) == prime256);
 
-  let (c1, (r0, r1, r2, r3)) = add4 (prime_temp_0, prime_temp_1, prime_temp_2, prime_temp_3) (r_0, r_1, r_2, r_3) in 
-  
-  assert(if uint_v c0 = 0 then as_nat4 prime_temp == 0 else as_nat4 prime_temp == prime256);
-  assert(as_nat4 (r_0, r_1, r_2, r_3) - uint_v c0 * pow2 256 = as_nat4 (a0, a1, a2, a3) -  as_nat4 (b0, b1, b2, b3));
-  assert(as_nat4 (r0, r1, r2, r3) + uint_v c1 * pow2 256 = as_nat4 (r_0, r_1, r_2, r_3) + as_nat4 (prime_temp_0, prime_temp_1, prime_temp_2, prime_temp_3));
-  
-  lemma_felem_sub_types (r0, r1, r2, r3) (r_0, r_1, r_2, r_3) (a0, a1, a2, a3) (b0, b1, b2, b3) c0 c1 prime_temp;
-  (r0, r1, r2, r3)
+  let (c1, result) = add4 prime_temp r in 
+  lemma_felem_sub_types result r a b c0 c1 prime_temp;
+  result
 
 
 
