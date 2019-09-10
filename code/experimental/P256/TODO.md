@@ -36,3 +36,16 @@ NB: the file test P256 is a set of tests. Some tests are commented because the p
 	scalarMultiplication(pub,key,priv,tempBuffer).
 
 
+
+
+
+-----------------------------------------
+
+Hacl.Spec.P256.Core
+FROM:
+	let open Lib.RawIntTypes in
+  	if FStar.UInt64.(u64_to_UInt64 b <^ u64_to_UInt64 a) then u64 1 else u64 0
+TO:
+	logand(gt_mask a b) (u64 1)  	
+WHY:
+	< is not constant time? 	

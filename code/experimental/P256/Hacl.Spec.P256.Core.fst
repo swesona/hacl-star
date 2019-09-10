@@ -10,21 +10,21 @@ open Hacl.Spec.P256.Basic
 
 open FStar.Mul
 
-
-inline_for_extraction noextract
-val lt_u64:a:uint64 -> b:uint64 -> Tot bool
-
-let lt_u64 a b =
-  let open Lib.RawIntTypes in
-  FStar.UInt64.(u64_to_UInt64 a <^ u64_to_UInt64 b)
-
-
+(*
 inline_for_extraction noextract
 val gt: a: uint64 -> b: uint64 -> Tot uint64
 
 let gt a b = 
-  if lt_u64 b a then u64 1 else u64 0
+  let open Lib.RawIntTypes in
+  if FStar.UInt64.(u64_to_UInt64 b <^ u64_to_UInt64 a) then u64 1 else u64 0
+*)
 
+inline_for_extraction noextract
+val gt: a: uint64 -> b: uint64 -> Tot (u: uint64 {uint_v u <= 1})
+
+let gt a b = 
+  logand_lemma (gt_mask a b) (u64 1);
+  logand(gt_mask a b) (u64 1)
 
 let eq_u64 a b =
   let open Lib.RawIntTypes in
