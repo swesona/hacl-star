@@ -131,21 +131,16 @@ let felem_sub a b =
   result
 
 
-
-#reset-options "--z3rlimit 300 --z3refresh"
-
 let reduction_prime_2prime (a0, a1, a2, a3) = 
   assert_norm (as_nat4 (u64 0xffffffffffffffff, u64 0xffffffff, u64 0, u64 0xffffffff00000001) == prime256);
   let (x16, (r0, r1, r2, r3)) = sub4 (a0, a1, a2, a3) (u64 0xffffffffffffffff, u64 0xffffffff, u64 0, u64 0xffffffff00000001) in 
   assert(if as_nat4 (a0, a1, a2, a3) < prime256 then uint_v x16 == 1 else uint_v x16 == 0);
   let result = cmovznz4 x16 (r0, r1, r2, r3) (a0, a1, a2, a3) in
   assert(as_nat4 (a0, a1, a2, a3) < pow2 256);
-  assert(if as_nat4 (a0, a1, a2, a3) >= prime256 then begin
+  assert(if as_nat4 (a0, a1, a2, a3) >= prime256 then
     as_nat4 result == as_nat4 (a0, a1, a2, a3) % prime256 
-    end
-    else begin 
-      as_nat4 result == as_nat4 (a0, a1, a2, a3) % prime256
-      end);
+    else 
+      as_nat4 result == as_nat4 (a0, a1, a2, a3) % prime256);
   result
 
 
@@ -156,10 +151,13 @@ let shift_carry x cin =
   add (Lib.IntTypes.shift_left x (size 1)) cin
 
 
-val lemma_get_number: a: nat {a < pow2 64} -> Lemma (
-	let mask = 0x7fffffffffffffff in 
-	let carry= if a> mask then 1 else 0 in 
-	(a * 2) = (a * 2) % pow2 64 + carry * pow2 64)	
+val lemma_get_number: a: nat {a < pow2 64} -> 
+  Lemma
+    (
+      let mask = 0x7fffffffffffffff in 
+      let carry= if a> mask then 1 else 0 in 
+      (a * 2) = (a * 2) % pow2 64 + carry * pow2 64
+    )	
 
 let lemma_get_number a = ()
 
@@ -183,14 +181,11 @@ a0 + a1 * pow2 64 + a2 * pow2 128 + a3 * pow2 192 < prime256} -> Lemma (let inpu
 
 
 let shift_left_lemma a0 a1 a2 a3 = 
-  let input: nat = a0+ a1 * pow2 64 + a2 * pow2 128 + a3 * pow2 192 in 
-
   let mask = 0x7fffffffffffffff in 
   let carry0 = if a0 > mask then 1 else 0 in 
   let carry1 = if a1 > mask then 1 else 0 in 
   let carry2 = if a2 > mask then 1 else 0 in 
   let carry3 = if a3 > mask then 1 else 0 in 
-
 
   let a0_u = (a0 * 2) % pow2 64  in 
    lemma_get_number a0;
@@ -206,9 +201,9 @@ let shift_left_lemma a0 a1 a2 a3 =
   assert_norm (pow2 64 * pow2 192 = pow2 256)
 
 
-#reset-options "--z3rlimit 500"
 let shift_left_felem (a0, a1, a2, a3) =  
   let mask = u64 0x7fffffffffffffff in   
+
   let carry0 = gt a0 mask in 
   let carry1 = gt a1 mask in 
   let carry2 = gt a2 mask in 
@@ -223,9 +218,6 @@ let shift_left_felem (a0, a1, a2, a3) =
   assert_norm(pow2 64 * pow2 64 * pow2 64 = pow2 192);
 
   shift_left_lemma (uint_v a0) (uint_v a1) (uint_v a2) (uint_v a3); 
-  assert(as_nat4 (a0, a1, a2, a3) * 2 = uint_v a0_updated + uint_v a1_updated * pow2 64 + uint_v a2_updated * pow2 128 + uint_v  a3_updated * pow2 192 + uint_v carry3 * pow2 256);
-  assert_norm(uint_v a2_updated * pow2 64 * pow2 64 == uint_v a2_updated * pow2 128);
-  assert_norm(uint_v a3_updated * pow2 64 * pow2 64 * pow2 64 == uint_v a3_updated * pow2 192);
   reduction_prime_2prime_with_carry carry3 (a0_updated,  a1_updated,  a2_updated, a3_updated)
 
 

@@ -25,10 +25,12 @@ val felem_add: arg1: felem4 {as_nat4 arg1 < prime256} -> arg2: felem4{as_nat4 ar
 noextract
 val felem_sub: arg1: felem4 {as_nat4 arg1 < prime256} -> arg2: felem4 {as_nat4 arg2 < prime256} -> Tot (r : felem4 {as_nat4 r < prime256 /\ as_nat4 r == (as_nat4 arg1 - as_nat4 arg2) % prime256})
 
-inline_for_extraction noextract
+(*This code is used only for proofs *)
+noextract
 val reduction_prime_2prime: a: felem4 -> Tot (r:felem4{as_nat4 r == as_nat4 a % prime256})
 
-
+(*This code is used only for proofs *)
+noextract
 val shift_left_felem: input: felem4{as_nat4 input < prime256} -> Tot (r: felem4 {as_nat4 r == (as_nat4 input * 2) % prime256})
 
 inline_for_extraction noextract
