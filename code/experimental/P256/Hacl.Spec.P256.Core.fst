@@ -10,30 +10,19 @@ open Hacl.Spec.P256.Basic
 
 open FStar.Mul
 
-(*
+(* This code is used only for proving, so the code is NOT side channel resistant *)
 inline_for_extraction noextract
 val gt: a: uint64 -> b: uint64 -> Tot uint64
 
 let gt a b = 
   let open Lib.RawIntTypes in
   if FStar.UInt64.(u64_to_UInt64 b <^ u64_to_UInt64 a) then u64 1 else u64 0
-*)
-
-inline_for_extraction noextract
-val gt: a: uint64 -> b: uint64 -> Tot (u: uint64 {uint_v u <= 1})
-
-let gt a b = 
-  logand_lemma (gt_mask a b) (u64 1);
-  logand(gt_mask a b) (u64 1)
 
 let eq_u64 a b =
   let open Lib.RawIntTypes in
   FStar.UInt64.(u64_to_UInt64 a =^ u64_to_UInt64 b)
 
-
-let eq_0_u64 a = 
-  let b = u64 0 in 
-  eq_u64 a b
+let eq_0_u64 a = eq_u64 a (u64 0)
 
 
 inline_for_extraction noextract
@@ -49,10 +38,11 @@ let cmovznz cin x y  =
     cmovznz4_lemma cin x y;
     x3
 
+
 inline_for_extraction noextract
 val cmovznz4: cin: uint64 -> x: felem4 -> y: felem4 -> Pure (r: felem4)
-(requires True)
-(ensures fun r -> if uint_v cin = 0 then as_nat4 r == as_nat4 x else as_nat4 r == as_nat4 y)
+  (requires True)
+  (ensures fun r -> if uint_v cin = 0 then as_nat4 r == as_nat4 x else as_nat4 r == as_nat4 y)
 
 let cmovznz4 cin (x0, x1, x2, x3) (y0, y1, y2, y3) = 
   let mask = neq_mask cin (u64 0) in 
@@ -78,11 +68,8 @@ let reduction_prime_2prime_with_carry carry a =
   lemma_nat_4 a;
     assert_norm (as_nat4  (u64 0xffffffffffffffff, u64 0xffffffff, u64 0, u64 0xffffffff00000001) == prime256);
   let (cin, (r0, r1, r2, r3)) = sub4 a  (u64 0xffffffffffffffff, u64 0xffffffff, u64 0, u64 0xffffffff00000001) in 
-    assert(as_nat4 (r0, r1, r2, r3) - uint_v cin * pow2 256 = as_nat4 a - prime256);
   let (r, c) = subborrow carry (u64 0) cin  in  
   let result = cmovznz4 c (r0, r1, r2, r3) a in
-    assert(if uint_v carry > 0 then uint_v c == 0 else if  uint_v carry = 0 && uint_v cin = 0 then uint_v c = 0 else uint_v c = 1);
-
     assert(if (uint_v carry * pow2 256 + as_nat4 a) >= prime256 then
       begin
 	if uint_v cin = 0 then 
@@ -96,21 +83,18 @@ let reduction_prime_2prime_with_carry carry a =
 
 let felem_add arg1 arg2 = 
   let (x8, c) = add4 arg1 arg2 in 
-  let result = reduction_prime_2prime_with_carry x8 c in 
-  result
+  reduction_prime_2prime_with_carry x8 c 
 
 val lemma_felem_sub: r: nat {r < pow2 256} -> r_: nat {r_ < pow2 256} -> a: nat {a < prime256} -> b: nat {b < prime256} -> 
   c0: nat {c0 <= 1} -> c1: nat {c1 <=1} -> prime256_temp: nat -> Lemma
     (requires (
-      (if c0 = 0 then prime256_temp == 0  else prime256_temp = prime256) /\
-      r_ - c0 * pow2 256 = a - b /\
+      (if c0 = 0 then prime256_temp == 0  else prime256_temp = prime256) /\ 
+      r_ - c0 * pow2 256 = a - b /\ 
       r + c1 * pow2 256 = r_ + prime256_temp))
-    (ensures ( r = (a - b) % prime256)) 
+    (ensures (r = (a - b) % prime256)) 
       
 
 let lemma_felem_sub r r_ a b c0 c1 prime256_temp = 
-  assert(r + c1 * pow2 256 = a - b + c0 * pow2 256 + prime256_temp);
-  assert(if c0 = 0 then c1 = 0 else True);
   assert(if c1 = 1 then c0 = 1 else True);
 
   assert(if c0 = 0 then r = a - b  else r = a - b + prime256);

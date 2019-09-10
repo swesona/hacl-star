@@ -9,9 +9,11 @@ open Hacl.Spec.P256.Lemmas
 open FStar.Mul
 
 
+(* This code is not side channel resistant *)
 inline_for_extraction noextract
 val eq_u64:a:uint64 -> b:uint64 -> Tot (r: bool {if uint_v a = uint_v b then r == true else r == false})
 
+(* This code is not side channel resistant *)
 inline_for_extraction noextract
 val eq_0_u64: a: uint64 -> Tot (r: bool {if uint_v a = 0 then r == true else r == false})
 
@@ -24,7 +26,7 @@ val felem_sub: arg1: felem4 {as_nat4 arg1 < prime256} -> arg2: felem4 {as_nat4 a
 inline_for_extraction noextract
 val reduction_prime_2prime: a: felem4 -> Tot (r:felem4{as_nat4 r == as_nat4 a % prime256})
 
-inline_for_extraction noextract 
+
 val shift_left_felem: input: felem4{as_nat4 input < prime256} -> Tot (r: felem4 {as_nat4 r == (as_nat4 input * 2) % prime256})
 
 inline_for_extraction noextract
@@ -53,7 +55,7 @@ val cube_tuple: a: felem4{as_nat4 a < prime256} -> Tot (result: felem4{as_nat4 r
 inline_for_extraction noextract
 val quatre_tuple: a: felem4 {as_nat4 a < prime256} -> Tot (result : felem4 {as_nat4 result = (as_nat4 a * as_nat4 a * as_nat4 a * as_nat4 a * modp_inv2 (pow2 256) * modp_inv2 (pow2 256) * modp_inv2(pow2 256)) % prime256})
 
-inline_for_extraction noextract
+
 val multByThree_tuple: a: felem4{as_nat4 a < prime256}  -> Tot (result: felem4{as_nat4 result = (as_nat4 a * 3) % prime256})
 
 inline_for_extraction noextract
