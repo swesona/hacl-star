@@ -408,39 +408,3 @@ let lemma_t_computation2 t =
   assert_norm(18446744073709551615 + 4294967295 * pow2 64 + 18446744069414584321 * pow2 192 = prime256)
 
 
-#set-options "--z3rlimit 500" 
-val p256_add: arg1: felem -> arg2: felem ->  out: felem -> Stack unit 
-  (requires (fun h0 ->  
-    live h0 arg1 /\ live h0 arg2 /\ live h0 out /\ eq_or_disjoint arg1 out /\ eq_or_disjoint arg2 out /\
-    (
-      let arg1_as_seq = as_seq h0 arg1 in let arg2_as_seq = as_seq h0 arg2 in 
-      felem_seq_as_nat arg1_as_seq < prime256 /\ felem_seq_as_nat arg2_as_seq < prime256 
-    )
-   )
-  )
-  (ensures (fun h0 _ h1 -> modifies1 out h0 h1 /\ 
-    (
-      let x = as_seq h0 arg1 in  
-      let y = as_seq h0 arg2 in 
-      let out = as_seq h1 out in 
-      felem_seq_as_nat out == (felem_seq_as_nat x + felem_seq_as_nat y) % prime256 /\
-      out == felem_add_seq (as_seq h0 arg1) (as_seq h0 arg2)
-    )
-  ))
-
-
-let p256_add arg1 arg2 out = 
-  let h0 = ST.get() in   
-  let t = add4 arg1 arg2 out in 
-    let h1 = ST.get() in 
-      assert(let out = as_seq h1 out in let x = as_seq h0 arg1 in let y = as_seq h0 arg2 in 
-      felem_seq_as_nat out + uint_v t * pow2 256 == felem_seq_as_nat x + felem_seq_as_nat y);
-  lemma_t_computation t;
-  reduction_prime256_2prime256_with_carry_impl t out out;
-    let h2 = ST.get() in 
-    assert(felem_seq_as_nat (as_seq h2 out) == (felem_seq_as_nat (as_seq h0 arg1) + felem_seq_as_nat (as_seq h0 arg2)) % prime256);
-    additionInDomain2Nat (felem_seq_as_nat (as_seq h0 arg1)) (felem_seq_as_nat (as_seq h0 arg2));
-    inDomain_mod_is_not_mod (fromDomain_ (felem_seq_as_nat (as_seq h0 arg1)) + fromDomain_ (felem_seq_as_nat (as_seq h0 arg2)));
-    lemma_eq_funct (as_seq h2 out) (felem_add_seq (as_seq h0 arg1) (as_seq h0 arg2))
-
-
