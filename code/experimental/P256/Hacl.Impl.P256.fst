@@ -18,6 +18,7 @@ open Hacl.Spec.P256.MontgomeryMultiplication.PointDouble
 open Hacl.Spec.P256.MontgomeryMultiplication.PointAdd
 open Hacl.Spec.P256.Normalisation 
 open Hacl.Impl.LowLevel
+open Hacl.Impl.P256.LowLevel
 open Hacl.Spec.P256
 
  

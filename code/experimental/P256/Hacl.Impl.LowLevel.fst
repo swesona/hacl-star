@@ -230,6 +230,7 @@ let cmovznz4 cin x y r =
 
 #reset-options "--z3refresh --z3rlimit 200"
 
+
 val reduction_prime_2prime_impl: x: felem -> result: felem -> 
   Stack unit
     (requires fun h -> live h x /\ live h result /\ eq_or_disjoint x result)
@@ -473,58 +474,4 @@ let p256_double arg1 out =
 
 
 
-val p256_sub: arg1: felem -> arg2: felem -> out: felem -> Stack unit 
-  (requires 
-    (fun h0 -> live h0 out /\ live h0 arg1 /\ live h0 arg2 /\ eq_or_disjoint arg1 out /\ eq_or_disjoint arg2 out /\
-    as_nat h0 arg1 < prime256 /\ as_nat h0 arg2 < prime256))
-    (ensures (fun h0 _ h1 -> modifies1 out h0 h1 /\ 
-      (
-	let x = as_seq h0 arg1 in 
-	let y = as_seq h0 arg2 in 
-	let out = as_seq h1 out in 
-	felem_seq_as_nat out == (felem_seq_as_nat x - felem_seq_as_nat y) % prime256 /\
-	out == felem_sub_seq (as_seq h0 arg1) (as_seq h0 arg2)
-      )
-  ))
 
-let p256_sub arg1 arg2 out = 
-    push_frame();
-    let h0 = ST.get() in 
-  let t = sub4 arg1 arg2 out in 
-    let h1 = ST.get() in 
-    lemma_t_computation2 t;
-    assert(let out = as_seq h1 out in let x = as_seq h0 arg1 in let y = as_seq h0 arg2 in 
-      felem_seq_as_nat out - uint_v t * pow2 256 == felem_seq_as_nat x - felem_seq_as_nat y);
-    assert(if felem_seq_as_nat (as_seq h0 arg1) < felem_seq_as_nat (as_seq h0 arg2) then uint_v t == 1 else uint_v t == 0);
-    
-  let t0 = (u64 0) -. t in 
-  let t1 = ((u64 0) -. t) >>. (size 32) in 
-  let t2 = u64 0 in 
-  let t3 = t -. (t <<. (size 32)) in 
-    assert(if uint_v t = 1 then uint_v t0 + uint_v t1 * pow2 64 + uint_v t2 * pow2 128 + uint_v t3 * pow2 192 == prime256 else True);
-    modulo_addition_lemma  (let x = as_seq h0 arg1 in let y = as_seq h0 arg2 in (felem_seq_as_nat x - felem_seq_as_nat y)) prime256 1;
-    assert(let x = as_seq h0 arg1 in let y = as_seq h0 arg2 in  (felem_seq_as_nat x - felem_seq_as_nat y + prime256) % prime256 = (felem_seq_as_nat x - felem_seq_as_nat y) % prime256);
-
-  let c = add4_variables out (u64 0)  t0 t1 t2 t3 out in 
-    let h2 = ST.get() in 
-      assert(let result = as_seq h2 out in 
-      let x = as_seq h0 arg1 in let y = as_seq h0 arg2 in 
-      let s = uint_v t0 + uint_v t1 * pow2 64 + uint_v t2 * pow2 128 + uint_v t3 * pow2 192 in 
-      if felem_seq_as_nat x - felem_seq_as_nat y >= 0 then 
-      begin
-	  modulo_lemma (felem_seq_as_nat x - felem_seq_as_nat y) prime256;
-	  felem_seq_as_nat result == (felem_seq_as_nat x - felem_seq_as_nat y) % prime256
-      end
-      else
-          begin
-	    modulo_lemma (felem_seq_as_nat result) prime256;
-            felem_seq_as_nat result == (felem_seq_as_nat x - felem_seq_as_nat y) % prime256
-	  end
-  );
-
-    substractionInDomain2Nat (felem_seq_as_nat (as_seq h0 arg1)) (felem_seq_as_nat (as_seq h0 arg2));
-    inDomain_mod_is_not_mod (fromDomain_ (felem_seq_as_nat (as_seq h0 arg1)) - fromDomain_ (felem_seq_as_nat (as_seq h0 arg2)));
-    lemma_eq_funct (as_seq h2 out) (felem_sub_seq (as_seq h0 arg1) (as_seq h0 arg2));
-    
-    pop_frame()
-    
