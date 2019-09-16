@@ -444,34 +444,3 @@ let p256_add arg1 arg2 out =
     lemma_eq_funct (as_seq h2 out) (felem_add_seq (as_seq h0 arg1) (as_seq h0 arg2))
 
 
-#set-options "--z3rlimit 500" 
-val p256_double: arg1: felem ->  out: felem -> Stack unit 
-  (requires (fun h0 ->  live h0 arg1 /\ live h0 out /\  eq_or_disjoint arg1 out /\
-    (
-      let arg1_as_seq = as_seq h0 arg1 in felem_seq_as_nat arg1_as_seq < prime256
-    )
-  ))
-  (ensures (fun h0 _ h1 -> modifies1 out h0 h1 /\ 
-    (
-      let x = as_seq h0 arg1 in 
-      let out = as_seq h1 out in 
-      felem_seq_as_nat out == (2 * felem_seq_as_nat x) % prime256 /\
-      felem_seq_as_nat out < prime256
-    )
-  ))
-
-
-let p256_double arg1 out = 
-    push_frame();
-  let h0 = ST.get() in 
-  let t = add4 arg1 arg1 out in 
-    let h1 = ST.get() in 
-      assert(let out = as_seq h1 out in let x = as_seq h0 arg1 in 
-      felem_seq_as_nat out + uint_v t * pow2 256 == felem_seq_as_nat x + felem_seq_as_nat x);
-  lemma_t_computation t;
-  reduction_prime256_2prime256_with_carry_impl t out out;
-  pop_frame()
-
-
-
-
