@@ -13,14 +13,6 @@ open Hacl.Spec.P256.Basic
 open Hacl.Spec.P256.MontgomeryMultiplication
 
 open FStar.Math.Lemmas
-
-open FStar.Mul
-
-inline_for_extraction
-let prime256_buffer: x: ilbuffer uint64 (size 4) {witnessed #uint64 #(size 4) x (Lib.Sequence.of_list p256_prime_list) /\ recallable x /\ felem_seq_as_nat (Lib.Sequence.of_list (p256_prime_list)) == prime256} = 
-  assert_norm (felem_seq_as_nat (Lib.Sequence.of_list (p256_prime_list)) == prime256);
-  createL_global p256_prime_list
-
 open FStar.Mul
 
 #reset-options "--z3refresh --z3rlimit 100"
@@ -30,9 +22,8 @@ val add_carry: cin: uint64 -> x: uint64 -> y: uint64 -> r: lbuffer uint64 (size 
     (requires fun h -> live h r)
     (ensures fun h0 c h1 -> modifies1 r h0 h1 /\ uint_v c <= 2 /\ 
       (
-  let r = as_seq h1 r in 
-  let r = Seq.index r 0 in 
-  uint_v r + uint_v c * pow2 64 == uint_v x + uint_v y + uint_v cin)
+	let r = Seq.index (as_seq h1 r) 0 in 
+	uint_v r + uint_v c * pow2 64 == uint_v x + uint_v y + uint_v cin)
     )
 
 let add_carry cin x y result1 = 
@@ -43,67 +34,52 @@ let add_carry cin x y result1 =
   Lib.Buffer.upd result1 (size 0) res;
   c
 
-#reset-options "--z3refresh --z3rlimit 200"
 
 inline_for_extraction noextract
 val add4: x: felem -> y: felem -> result: felem -> 
   Stack uint64
-    (requires fun h -> live h x /\ live h y /\ live h result /\ eq_or_disjoint x result /\eq_or_disjoint y result )
-    (ensures fun h0 c h1 -> modifies (loc result) h0 h1 /\ v c <= 1 /\
-      (
-  let result = as_seq h1 result in 
-  let x = as_seq h0 x in 
-  let y = as_seq h0 y in 
-  felem_seq_as_nat result + v c * pow2 256 == felem_seq_as_nat x + felem_seq_as_nat y
-      )
-   )   
+    (requires fun h -> live h x /\ live h y /\ live h result /\ eq_or_disjoint x result /\ eq_or_disjoint y result)
+    (ensures fun h0 c h1 -> modifies (loc result) h0 h1 /\ v c <= 1 /\ 
+      as_nat h1 result + v c * pow2 256 == as_nat h0 x + as_nat h0 y)   
 
-
-let add4 x y result = 
+let add4 x y result =    
+    let h0 = ST.get() in
+  
     let r0 = sub result (size 0) (size 1) in 
     let r1 = sub result (size 1) (size 1) in 
     let r2 = sub result (size 2) (size 1) in 
     let r3 = sub result (size 3) (size 1) in 
-
-      let h0 = ST.get() in 
+    
     let cc = add_carry (u64 0) x.(0ul) y.(0ul) r0 in 
     let cc = add_carry cc x.(1ul) y.(1ul) r1 in 
     let cc = add_carry cc x.(2ul) y.(2ul) r2 in 
-    let cc = add_carry cc x.(3ul) y.(3ul) r3 in 
-      
-    assert(let r1_0 = as_seq h0 r1 in let r0_ = as_seq h0 result in Seq.index r0_ 1 == Seq.index r1_0 0);
-    assert(let r2_0 = as_seq h0 r2 in let r0_ = as_seq h0 result in Seq.index r0_ 2 == Seq.index r2_0 0);
-    assert(let r3_0 = as_seq h0 r3 in let r0_ = as_seq h0 result in Seq.index r0_ 3 == Seq.index r3_0 0);
-  cc
+    let cc = add_carry cc x.(3ul) y.(3ul) r3 in   
+    
+      assert(let r1_0 = as_seq h0 r1 in let r0_ = as_seq h0 result in Seq.index r0_ 1 == Seq.index r1_0 0);
+      assert(let r2_0 = as_seq h0 r2 in let r0_ = as_seq h0 result in Seq.index r0_ 2 == Seq.index r2_0 0);
+      assert(let r3_0 = as_seq h0 r3 in let r0_ = as_seq h0 result in Seq.index r0_ 3 == Seq.index r3_0 0);
+    
+    cc
 
 
 inline_for_extraction noextract
 val add4_variables: x: felem -> cin: uint64 {uint_v cin <=1} ->  y0: uint64 -> y1: uint64 -> y2: uint64 -> y3: uint64 -> result: felem -> 
   Stack uint64
-    (requires fun h -> live h x /\ live h result /\ eq_or_disjoint x result )
+    (requires fun h -> live h x /\ live h result /\ eq_or_disjoint x result)
     (ensures fun h0 c h1 -> modifies (loc result) h0 h1 /\ v c <= 1 /\  
-      (
-  let result = as_seq h1 result in 
-  let x = as_seq h0 x in 
-  let y = uint_v y0 + uint_v y1 * pow2 64 + uint_v y2 * pow2 128 + uint_v y3 * pow2 192 in 
-  felem_seq_as_nat result + uint_v c * pow2 256 == felem_seq_as_nat x + y + uint_v cin 
-      )
-   )   
-
+	as_nat h1 result  + uint_v c * pow2 256 == as_nat h0 x + uint_v y0 + uint_v y1 * pow2 64 + uint_v y2 * pow2 128 + uint_v y3 * pow2 192 + uint_v cin)   
 
 let add4_variables x cin y0 y1 y2 y3 result = 
-  let h0 = ST.get() in 
+    let h0 = ST.get() in 
+    
     let r0 = sub result (size 0) (size 1) in      
     let r1 = sub result (size 1) (size 1) in 
     let r2 = sub result (size 2) (size 1) in 
     let r3 = sub result (size 3) (size 1) in 
 
-    let cc0 = add_carry cin x.(0ul) y0 r0 in 
-      let h1 = ST.get() in 
-    let cc1 = add_carry cc0 x.(1ul) y1 r1 in 
-      let h2 = ST.get() in 
-    let cc = add_carry cc1 x.(2ul) y2 r2 in 
-      let h3 = ST.get() in 
+    let cc = add_carry cin x.(0ul) y0 r0 in 
+    let cc = add_carry cc x.(1ul) y1 r1 in 
+    let cc = add_carry cc x.(2ul) y2 r2 in 
     let cc = add_carry cc x.(3ul) y3 r3 in 
       
     assert_norm (pow2 64 * pow2 64 = pow2 128);
@@ -231,6 +207,12 @@ let cmovznz4 cin x y r =
 #reset-options "--z3refresh --z3rlimit 200"
 
 
+inline_for_extraction
+let prime256_buffer: x: ilbuffer uint64 (size 4) {witnessed #uint64 #(size 4) x (Lib.Sequence.of_list p256_prime_list) /\ recallable x /\ felem_seq_as_nat (Lib.Sequence.of_list (p256_prime_list)) == prime256} = 
+  assert_norm (felem_seq_as_nat (Lib.Sequence.of_list (p256_prime_list)) == prime256);
+  createL_global p256_prime_list
+
+
 val reduction_prime_2prime_impl: x: felem -> result: felem -> 
   Stack unit
     (requires fun h -> live h x /\ live h result /\ eq_or_disjoint x result)
@@ -355,56 +337,3 @@ let shift_256_impl i o =
   assert_norm(pow2 64 * pow2 64 * pow2 64  * pow2 64 * pow2 64 * pow2 64 = pow2 (6 * 64));
   assert_norm(pow2 64 * pow2 64 * pow2 64  * pow2 64 * pow2 64* pow2 64 * pow2 64 = pow2 (7 * 64));
   assert_norm(pow2 64 * pow2 64 * pow2 64  * pow2 64 * pow2 64* pow2 64 * pow2 64 * pow2 64 = pow2 (8 * 64))
-
-val lemma_t_computation: t: uint64{uint_v t == 0 \/ uint_v t == 1} -> 
-  Lemma
-    (
-        let t0 = u64 0 in 
-  let t1 = (u64 0) -. (t <<. (size 32)) in 
-  let t2 = (u64 0) -. t in 
-  let t3 = (t <<. (size 32)) -. (t <<. (size 1)) in 
-  let s = uint_v t0 + uint_v t1 * pow2 64 + uint_v t2 * pow2 128 + uint_v t3 * pow2 192 in 
-  if uint_v t = 1 then s == pow2 256 - prime256 - 1 else s == 0
-    )
-
-let lemma_t_computation t = 
-  let t0 = u64 0 in 
-  let t1 = (u64 0) -. (t <<. (size 32)) in 
-  let t2 = (u64 0) -. t in 
-  let t3 = (t <<. (size 32)) -. (t <<. (size 1)) in 
-
-  let s = uint_v t0 + uint_v t1 * pow2 64 + uint_v t2 * pow2 128 + uint_v t3 * pow2 192 in  
-
-  assert_norm(if uint_v t = 1 then uint_v t1 = 18446744069414584320 else uint_v t1 = 0);
-  assert_norm(if uint_v t = 1 then uint_v t2 = 18446744073709551615 else uint_v t2 = 0);
-  assert_norm(if uint_v t = 1 then uint_v t3 = 4294967294 else uint_v t3 = 0);
- 
-  assert_norm(18446744069414584320 * pow2 64 + 18446744073709551615 * pow2 128 + 4294967294 * pow2 192 = pow2 256 - prime256 - 1)
-
-
-val lemma_t_computation2: t: uint64 {uint_v t == 0 \/ uint_v t == 1} ->
-  Lemma
-    (
-      let t0 = (u64 0) -. t in 
-      let t1 = ((u64 0) -. t) >>. (size 32) in 
-      let t2 = u64 0 in 
-      let t3 = t -. (t <<. (size 32)) in 
-      let s = uint_v t0 + uint_v t1 * pow2 64 + uint_v t2 * pow2 128 + uint_v t3 * pow2 192 in 
-  if uint_v t = 1 then s == prime256 else s == 0
-    )
-
-let lemma_t_computation2 t = 
-      let t0 = (u64 0) -. t in 
-      let t1 = ((u64 0) -. t) >>. (size 32) in 
-      let t2 = u64 0 in 
-      let t3 = t -. (t <<. (size 32)) in 
-
-  let s = uint_v t0 + uint_v t1 * pow2 64 + uint_v t2 * pow2 128 + uint_v t3 * pow2 192 in  
-
-  assert_norm(if uint_v t = 1 then uint_v t0 == 18446744073709551615 else uint_v t0 = 0);
-  assert_norm(if uint_v t = 1 then uint_v t1 == 4294967295 else uint_v t1 = 0);
-  assert_norm(if uint_v t = 1 then uint_v t3 == 18446744069414584321 else uint_v t3 = 0);
-
-  assert_norm(18446744073709551615 + 4294967295 * pow2 64 + 18446744069414584321 * pow2 192 = prime256)
-
-
