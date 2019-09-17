@@ -21,18 +21,18 @@ open FStar.Mul
 #reset-options "--z3refresh --z3rlimit 100"
 
 
+inline_for_extraction
+let prime256_buffer: x: ilbuffer uint64 (size 4) {witnessed #uint64 #(size 4) x (Lib.Sequence.of_list p256_prime_list) /\ recallable x /\ felem_seq_as_nat (Lib.Sequence.of_list (p256_prime_list)) == prime256} = 
+  assert_norm (felem_seq_as_nat (Lib.Sequence.of_list (p256_prime_list)) == prime256);
+  createL_global p256_prime_list
+
+
 inline_for_extraction noextract
 val reduction_prime256_2prime256_with_carry_impl: cin: uint64 -> x: felem -> result: felem ->
   Stack unit 
     (requires fun h -> live h x /\ live h result /\  eq_or_disjoint x result /\ 
       (let x = as_seq h x in  felem_seq_as_nat x + uint_v cin * pow2 256) < 2 * prime256)
-    (ensures fun h0 _ h1 -> modifies1 result h0 h1 /\ 
-      (
-  let r = as_seq h1 result in 
-  let x = as_seq h0 x in 
-  felem_seq_as_nat r = (felem_seq_as_nat x + uint_v cin * pow2 256) % prime256
-      )
-    )  
+    (ensures fun h0 _ h1 -> modifies1 result h0 h1 /\ as_nat h1 result = (as_nat h0 x + uint_v cin * pow2 256) % prime256)  
 
 
 let reduction_prime256_2prime256_with_carry_impl cin x result = 
@@ -40,45 +40,45 @@ let reduction_prime256_2prime256_with_carry_impl cin x result =
     let tempBuffer = create (size 4) (u64 0) in 
     let tempBufferForSubborrow = create (size 1) (u64 0) in 
     recall_contents prime256_buffer (Lib.Sequence.of_list p256_prime_list);
-      let h0  = ST.get() in 
     let c = sub4_il x prime256_buffer tempBuffer in
-      let h1 = ST.get() in 
-	assert(let x = felem_seq_as_nat (as_seq h0 x) in if x < prime256 then uint_v c = 1 else uint_v c = 0);
-	assert(felem_seq_as_nat (as_seq h1 tempBuffer)  = felem_seq_as_nat (as_seq h0 x) - prime256 + uint_v c * pow2 256);
     let carry = sub_borrow c cin (u64 0) tempBufferForSubborrow in 
-      assert(if uint_v cin > 0 then uint_v carry == 0 else if uint_v c = 0 then uint_v carry = 0 else uint_v carry = 1);
       cmovznz4 carry tempBuffer x result;
       let h3 = ST.get() in 
       modulo_addition_lemma (felem_seq_as_nat (as_seq h3 result)) prime256 1;
-      assert((felem_seq_as_nat (as_seq h3 result) + prime256) % prime256 = (felem_seq_as_nat (as_seq h3 result)) % prime256);
       small_modulo_lemma_1 (as_nat h3 result) prime256;
-      assert(let resultN = felem_seq_as_nat (as_seq h3 result) in 
-	if uint_v cin = 1 then 
-	  if uint_v c = 0 then 
-	    resultN = felem_seq_as_nat (as_seq h0 x) - prime256 /\
-	    (felem_seq_as_nat (as_seq h0 x) + uint_v cin * pow2 256) % prime256 = resultN
-	  else 
-	    resultN = felem_seq_as_nat (as_seq h0 x) - prime256 + pow2 256 /\
-	    resultN < prime256 /\
-	    resultN % prime256 == resultN  /\
-	    (felem_seq_as_nat (as_seq h0 x) + uint_v cin * pow2 256) % prime256 == resultN  
-       else 
-        True );
-
-      assert(let resultN = felem_seq_as_nat (as_seq h3 result) in 
-	if uint_v cin = 0 then 
-	  if uint_v c = 0 then 
-	    uint_v carry = 0 /\
-	    resultN = felem_seq_as_nat (as_seq h0 x) - prime256 /\
-	    (felem_seq_as_nat (as_seq h0 x) + uint_v carry * pow2 256) % prime256  == resultN
-	  else 
-	    uint_v carry = 1 /\
-	    resultN = felem_seq_as_nat (as_seq h0 x) /\
-	    (felem_seq_as_nat (as_seq h0 x) + uint_v cin * pow2 256) % prime256  = resultN % prime256 
-	  else True  );
- 
  pop_frame()   
 
+
+#reset-options "--z3rlimit 300"
+
+val lemma_reduction1: a: nat {a < pow2 256} -> r: nat{if a >= prime256 then r = a - prime256 else r = a} -> 
+  Lemma (r = a % prime256)
+
+let lemma_reduction1 a r = 
+  assert_norm (pow2 256 - prime256 < prime256);
+  assert(if a >= prime256 then a - prime256 < prime256 else True);
+  assert(if a >= prime256 then r < prime256 else True);
+  assert(if a >= prime256 then r = a % prime256 else True);
+  assert(if a < prime256 then r < prime256 else True);
+  assert(if a < prime256 then r = a % prime256 else True);
+  assert(r = a % prime256)
+
+
+val reduction_prime_2prime_impl: x: felem -> result: felem -> 
+  Stack unit
+    (requires fun h -> live h x /\ live h result /\ eq_or_disjoint x result)
+    (ensures fun h0 _ h1 -> modifies1 result h0 h1 /\ as_nat h1 result == as_nat h0 x % prime256)
+
+let reduction_prime_2prime_impl x result = 
+  push_frame();
+  let tempBuffer = create (size 4) (u64 0) in 
+    recall_contents prime256_buffer (Lib.Sequence.of_list p256_prime_list);
+        let h0 = ST.get() in 
+    let c = sub4_il x prime256_buffer tempBuffer in 
+    cmovznz4 c tempBuffer x result;
+      let h2 = ST.get() in 
+    lemma_reduction1 (as_nat h0 x) (as_nat h2 result);
+  pop_frame()  
 
 
 val lemma_t_computation: t: uint64{uint_v t == 0 \/ uint_v t == 1} -> 

@@ -19,6 +19,8 @@ open Hacl.Spec.ECDSA
 open Hacl.Spec.P256 
 open Hacl.Spec.P256.Ladder
 
+open Hacl.Impl.P256.LowLevel
+
 open Hacl.Hash.SHA2
 
 #reset-options "--z3refresh --z3rlimit 300"
