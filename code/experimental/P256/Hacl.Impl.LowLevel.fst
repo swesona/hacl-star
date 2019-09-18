@@ -10,12 +10,43 @@ open Lib.Buffer
 open Hacl.Spec.P256.Definitions
 open Hacl.Spec.P256.Lemmas
 open Hacl.Spec.P256.Basic
-open Hacl.Spec.P256.MontgomeryMultiplication
 
 open FStar.Math.Lemmas
 open FStar.Mul
 
 #reset-options "--z3refresh --z3rlimit 100"
+
+inline_for_extraction noextract
+val load_buffer8: 
+  a0: uint64 -> a1: uint64 -> 
+  a2: uint64 -> a3: uint64 -> 
+  a4: uint64 -> a5: uint64 -> 
+  a6: uint64 -> a7: uint64 ->  
+  o: lbuffer uint64 (size 8) -> 
+  Stack unit
+    (requires fun h -> live h o)
+    (ensures fun h0 _ h1 -> modifies (loc o) h0 h1 /\ wide_as_nat h1 o == wide_as_nat4 (a0, a1, a2, a3, a4, a5, a6, a7))
+
+
+let load_buffer8 a0 a1 a2 a3 a4 a5 a6 a7  o = 
+    let h0 = ST.get() in 
+  assert_norm (pow2 64 * pow2 64 = pow2 128);
+  assert_norm (pow2 64 * pow2 64 * pow2 64 = pow2 192);
+  assert_norm (pow2 64 * pow2 64 * pow2 64 * pow2 64 = pow2 256);
+  assert_norm (pow2 64 * pow2 64 * pow2 64 * pow2 64 * pow2 64 = pow2 (5 * 64));
+  assert_norm (pow2 64 * pow2 64 * pow2 64 * pow2 64 * pow2 64 * pow2 64 = pow2 (6 * 64));
+  assert_norm (pow2 64 * pow2 64 * pow2 64 * pow2 64 * pow2 64 * pow2 64 * pow2 64 = pow2 (7 * 64));
+
+  upd o (size 0) a0;
+  upd o (size 1) a1;
+  upd o (size 2) a2;
+  upd o (size 3) a3;
+  
+  upd o (size 4) a4;
+  upd o (size 5) a5;
+  upd o (size 6) a6;
+  upd o (size 7) a7
+
 
 val add_carry: cin: uint64 -> x: uint64 -> y: uint64 -> r: lbuffer uint64 (size 1) -> 
   Stack uint64 
@@ -153,6 +184,26 @@ let sub4 x y result =
   cc
 
 
+val mul: f1: felem -> r: felem -> out: widefelem
+  -> Stack unit
+    (requires fun h -> live h out /\ live h f1 /\ live h r)
+    (ensures  fun h0 _ h1 -> modifies (loc out) h0 h1 /\ wide_as_nat h1 out == as_nat h0 f1 * as_nat h0 r)
+      
+[@ CInline]
+let mul f1 r out =
+  let f10 = f1.(0ul) in
+  let f11 = f1.(1ul) in
+  let f12 = f1.(2ul) in
+  let f13 = f1.(3ul) in
+
+  let r0 = r.(0ul) in
+  let r1 = r.(1ul) in
+  let r2 = r.(2ul) in
+  let r3 = r.(3ul) in
+  let (o0, o1, o2, o3, o4, o5, o6, o7) = mul4 (f10, f11, f12, f13) (r0, r1, r2, r3) in
+    assert(wide_as_nat4  (o0, o1, o2, o3, o4, o5, o6, o7) == as_nat4 (f10, f11, f12, f13) * as_nat4 (r0, r1, r2, r3));
+  load_buffer8 o0 o1 o2 o3 o4 o5 o6 o7 out
+
 
 val cmovznz4: cin: uint64 -> x: felem -> y: felem -> result: felem ->
   Stack unit
@@ -208,3 +259,61 @@ let shift_256_impl i o =
   assert_norm(pow2 64 * pow2 64 * pow2 64  * pow2 64 * pow2 64 * pow2 64 = pow2 (6 * 64));
   assert_norm(pow2 64 * pow2 64 * pow2 64  * pow2 64 * pow2 64* pow2 64 * pow2 64 = pow2 (7 * 64));
   assert_norm(pow2 64 * pow2 64 * pow2 64  * pow2 64 * pow2 64* pow2 64 * pow2 64 * pow2 64 = pow2 (8 * 64))
+
+inline_for_extraction noextract
+val mod64: a: widefelem -> Stack uint64 
+  (requires fun h -> live h a) 
+  (ensures fun h0 r h1 -> modifies0 h0 h1 /\  wide_as_nat h1 a % pow2 64 = uint_v r)
+
+let mod64 a = index a (size 0)
+
+inline_for_extraction noextract
+val shortened_mul_tuple: a: felem4 -> b: uint64 -> Tot (r: felem8 {as_nat4 a * uint_v b = wide_as_nat4 r /\ wide_as_nat4 r < pow2 320})
+
+let shortened_mul_tuple (a0, a1, a2, a3) b = 
+  let (c, (f0, f1, f2, f3)) = mul1 (a0, a1, a2, a3) b in 
+   assert_norm(pow2 64 * pow2 64 = pow2 128);
+   assert_norm(pow2 64 * pow2 64 * pow2 64 = pow2 192);
+   assert_norm(pow2 64 * pow2 64 * pow2 64 * pow2 64 = pow2 256);
+   assert_norm(pow2 64 * pow2 64 * pow2 64  * pow2 64 * pow2 64= pow2 320);
+   assert_norm(pow2 64 * pow2 64 * pow2 64  * pow2 64 * pow2 64 * pow2 64 = pow2 (6 * 64));
+   assert_norm(pow2 64 * pow2 64 * pow2 64  * pow2 64 * pow2 64* pow2 64 * pow2 64 = pow2 (7 * 64));
+  f0, f1, f2, f3, c, (u64 0), (u64 0), u64(0)  
+
+
+val shortened_mul: a: ilbuffer uint64 (size 4) -> b: uint64 -> result: widefelem -> Stack unit
+  (requires fun h -> live h a /\ live h result)
+  (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\ 
+    felem_seq_as_nat (as_seq h0 a) * uint_v b = wide_as_nat h1 result /\ wide_as_nat h1 result < pow2 320)
+
+let shortened_mul a b result = 
+  let a0 = index a (size 0) in 
+  let a1 = index a (size 1) in 
+  let a2 = index a (size 2) in 
+  let a3 = index a (size 3) in 
+  let (f0, f1, f2, f3, f4, f5, f6, f7) = shortened_mul_tuple (a0, a1, a2, a3) b in 
+  load_buffer8 f0 f1 f2 f3 f4 f5 f6 f7 result
+
+
+(*wide_as_nat h0 t / pow2 64 = wide_as_nat h1 t1 *)
+val shift8: t: widefelem -> t1: widefelem -> Stack unit 
+  (requires fun h -> live h t /\ live h t1 /\ eq_or_disjoint t t1)
+  (ensures fun h0 _ h1 -> modifies (loc t1) h0 h1 /\ wide_as_nat h0 t / pow2 64 = wide_as_nat h1 t1)
+
+let shift8 t out = 
+  let t1 = index t (size 1) in 
+  let t2 = index t (size 2) in 
+  let t3 = index t (size 3) in 
+  let t4 = index t (size 4) in 
+  let t5 = index t (size 5) in 
+  let t6 = index t (size 6) in 
+  let t7 = index t (size 7) in 
+
+  upd out (size 0) t1;
+  upd out (size 1) t2;
+  upd out (size 2) t3;
+  upd out (size 3) t4;
+  upd out (size 4) t5;
+  upd out (size 5) t6;
+  upd out (size 6) t7;
+  upd out (size 7) (u64 0)
