@@ -51,6 +51,37 @@ let reduction_prime256_2prime256_with_carry_impl cin x result =
 
 #reset-options "--z3rlimit 300"
 
+inline_for_extraction
+val reduction_prime256_2prime256_8_with_carry_impl: x: widefelem -> result: felem -> 
+  Stack unit 
+    (requires fun h -> live h x /\ live h result /\ eq_or_disjoint x result /\ wide_as_nat h x < 2 * prime256)
+    (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\ as_nat h1 result = (wide_as_nat h0 x) % prime256)
+
+let reduction_prime256_2prime256_8_with_carry_impl x result = 
+  push_frame();
+    let h0 = ST.get() in 
+    let tempBuffer = create (size 4) (u64 0) in 
+    let tempBufferForSubborrow = create (size 1) (u64 0) in 
+    let cin = Lib.Buffer.index x (size 4) in 
+    let x_ = Lib.Buffer.sub x (size 0) (size 4) in 
+      recall_contents prime256_buffer (Lib.Sequence.of_list p256_prime_list); 
+    let c = Hacl.Impl.LowLevel.sub4_il x_ prime256_buffer tempBuffer in 
+    let carry = sub_borrow c cin (u64 0) tempBufferForSubborrow in 
+    cmovznz4 carry tempBuffer x_ result; 
+      let h4 = ST.get() in 
+      assert_norm (pow2 256 > prime256);
+      assert(if (wide_as_nat h0 x < prime256) then begin
+      small_modulo_lemma_1 (wide_as_nat h0 x) prime256;
+      as_nat h4 result = (wide_as_nat h0 x) % prime256 end 
+      else 
+	begin 
+	small_modulo_lemma_1 (as_nat h4 result) prime256;
+	lemma_mod_sub (wide_as_nat h0 x) prime256 1;
+	as_nat h4 result = (wide_as_nat h0 x) % prime256
+	end );
+ pop_frame()
+
+
 val lemma_reduction1: a: nat {a < pow2 256} -> r: nat{if a >= prime256 then r = a - prime256 else r = a} -> 
   Lemma (r = a % prime256)
 

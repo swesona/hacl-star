@@ -406,7 +406,7 @@ let montgomery_multiplication_ecdsa_module a b result =
      lemma_mod_mul_distr_l (as_nat h0 a * as_nat h0 b * modp_inv2_prime (pow2 128) prime_p256_order) (modp_inv2_prime (pow2 128) prime_p256_order) prime_p256_order;
      lemma_montgomery_mod_inverse_addition2 (as_nat h0 a * as_nat h0 b);
      lemma_montgomery_mult_result_less_than_prime_p256_order (as_nat h0 a) (as_nat h0 b) (uint_v k0);
-     reduction_prime_prime_2prime_with_carry round4 result; 
+   reduction_prime_prime_2prime_with_carry round4 result; 
      
      lemmaFromDomainToDomain (as_nat h0 a);
      lemmaFromDomainToDomain (as_nat h0 b);

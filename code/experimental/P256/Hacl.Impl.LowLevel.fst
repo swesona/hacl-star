@@ -66,7 +66,7 @@ let add_carry cin x y result1 =
   Lib.Buffer.upd result1 (size 0) res;
   c
 
-
+inline_for_extraction noextract
 val add4: x: felem -> y: felem -> result: felem -> 
   Stack uint64
     (requires fun h -> live h x /\ live h y /\ live h result /\ eq_or_disjoint x result /\ eq_or_disjoint y result)
@@ -92,6 +92,55 @@ let add4 x y result =
     
     cc
 
+
+
+#reset-options "--z3refresh --z3rlimit 300"
+inline_for_extraction noextract
+val add4_with_carry: c: uint64 ->  x: felem -> y: felem -> result: felem -> 
+  Stack uint64
+    (requires fun h -> uint_v c <= 1 /\ live h x /\ live h y /\ live h result /\ eq_or_disjoint x result /\ eq_or_disjoint y result)
+    (ensures fun h0 carry h1 -> modifies (loc result) h0 h1 /\ uint_v carry <= 1 /\ 
+      as_nat h1 result + v carry * pow2 256 == as_nat h0 x + as_nat h0 y + uint_v c)   
+
+let add4_with_carry c x y result =    
+    let h0 = ST.get() in
+  
+    let r0 = sub result (size 0) (size 1) in 
+    let r1 = sub result (size 1) (size 1) in 
+    let r2 = sub result (size 2) (size 1) in 
+    let r3 = sub result (size 3) (size 1) in 
+    
+    let cc = add_carry c x.(0ul) y.(0ul) r0 in 
+    let cc = add_carry cc x.(1ul) y.(1ul) r1 in 
+    let cc = add_carry cc x.(2ul) y.(2ul) r2 in 
+    let cc = add_carry cc x.(3ul) y.(3ul) r3 in   
+
+      assert(let r1_0 = as_seq h0 r1 in let r0_ = as_seq h0 result in Seq.index r0_ 1 == Seq.index r1_0 0);
+      assert(let r2_0 = as_seq h0 r2 in let r0_ = as_seq h0 result in Seq.index r0_ 2 == Seq.index r2_0 0);
+      assert(let r3_0 = as_seq h0 r3 in let r0_ = as_seq h0 result in Seq.index r0_ 3 == Seq.index r3_0 0);
+    
+    cc
+
+
+val add8: x: widefelem -> y: widefelem -> result: widefelem -> Stack uint64 
+  (requires fun h -> live h x /\ live h y /\ live h result /\ eq_or_disjoint x result /\ eq_or_disjoint y result)
+  (ensures fun h0 c h1 -> modifies (loc result) h0 h1 /\ v c <= 1 /\ 
+    wide_as_nat h1 result + v c * pow2 512 == wide_as_nat h0 x + wide_as_nat h0 y)
+
+let add8 x y result = 
+    let a0 = sub x (size 0) (size 4) in 
+    let a1 = sub x (size 4) (size 4) in 
+    let b0 = sub y (size 0) (size 4) in 
+    let b1 = sub y (size 4) (size 4) in 
+
+    let c0 = sub result (size 0) (size 4) in 
+    let c1 = sub result (size 4) (size 4) in 
+
+    let carry0 = add4 a0 b0 c0 in
+    let carry1 = add4_with_carry carry0 a1 b1 c1 in 
+    assert_norm (pow2 256 * pow2 256 = pow2 512); 
+    carry1
+    
 
 val add4_variables: x: felem -> cin: uint64 {uint_v cin <=1} ->  y0: uint64 -> y1: uint64 -> y2: uint64 -> y3: uint64 -> result: felem -> 
   Stack uint64

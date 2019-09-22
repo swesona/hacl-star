@@ -19,9 +19,10 @@ open Hacl.Spec.P256.MontgomeryMultiplication.PointAdd
 open Hacl.Spec.P256.Normalisation 
 open Hacl.Impl.LowLevel
 open Hacl.Impl.P256.LowLevel
+open Hacl.Impl.P256.MontgomeryMultiplication
 open Hacl.Spec.P256
 
- 
+
 open FStar.Math.Lemmas
 
 friend Hacl.Spec.P256.MontgomeryMultiplication
@@ -81,7 +82,7 @@ val fromDomain: f: felem-> result: felem-> Stack unit
   (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\ as_nat h1 result = (as_nat h0 f * modp_inv2(pow2 256)) % prime/\ as_nat h1 result = fromDomain_ (as_nat h0 f))
 
 let fromDomain f result = 
-  multiplication_partially_opened ((u64 1), (u64 0), u64 0, u64 0) f result
+  montgomery_multiplication_buffer_by_one f result
     
 
 let pointFromDomain p result = 
@@ -107,8 +108,9 @@ val quatre: a: felem -> result: felem -> Stack unit
 #reset-options "--z3refresh --z3rlimit 500" 
 
 let quatre a result = 
+  let open Hacl.Impl.P256.MontgomeryMultiplication in 
     let h0 = ST.get() in 
-  montgomery_multiplication_buffer a a result;
+  Hacl.Impl.P256.MontgomeryMultiplication.montgomery_multiplication_buffer a a result;
   montgomery_multiplication_buffer result result result;
     let h1 = ST.get() in 
   assert(Lib.Sequence.equal (mm_quatre_seq (as_seq h0 a))  (as_seq h1 result))
