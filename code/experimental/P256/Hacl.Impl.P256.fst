@@ -272,7 +272,7 @@ let point_double_compute_x3 x3 s m tempBuffer =
    let twoS = sub tempBuffer (size 0) (size 4) in 
    let mm = sub tempBuffer (size 4) (size 4) in 
     multByTwo s twoS;
-    Hacl.Spec.P256.MontgomeryMultiplication.montgomery_multiplication_buffer m m mm;
+    montgomery_multiplication_buffer m m mm;
     p256_sub mm twoS x3
  
 
@@ -297,7 +297,7 @@ let point_double_compute_y3 p_y y3 x3 s m tempBuffer =
     quatre p_y yyyy;
     multByEight yyyy eightYyyy;
     p256_sub s x3 sx3;
-    Hacl.Spec.P256.MontgomeryMultiplication.montgomery_multiplication_buffer m sx3 msx3; 
+    montgomery_multiplication_buffer m sx3 msx3; 
     p256_sub msx3 eightYyyy y3
 
 #reset-options "--z3refresh --z3rlimit 500"
@@ -328,7 +328,7 @@ let point_double p result tempBuffer =
    point_double_compute_y3 p_y y3 x3 s m buffer_for_y3;
      let h4 = ST.get() in 
      assert(modifies1 tempBuffer h2 h4);
-   Hacl.Spec.P256.MontgomeryMultiplication.montgomery_multiplication_buffer p_y p_z pypz;
+   montgomery_multiplication_buffer p_y p_z pypz;
    multByTwo pypz z3;
      let h5 = ST.get() in  
      concat3 (size 4) x3 (size 4) y3 (size 4) z3 result ; 
@@ -774,14 +774,14 @@ let norm p resultPoint tempBuffer =
   let tempBuffer20 = sub tempBuffer (size 12) (size 20) in 
 
     let h0 = ST.get() in 
-  Hacl.Spec.P256.MontgomeryMultiplication.montgomery_multiplication_buffer zf zf z2f;
-  Hacl.Spec.P256.MontgomeryMultiplication.montgomery_multiplication_buffer z2f zf z3f;
+  montgomery_multiplication_buffer zf zf z2f;
+  montgomery_multiplication_buffer z2f zf z3f;
 
-  Hacl.Spec.P256.MontgomeryMultiplication.exponent z2f z2f tempBuffer20;
-  Hacl.Spec.P256.MontgomeryMultiplication.exponent z3f z3f tempBuffer20;
+  exponent z2f z2f tempBuffer20;
+  exponent z3f z3f tempBuffer20;
      
-  Hacl.Spec.P256.MontgomeryMultiplication.montgomery_multiplication_buffer xf z2f z2f;
-  Hacl.Spec.P256.MontgomeryMultiplication.montgomery_multiplication_buffer yf z3f z3f;
+  montgomery_multiplication_buffer xf z2f z2f;
+  montgomery_multiplication_buffer yf z3f z3f;
 
   normalisation_update z2f z3f p resultPoint;
     let h3 = ST.get() in 

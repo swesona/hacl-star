@@ -44,6 +44,10 @@ val lemmaToDomainAndBackIsTheSame: a: nat { a < prime256} -> Lemma (fromDomain_ 
 
 val lemmaFromDomainToDomain: a: nat { a < prime256} -> Lemma (toDomain_ (fromDomain_ a) == a)
 
+
+val lemmaFromDomainToDomainModuloPrime: a: int -> Lemma (a % prime256 == fromDomain_(toDomain_ a))
+
+
 (* the lemma shows the equivalence between toDomain(a:nat) and toDomain(a % prime256) *)
 val inDomain_mod_is_not_mod: a: int -> Lemma (toDomain_ a == toDomain_ (a % prime256))
 
@@ -132,13 +136,3 @@ val lemma_add_same_value_is_by_minus_three: a: felem_seq{felem_seq_as_nat a < pr
       let three = mm_byThree_seq a in 
       let minusThree = felem_sub_seq zero three in 
       minusThree == mm_byMinusThree_seq a)
-
-
-val lemmaEraseToDomainFromDomain: z: nat-> Lemma (toDomain_ (fromDomain_ (toDomain_ (z * z % prime256)) * z % prime256) == toDomain_ (z * z * z % prime256))
-
-val exponent: a: felem ->result: felem -> tempBuffer: lbuffer uint64 (size 20) ->  Stack unit
-  (requires fun h -> live h a /\ live h tempBuffer /\ live h result /\ disjoint tempBuffer result /\ 
-  disjoint a tempBuffer /\ as_nat h a < prime256)
-  (ensures fun h0 _ h1 -> modifies2 result tempBuffer h0 h1 /\ (let k = fromDomain_ (as_nat h0 a) in 
-    as_nat h1 result =  toDomain_ ((pow k (prime256-2)) % prime256)))
-
