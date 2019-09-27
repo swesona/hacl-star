@@ -173,6 +173,60 @@ static uint64_t Hacl_Impl_LowLevel_sub4(uint64_t *x, uint64_t *y, uint64_t *resu
   return cc3;
 }
 
+static void Hacl_Impl_LowLevel_mul64(uint64_t x, uint64_t y, uint64_t *result, uint64_t *temp)
+{
+  uint128_t res = (uint128_t)x * y;
+  uint64_t l0 = (uint64_t)res;
+  uint64_t h0 = (uint64_t)(res >> (uint32_t)64U);
+  result[0U] = l0;
+  temp[0U] = h0;
+}
+
+static void
+Hacl_Impl_LowLevel_mult64_0u(uint64_t *x, uint64_t u, uint64_t *result, uint64_t *temp)
+{
+  uint64_t f0 = x[0U];
+  Hacl_Impl_LowLevel_mul64(f0, u, result, temp);
+}
+
+static uint64_t
+Hacl_Impl_LowLevel_mult64_c(
+  uint64_t x,
+  uint64_t u,
+  uint64_t cin,
+  uint64_t *result,
+  uint64_t *temp
+)
+{
+  uint64_t h = temp[0U];
+  uint64_t l;
+  Hacl_Impl_LowLevel_mul64(x, u, result, temp);
+  l = result[0U];
+  return Hacl_Impl_LowLevel_add_carry(cin, l, h, result);
+}
+
+static uint64_t Hacl_Impl_LowLevel_mul1(uint64_t *f, uint64_t u, uint64_t *result)
+{
+  uint64_t temp = (uint64_t)0U;
+  uint64_t f1 = f[1U];
+  uint64_t f2 = f[2U];
+  uint64_t f3 = f[3U];
+  uint64_t *o0 = result;
+  uint64_t *o1 = result + (uint32_t)1U;
+  uint64_t *o2 = result + (uint32_t)2U;
+  uint64_t *o3 = result + (uint32_t)3U;
+  uint64_t c1;
+  uint64_t c2;
+  uint64_t c3;
+  uint64_t h4_;
+  Hacl_Impl_LowLevel_mult64_0u(f, u, o0, &temp);
+  c1 = Hacl_Impl_LowLevel_mult64_c(f1, u, (uint64_t)0U, o1, &temp);
+  c2 = Hacl_Impl_LowLevel_mult64_c(f2, u, c1, o2, &temp);
+  c3 = Hacl_Impl_LowLevel_mult64_c(f3, u, c2, o3, &temp);
+  h4_ = temp;
+  return c3 + h4_;
+}
+
 inline void Hacl_Impl_LowLevel_mul(uint64_t *f1, uint64_t *r, uint64_t *out)
 {
   uint64_t f10 = f1[0U];
@@ -670,88 +724,9 @@ static void Hacl_Impl_LowLevel_shift_256_impl(uint64_t *i, uint64_t *o)
 
 void Hacl_Impl_LowLevel_shortened_mul(uint64_t *a, uint64_t b, uint64_t *result)
 {
-  uint64_t a0 = a[0U];
-  uint64_t a1 = a[1U];
-  uint64_t a2 = a[2U];
-  uint64_t a3 = a[3U];
-  uint128_t res0 = (uint128_t)a0 * b;
-  uint64_t l0 = (uint64_t)res0;
-  uint64_t h0 = (uint64_t)(res0 >> (uint32_t)64U);
-  uint128_t res1 = (uint128_t)a1 * b;
-  uint64_t l1 = (uint64_t)res1;
-  uint64_t h1 = (uint64_t)(res1 >> (uint32_t)64U);
-  uint128_t res2 = (uint128_t)a2 * b;
-  uint64_t l2 = (uint64_t)res2;
-  uint64_t h2 = (uint64_t)(res2 >> (uint32_t)64U);
-  uint128_t res = (uint128_t)a3 * b;
-  uint64_t l3 = (uint64_t)res;
-  uint64_t h3 = (uint64_t)(res >> (uint32_t)64U);
-  uint64_t o0 = l0;
-  K___uint64_t_uint64_t scrut0 = Hacl_Spec_P256_Basic_addcarry(l1, h0, (uint64_t)0U);
-  uint64_t o1 = scrut0.fst;
-  uint64_t c0 = scrut0.snd;
-  K___uint64_t_uint64_t scrut1 = Hacl_Spec_P256_Basic_addcarry(l2, h1, c0);
-  uint64_t o2 = scrut1.fst;
-  uint64_t c1 = scrut1.snd;
-  K___uint64_t_uint64_t scrut2 = Hacl_Spec_P256_Basic_addcarry(l3, h2, c1);
-  uint64_t o3 = scrut2.fst;
-  uint64_t c2 = scrut2.snd;
-  uint64_t c3 = h3 + c2;
-  K___uint64_t_K___uint64_t_uint64_t_uint64_t_uint64_t lit0;
-  K___uint64_t_K___uint64_t_uint64_t_uint64_t_uint64_t scrut3;
-  uint64_t f30;
-  uint64_t f20;
-  uint64_t f10;
-  uint64_t f00;
-  uint64_t c;
-  lit0.fst = c3;
-  lit0.snd.fst = o0;
-  lit0.snd.snd = o1;
-  lit0.snd.thd = o2;
-  lit0.snd.f3 = o3;
-  scrut3 = lit0;
-  f30 = scrut3.snd.f3;
-  f20 = scrut3.snd.thd;
-  f10 = scrut3.snd.snd;
-  f00 = scrut3.snd.fst;
-  c = scrut3.fst;
-  {
-    K___uint64_t_uint64_t_uint64_t_uint64_t_uint64_t_uint64_t_uint64_t_uint64_t lit;
-    K___uint64_t_uint64_t_uint64_t_uint64_t_uint64_t_uint64_t_uint64_t_uint64_t scrut;
-    uint64_t f0;
-    uint64_t f1;
-    uint64_t f2;
-    uint64_t f3;
-    uint64_t f4;
-    uint64_t f5;
-    uint64_t f6;
-    uint64_t f7;
-    lit.fst = f00;
-    lit.snd = f10;
-    lit.thd = f20;
-    lit.f3 = f30;
-    lit.f4 = c;
-    lit.f5 = (uint64_t)0U;
-    lit.f6 = (uint64_t)0U;
-    lit.f7 = (uint64_t)0U;
-    scrut = lit;
-    f0 = scrut.fst;
-    f1 = scrut.snd;
-    f2 = scrut.thd;
-    f3 = scrut.f3;
-    f4 = scrut.f4;
-    f5 = scrut.f5;
-    f6 = scrut.f6;
-    f7 = scrut.f7;
-    result[0U] = f0;
-    result[1U] = f1;
-    result[2U] = f2;
-    result[3U] = f3;
-    result[4U] = f4;
-    result[5U] = f5;
-    result[6U] = f6;
-    result[7U] = f7;
-  }
+  uint64_t *result04 = result;
+  uint64_t c = Hacl_Impl_LowLevel_mul1(a, b, result04);
+  result[4U] = c;
 }
 
 void Hacl_Impl_LowLevel_shift8(uint64_t *t, uint64_t *out)
