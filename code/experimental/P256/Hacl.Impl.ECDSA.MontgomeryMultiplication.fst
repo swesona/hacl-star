@@ -259,6 +259,17 @@ let reduction_prime_prime_2prime_with_carry x result  =
     cmovznz4 carry tempBuffer x result;
  pop_frame()   
 
+let reduction_prime_prime_2prime_with_carry2 cin x result  = 
+  push_frame();
+    let tempBuffer = create (size 4) (u64 0) in 
+    let tempBufferForSubborrow = create (size 1) (u64 0) in 
+    let x = Lib.Buffer.sub x (size 0) (size 4) in 
+        recall_contents prime256order_buffer (Lib.Sequence.of_list p256_order_prime_list);
+    let c = Hacl.Impl.LowLevel.sub4_il x prime256order_buffer tempBuffer in
+    let carry = sub_borrow c cin (u64 0) tempBufferForSubborrow in 
+    cmovznz4 carry tempBuffer x result;
+ pop_frame()      
+
 
 val lemma_reduction1: a: nat {a < pow2 256} -> r: nat{if a >= prime_p256_order then r = a - prime_p256_order else r = a} -> 
   Lemma (r = a % prime_p256_order)

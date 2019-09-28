@@ -43,7 +43,7 @@ FSTAR = $(FSTAR_HOME)/bin/fstar.exe $(FSTAR_FLAGS)
 ENABLE_HINTS = --use_hints --use_hint_hashes --record_hints --query_stats
 
 #ROOTS = Hacl.Impl.P256.fst
-ROOTS = Hacl.Impl.ECDSA.P256SHA256.Verification.fst
+ROOTS = Hacl.Impl.ECDSA.P256SHA256.Signature.fst
 #ROOTS = Hacl.Impl.MM.Exponent.fst
 #ROOTS = Hacl.Test.CSHAKE.fst
 
@@ -93,7 +93,7 @@ $(GENERATED_DIR)/Makefile.include: $(ALL_KRML_FILES) | .depend
 	-bundle 'Hacl.Impl.P256=Hacl.Impl.P256,Hacl.Impl.P256.MontgomeryMultiplication,Hacl.Impl.P256.LowLevel,Hacl.Impl.LowLevel,Hacl.Impl.SolinasReduction,Hacl.Spec.P256.*,Hacl.Spec.Curve25519.*,Hacl.Impl.Curve25519.*' \
 	-bundle 'Hacl.Impl.ECDSA.P256SHA256.Verification=Hacl.Impl.MontgomeryMultiplication,Hacl.Impl.ECDSA.P256SHA256.Verification,Hacl.Impl.MM.Exponent' \
 	-library 'C,FStar' \
-	-drop 'LowStar,Spec,Prims,Lib,C.Loops.*,Hacl.Spec.P256.Lemmas,Hacl.Spec.P256,Hacl.Spec.ECDSA' \
+	-drop 'LowStar,Spec,Prims,Lib,C.Loops.*,Hacl.Spec.P256.Lemmas,Hacl.Spec.P256,Hacl.Spec.ECDSA,Hacl.Spec.Ladder' \
 	-add-include '"c/Lib_PrintBuffer.h"' \
 	-add-include '"FStar_UInt_8_16_32_64.h"' \
 	-tmpdir $(GENERATED_DIR) \

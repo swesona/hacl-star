@@ -34,6 +34,12 @@ val reduction_prime_prime_2prime_with_carry : x: widefelem -> result: felem ->
     (requires fun h -> live h x /\ live h result /\  eq_or_disjoint x result /\ wide_as_nat h x < 2 * prime_p256_order)
     (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\ as_nat h1 result = wide_as_nat h0 x % prime_p256_order)  
 
+inline_for_extraction noextract
+val reduction_prime_prime_2prime_with_carry2 : carry: uint64 ->  x: felem -> result: felem ->
+  Stack unit 
+    (requires fun h -> True)
+    (ensures fun h0 _ h1 -> True)  
+
 
 val reduction_prime_2prime_order: x: felem -> result: felem -> 
   Stack unit 

@@ -409,9 +409,12 @@ assert_norm (pow2 64 * pow2 64 = pow2 128);
   pop_frame();  
   c3 +! h4_
   
-    
+val mul1_add: f1: felem -> u2: uint64 -> f3: felem -> result: felem -> 
+  Stack uint64 
+  (requires fun h -> True)
+  (ensures fun h0 _ h1 -> True)
 
-
+  
 val mul: f1: felem -> r: felem -> out: widefelem
   -> Stack unit
     (requires fun h -> live h out /\ live h f1 /\ live h r)
