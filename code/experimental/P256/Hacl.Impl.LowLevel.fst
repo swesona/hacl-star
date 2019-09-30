@@ -140,7 +140,7 @@ let add8 x y result =
     let carry1 = add4_with_carry carry0 a1 b1 c1 in 
     assert_norm (pow2 256 * pow2 256 = pow2 512); 
     carry1
-    
+
 
 val add4_variables: x: felem -> cin: uint64 {uint_v cin <=1} ->  y0: uint64 -> y1: uint64 -> y2: uint64 -> y3: uint64 -> result: felem -> 
   Stack uint64

@@ -34,33 +34,15 @@ let add8_without_carry (a0, a1, a2, a3, a4, a5, a6, a7) (b0, b1, b2, b3, b4, b5,
   assert(uint_v carry = 0);
   (r0, r1, r2, r3, r4, r5, r6, r7)
 
-
+inline_for_extraction noextract
 val add8_without_carry1:  t: widefelem -> t1: widefelem -> result: widefelem  -> Stack unit
   (requires fun h -> live h t /\ live h t1 /\ live h result /\ wide_as_nat h t1 < pow2 320 /\
-    wide_as_nat h t <  prime_p256_order * prime_p256_order  )
+    wide_as_nat h t <  prime_p256_order * prime_p256_order /\ eq_or_disjoint t result /\ eq_or_disjoint t1 result  )
   (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\  wide_as_nat h1 result = wide_as_nat h0 t + wide_as_nat h0 t1)
 
-let add8_without_carry1 t r result  = 
-  let t0 = index t (size 0) in 
-  let t1 = index t (size 1) in 
-  let t2 = index t (size 2) in 
-  let t3 = index t (size 3) in 
-  let t4 = index t (size 4) in 
-  let t5 = index t (size 5) in 
-  let t6 = index t (size 6) in 
-  let t7 = index t (size 7) in 
-
-  let r0 = index r (size 0) in 
-  let r1 = index r (size 1) in 
-  let r2 = index r (size 2) in 
-  let r3 = index r (size 3) in 
-  let r4 = index r (size 4) in 
-  let r5 = index r (size 5) in 
-  let r6 = index r (size 6) in  
-  let r7 = index r (size 7) in 
-
-  let (r0, r1, r2, r3, r4, r5, r6, r7) = add8_without_carry (t0, t1, t2, t3, t4, t5, t6, t7) (r0, r1, r2, r3, r4, r5, r6, r7) in 
-  load_buffer8 r0 r1 r2 r3 r4 r5 r6 r7 result
+let add8_without_carry1 t t1 result  = 
+  let _ = Hacl.Impl.LowLevel.add8 t t1 result in 
+  admit()
 
 
 private let mul_lemma_1 (a: nat) (c: nat) (b: pos) : Lemma (requires (a < c)) (ensures (a * b < c * b)) = ()
@@ -259,11 +241,11 @@ let reduction_prime_prime_2prime_with_carry x result  =
     cmovznz4 carry tempBuffer x result;
  pop_frame()   
 
+
 let reduction_prime_prime_2prime_with_carry2 cin x result  = 
   push_frame();
     let tempBuffer = create (size 4) (u64 0) in 
     let tempBufferForSubborrow = create (size 1) (u64 0) in 
-    let x = Lib.Buffer.sub x (size 0) (size 4) in 
         recall_contents prime256order_buffer (Lib.Sequence.of_list p256_order_prime_list);
     let c = Hacl.Impl.LowLevel.sub4_il x prime256order_buffer tempBuffer in
     let carry = sub_borrow c cin (u64 0) tempBufferForSubborrow in 
@@ -346,6 +328,8 @@ let fromDomain_ a = (a * modp_inv2_prime (pow2 256) prime_p256_order) % prime_p2
 
 let toDomain_ a = (a * pow2 256) % prime_p256_order 
 
+let lemmaFromDomain a = ()
+
 
 let lemmaFromDomainToDomain a = 
    let fromA = (a * modp_inv2_prime (pow2 256) prime_p256_order) % prime_p256_order in 
@@ -425,3 +409,13 @@ let montgomery_multiplication_ecdsa_module a b result =
      inDomain_mod_is_not_mod (fromDomain_ (as_nat h0 a) * fromDomain_ (as_nat h0 b));
 
     pop_frame()
+
+
+
+
+let felem_add arg1 arg2 out = 
+  let open Hacl.Impl.LowLevel in 
+  let t = add4 arg1 arg2 out in 
+  reduction_prime_prime_2prime_with_carry2 t out out
+
+

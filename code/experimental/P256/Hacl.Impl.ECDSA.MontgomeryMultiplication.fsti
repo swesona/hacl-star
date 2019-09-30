@@ -34,12 +34,13 @@ val reduction_prime_prime_2prime_with_carry : x: widefelem -> result: felem ->
     (requires fun h -> live h x /\ live h result /\  eq_or_disjoint x result /\ wide_as_nat h x < 2 * prime_p256_order)
     (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\ as_nat h1 result = wide_as_nat h0 x % prime_p256_order)  
 
-inline_for_extraction noextract
+
 val reduction_prime_prime_2prime_with_carry2 : carry: uint64 ->  x: felem -> result: felem ->
   Stack unit 
-    (requires fun h -> True)
-    (ensures fun h0 _ h1 -> True)  
-
+    (requires fun h -> live h x /\ live h result /\ eq_or_disjoint x result /\ 
+      uint_v carry * pow2 256 + as_nat h x < 2 * prime_p256_order )
+    (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\ 
+      as_nat h1 result = (uint_v carry * pow2 256 + as_nat h0 x) % prime_p256_order)  
 
 val reduction_prime_2prime_order: x: felem -> result: felem -> 
   Stack unit 
@@ -53,6 +54,8 @@ val fromDomain_: a: nat -> Tot (r: nat { r < prime})
 noextract
 val toDomain_: a: nat -> Tot nat
 
+val lemmaFromDomain: a: nat {a < prime_p256_order} ->  Lemma (
+  (a * modp_inv2_prime (pow2 256) prime_p256_order) % prime_p256_order == fromDomain_ a)
 
 val lemmaFromDomainToDomain: a: nat { a < prime} -> Lemma (toDomain_ (fromDomain_ a) == a)
 
@@ -69,3 +72,11 @@ val montgomery_multiplication_ecdsa_module: a: felem -> b: felem ->result: felem
       as_nat h1 result = (as_nat h0 a * as_nat h0 b * modp_inv2_prime (pow2 256) prime_p256_order) % prime_p256_order /\ 
       as_nat h1 result = toDomain_ (fromDomain_ (as_nat h0 a) * fromDomain_ (as_nat h0 b) % prime_p256_order))
 
+val felem_add: arg1: felem -> arg2: felem -> out: felem -> Stack unit 
+  (requires (fun h0 ->  
+    live h0 arg1 /\ live h0 arg2 /\ live h0 out /\ 
+    eq_or_disjoint arg1 out /\ eq_or_disjoint arg2 out /\
+    as_nat h0 arg1 < prime_p256_order /\ as_nat h0 arg2 < prime_p256_order
+   )
+  )
+  (ensures (fun h0 _ h1 -> modifies (loc out) h0 h1 /\ as_nat h1 out == (as_nat h0 arg1 + as_nat h0 arg2) % prime_p256_order))
