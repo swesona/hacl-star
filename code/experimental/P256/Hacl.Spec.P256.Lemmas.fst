@@ -9,6 +9,9 @@ open FStar.Mul
 
 open Hacl.Spec.P256.Definitions
 
+open FStar.Tactics 
+open FStar.Tactics.Canon 
+
 #reset-options " --z3rlimit 100" 
 
 noextract
@@ -47,15 +50,7 @@ let log_or a b =
       end
 
 
-#reset-options " --z3rlimit 100" 
 
-
-noextract   
-let ( +% ) a b = (a + b) % prime256
-noextract
-let ( -% ) a b = (a - b) % prime256
-noextract
-let ( *% ) a b prime = (a * b) % prime
 
 noextract
 let rec exp (e: nat) (n:nat {n > 0}) (prime: pos {e < prime}) : Tot (r: nat) (decreases n)  =
@@ -73,21 +68,16 @@ noextract
 let modp_inv_prime (prime: pos {prime > 3}) (x: nat {x < prime})  : Tot (r: nat{r < prime}) = 
   (exp x (prime - 2) prime) % prime
 
-noextract
-let modp_inv2_prime (x: int) (p: nat {p > 3}) : Tot (r: nat {r < p}) = 
-  assert_norm (p > 0);
-  let r:nat = x % p in  
-  modp_inv_prime p r
 
 noextract
-let modp_inv (x: nat {x < prime256}) : Tot (r: nat{r < prime256}) = 
-  assert_norm (prime256 > 3);
-  modp_inv_prime prime256 x
+let modp_inv2_prime (x: int) (p: nat {p > 3}) : Tot (r: nat {r < p}) = modp_inv_prime p (x % p)
+
 
 noextract
 let modp_inv2 (x: nat) : Tot (r: nat {r < prime256}) = 
   assert_norm (prime256 > 3);
   modp_inv2_prime x prime256
+
 
 
 noextract
@@ -97,12 +87,14 @@ let modulo_distributivity_mult a b c =
   lemma_mod_mul_distr_l a b c;
   lemma_mod_mul_distr_r (a % c) b c
 
+
+
 val power_one: a: nat -> Lemma (pow 1 a == 1) 
 
 let rec power_one a = 
   match a with 
   | 0 -> assert_norm (pow 1 0 == 1)
-  | _ -> power_one (a - 1);
+  | _ -> power_one (a - 1); 
     assert(pow 1 (a - 1) == 1)
 
 
@@ -113,7 +105,7 @@ val pow_plus: a: nat -> b: nat -> c: nat -> Lemma (ensures (pow a b * pow a c = 
 let rec pow_plus a b c = 
   match b with 
   | 0 -> assert_norm (pow a 0 = 1)
-  | _ -> pow_plus a (b -1) c; 
+  | _ -> pow_plus a (b - 1) c; 
     assert_norm(pow a (b - 1) * a = pow a b)
 
 
@@ -129,18 +121,6 @@ let rec power_distributivity a b c =
      lemma_mod_twice a c;
      modulo_distributivity_mult (pow (a % c) (b -1)) (a % c) c
 
-val lemma_power_one: a: nat -> Lemma (pow a 1 == a)
-
-let lemma_power_one a = ()
-
-noextract
-val power_mult: a: nat -> b: nat -> c: nat -> Lemma (pow (pow a b) c == pow a (b * c))
-
-let rec power_mult a b c = 
-  match c with 
-  |0 -> assert_norm(pow a 0 = 1); assert(pow (pow a b) 0  = 1)
-  |_ ->  power_mult a b (c -1); pow_plus a (b * (c -1)) b
-
 
 val power_distributivity_2: a: nat -> b: nat -> c: pos -> 
   Lemma (pow (a * b) c == pow a c * pow b c)
@@ -150,24 +130,24 @@ let rec power_distributivity_2 a b c =
   |0 -> ()
   |1 -> ()
   | _ ->
-    let open FStar.Tactics in 
-    let open FStar.Tactics.Canon in
     power_distributivity_2 a b (c - 1);
-    assert(pow (a * b) (c - 1) == pow a (c - 1) * pow b (c - 1));
-    assert(pow (a * b) (c - 1) * pow (a * b) 1 == pow a (c - 1) * pow b (c - 1) * pow (a * b) 1);
-    
-    assert(pow (a * b) (c - 1) * pow (a * b) 1 == pow (a * b) c);
-    assert(pow (a * b) 1 == a * b);
-    assert(pow a (c - 1) * pow b (c - 1) * pow (a * b) 1 == pow a (c - 1) * pow b (c - 1) * a * b);
-    assert_by_tactic (pow a (c - 1) * pow b (c - 1) * a * b == (pow a c * pow b c)) canon;
-    assert(pow a (c - 1) * pow b (c - 1) * pow (a * b) 1 == (pow a c * pow b c));
-    assert(pow a c * pow b c == pow (a * b) c)
+    assert_by_tactic (pow a (c - 1) * pow b (c - 1) * a * b == (pow a c * pow b c)) canon
+
+
+
+noextract
+val power_mult: a: nat -> b: nat -> c: nat -> Lemma (pow (pow a b) c == pow a (b * c))
+
+let rec power_mult a b c = 
+  match c with 
+  |0 -> ()
+  |_ ->  power_mult a b (c - 1); 
+    pow_plus a (b * (c - 1)) b
 
 
 val lemma_exponent1: a: nat -> b: pos{b > 1} -> prime: pos { a < prime} -> Lemma ((exp a (b - 1) prime * a) % prime = exp a b prime)
 
 let rec lemma_exponent1 a b prime = 
-  let ( *%) a b =  ( *% ) a b prime in 
   match b with 
   |2 -> ()
   |_ -> 

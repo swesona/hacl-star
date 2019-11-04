@@ -167,7 +167,7 @@ let fsquarePowN n a =
     let k_before_d = as_nat h0 a in let k = fromDomain_ k_before_d in 
     as_nat h1 a = toDomain_ (pow k (pow2 i)) /\ 
     as_nat h1 a < prime /\ live h1 a /\ modifies1 a h0 h1 in 
-  lemma_power_one (fromDomain_ (as_nat h0 a));
+  power_one (fromDomain_ (as_nat h0 a));
   for (size 0) n (inv h0) (fun x -> 
     let h0_ = ST.get() in 
      montgomery_multiplication_buffer a a a; 
