@@ -46,32 +46,6 @@ let log_or a b =
 	logor_lemma a b
       end
 
-noextract
-val lemma_nat_4: f: felem4 -> Lemma (as_nat4 f < pow2 256)
-
-let lemma_nat_4 f = 
-  let (s0, s1, s2, s3) = f in 
-  let r_n = as_nat4 f in 
-  let r = uint_v s0 + uint_v s1 * pow2 64 + uint_v s2 * pow2 64 * pow2 64 + 
-  uint_v s3 * pow2 64 * pow2 64 * pow2 64 in 
-  assert(r_n == r);
-  assert_norm(r < pow2 256)
-
-
-noextract
-val lemma_enough_to_carry: a: felem4 -> b: felem4 -> Lemma (
-  if as_nat4 b >= (pow2 256 - as_nat4 a) then 
-    let (c, r) = add4 a b in 
-    uint_v c == 1
-    else True)
-    
-let lemma_enough_to_carry a b = 
- if as_nat4 b >= (pow2 256 - as_nat4 a) then begin
-  let (c, r) = add4 a b in 
-    lemma_nat_4 r
-  end
-  else
-  ()
 
 #reset-options " --z3rlimit 100" 
 
@@ -84,9 +58,8 @@ noextract
 let ( *% ) a b prime = (a * b) % prime
 
 noextract
-let rec exp (e: nat) (n:nat {n > 0}) (prime: pos) : Tot (r: nat) (decreases n)  =
-  let ( *%) a b =  ( *% ) a b prime in 
-
+let rec exp (e: nat) (n:nat {n > 0}) (prime: pos {e < prime}) : Tot (r: nat) (decreases n)  =
+  let ( *%) a b =  (a * b) % prime in 
   if n = 1 then e
   else
     if n % 2 = 0 then 
@@ -189,6 +162,31 @@ let rec power_distributivity_2 a b c =
     assert_by_tactic (pow a (c - 1) * pow b (c - 1) * a * b == (pow a c * pow b c)) canon;
     assert(pow a (c - 1) * pow b (c - 1) * pow (a * b) 1 == (pow a c * pow b c));
     assert(pow a c * pow b c == pow (a * b) c)
+
+
+val lemma_exponent1: a: nat -> b: pos{b > 1} -> prime: pos { a < prime} -> Lemma ((exp a (b - 1) prime * a) % prime = exp a b prime)
+
+let rec lemma_exponent1 a b prime = 
+  let ( *%) a b =  ( *% ) a b prime in 
+  match b with 
+  |2 -> ()
+  |_ -> 
+    lemma_exponent1 a (b - 1) prime;
+    assert((exp a (b - 2) prime * a) % prime = exp a (b - 1) prime);
+    admit()
+
+
+
+val lemma_exponent_is_power: a: nat -> b: pos -> prime: pos{a < prime} ->  Lemma (exp a b prime == (pow a b) % prime)
+
+let rec lemma_exponent_is_power a b prime = 
+  match b with 
+  | 1 -> ()
+  | _ -> 
+    lemma_exponent_is_power a (b - 1) prime;
+    lemma_exponent1 a b prime;
+    lemma_mod_mul_distr_l (pow a (b - 1)) (pow a 1) prime
+
 
 
 val modulo_distributivity_mult_last_two: a: int -> b: int -> c: int -> d: int -> e: int -> f: pos -> 

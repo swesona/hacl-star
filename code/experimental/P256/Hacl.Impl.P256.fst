@@ -912,6 +912,21 @@ val lemma_to_point_buffer: h: mem -> b: lbuffer uint64 (size 12) {
 
 let lemma_to_point_buffer h b = ()
 
+val lemma_test: h: mem -> r0: point -> 
+  Lemma 
+  (requires (
+     let x = Lib.Sequence.sub (as_seq h r0) 0 4 in 
+    let y = Lib.Sequence.sub (as_seq h r0) 4 4 in
+    let z = Lib.Sequence.sub (as_seq h r0) 8 4 in 
+    felem_seq_as_nat x < prime /\ felem_seq_as_nat y < prime /\ felem_seq_as_nat z < prime))
+  (ensures 
+    (
+      as_nat h (gsub r0 (size 0) (size 4)) < prime /\ 
+      as_nat h (gsub r0 (size 4) (size 4)) < prime /\
+      as_nat h (gsub r0 (size 8) (size 4)) < prime)
+  )
+
+let lemma_test h r0 = ()
 
 
 inline_for_extraction noextract 
@@ -931,7 +946,7 @@ val montgomery_ladder_step: #buf_type: buftype->
     as_nat h (gsub q (size 4) (size 4)) < prime /\
     as_nat h (gsub q (size 8) (size 4)) < prime
   )
-  (ensures fun h0 _ h1 -> modifies3 p q tempBuffer h0 h1 /\ 
+  (ensures fun h0 _ h1 -> modifies (loc p |+| loc q |+| loc tempBuffer) h0 h1 /\ 
     (
       let p1 = as_seq h1 p in let q1 = as_seq h1 q in 
       let pN, qN = Hacl.Spec.P256.Ladder.montgomery_ladder_step_swap (as_seq h0 p) (as_seq h0 q) (as_seq h0 scalar) (uint_v i) in 
@@ -944,35 +959,26 @@ val montgomery_ladder_step: #buf_type: buftype->
       as_nat h1 (gsub q (size 0) (size 4)) < prime /\  
       as_nat h1 (gsub q (size 4) (size 4)) < prime /\
       as_nat h1 (gsub q (size 8) (size 4)) < prime
-    )
+    ) 
   )
 
-val lemma_test: h: mem -> r0: point -> 
-  Lemma 
-  (requires (
-     let x = Lib.Sequence.sub (as_seq h r0) 0 4 in 
-    let y = Lib.Sequence.sub (as_seq h r0) 4 4 in
-    let z = Lib.Sequence.sub (as_seq h r0) 8 4 in 
-    felem_seq_as_nat x < prime /\ felem_seq_as_nat y < prime /\ felem_seq_as_nat z < prime))
-  (ensures 
-    (
-      as_nat h (gsub r0 (size 0) (size 4)) < prime /\ 
-      as_nat h (gsub r0 (size 4) (size 4)) < prime /\
-      as_nat h (gsub r0 (size 8) (size 4)) < prime)
-  )
 
-let lemma_test h r0 = ()
-
-#reset-options "--z3refresh --z3rlimit 200" 
 let montgomery_ladder_step #buf_type r0 r1 tempBuffer scalar i = 
     let h0 = ST.get() in 
   let bit0 = (size 255) -. i in 
   let bit = scalar_bit scalar bit0 in 
 
   cswap bit r0 r1; 
+    let h1 = ST.get() in 
+    assert(modifies (loc r0 |+| loc r1) h0 h1);
   montgomery_ladder_step1 r0 r1 tempBuffer; 
+    let h2 = ST.get() in 
+    assert(modifies (loc r0 |+| loc r1 |+| loc tempBuffer) h1 h2);
   cswap bit r0 r1; 
   let h3 = ST.get() in 
+    assert(modifies (loc r0 |+| loc r1) h2 h3);
+    assert(modifies (loc r0 |+| loc r1 |+| loc tempBuffer) h0 h2);
+    assert(modifies (loc r0 |+| loc r1 |+| loc tempBuffer) h0 h3);
   lemma_to_point_buffer h0 r0;
   lemma_to_point_buffer h0 r1;
   lemma_step i;
@@ -989,9 +995,7 @@ let montgomery_ladder_step #buf_type r0 r1 tempBuffer scalar i =
 	     
       as_nat h3 (gsub r1 (size 0) (size 4)) < prime /\  
       as_nat h3 (gsub r1 (size 4) (size 4)) < prime /\
-      as_nat h3 (gsub r1 (size 8) (size 4)) < prime);
-
-  admit()
+      as_nat h3 (gsub r1 (size 8) (size 4)) < prime)
 
 
 inline_for_extraction noextract

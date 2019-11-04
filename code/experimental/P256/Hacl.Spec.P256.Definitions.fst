@@ -200,6 +200,19 @@ let long_as_nat (h:mem) (e:long) : GTot nat =
   as_nat9 (s0, s1, s2, s3, s4, s5, s6, s7, s8)
 
 
+(* noextract
+let rec exp (e: nat) (n:nat {n > 0}) (prime: pos) : Tot (r: nat) (decreases n)  =
+  let ( *%) a b =  ( *% ) a b prime in 
+
+  if n = 1 then e
+  else
+    if n % 2 = 0 then 
+    begin
+      exp (e *% e) (n/2) prime
+    end
+    else e *% (exp (e *% e)((n-1)/2) prime) 
+*)
+
 
 noextract
 val pow: a:nat -> b:nat -> res:nat
@@ -207,5 +220,4 @@ val pow: a:nat -> b:nat -> res:nat
 let rec pow a b =
   if b = 0 then 1
   else a * (pow a (b - 1))
-
 

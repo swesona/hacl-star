@@ -65,7 +65,6 @@ val reduction_prime_2prime_with_carry: carry: uint64{uint_v carry <= 1} ->
 
 
 let reduction_prime_2prime_with_carry carry a = 
-  lemma_nat_4 a;
     assert_norm (as_nat4  (u64 0xffffffffffffffff, u64 0xffffffff, u64 0, u64 0xffffffff00000001) == prime256);
   let (cin, (r0, r1, r2, r3)) = sub4 a  (u64 0xffffffffffffffff, u64 0xffffffff, u64 0, u64 0xffffffff00000001) in 
   let (r, c) = subborrow carry (u64 0) cin  in  

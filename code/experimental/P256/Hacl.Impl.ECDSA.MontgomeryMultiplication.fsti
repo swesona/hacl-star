@@ -54,7 +54,7 @@ val fromDomain_: a: nat -> Tot (r: nat { r < prime})
 noextract
 val toDomain_: a: nat -> Tot nat
 
-val lemmaFromDomain: a: nat {a < prime_p256_order} ->  Lemma (
+val lemmaFromDomain: a: nat ->  Lemma (
   (a * modp_inv2_prime (pow2 256) prime_p256_order) % prime_p256_order == fromDomain_ a)
 
 val lemmaFromDomainToDomain: a: nat { a < prime} -> Lemma (toDomain_ (fromDomain_ a) == a)
@@ -80,3 +80,5 @@ val felem_add: arg1: felem -> arg2: felem -> out: felem -> Stack unit
    )
   )
   (ensures (fun h0 _ h1 -> modifies (loc out) h0 h1 /\ as_nat h1 out == (as_nat h0 arg1 + as_nat h0 arg2) % prime_p256_order))
+
+val lemma_felem_add: a: nat -> b: nat -> Lemma ((fromDomain_ a + fromDomain_ b) % prime_p256_order = fromDomain_ (a + b))

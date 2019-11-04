@@ -412,6 +412,7 @@ let montgomery_multiplication_ecdsa_module a b result =
 
 
 
+#reset-options "--z3refresh --z3rlimit 100"
 
 let felem_add arg1 arg2 out = 
   let open Hacl.Impl.LowLevel in 
@@ -419,3 +420,17 @@ let felem_add arg1 arg2 out =
   reduction_prime_prime_2prime_with_carry2 t out out
 
 
+let lemma_felem_add a b = 
+  lemmaFromDomain a;
+  lemmaFromDomain b;
+  lemmaFromDomain (a + b);
+  assert(fromDomain_ a + fromDomain_ b = (a * modp_inv2_prime (pow2 256) prime_p256_order) % prime_p256_order + (b * modp_inv2_prime (pow2 256) prime_p256_order) % prime_p256_order);
+  let aD = a * modp_inv2_prime (pow2 256) prime_p256_order in 
+  let bD = b * modp_inv2_prime (pow2 256) prime_p256_order in 
+  assert(fromDomain_ (a + b) = (aD + bD) % prime_p256_order);
+
+  lemma_mod_plus_distr_l aD bD prime_p256_order;
+  lemma_mod_plus_distr_l bD (aD % prime_p256_order) prime_p256_order;
+  assert(fromDomain_ (a + b) = (aD % prime_p256_order + bD % prime_p256_order) % prime_p256_order);
+
+  assert(fromDomain_ (a + b) = (fromDomain_ a + fromDomain_ b) % prime_p256_order)

@@ -47,23 +47,39 @@ let ecdsa_signature_step01 mLen m hashAsFelem  =
   pop_frame()
 
 
-val ecdsa_signature_step6: kFelem: felem -> z: felem -> r: felem -> da: felem -> Stack unit
-  (requires fun h -> live h kFelem /\ live h z /\ live h r /\ live h da /\ as_nat h z < prime /\ as_nat h r < prime /\ as_nat h da < prime)
+val ecdsa_signature_step6: kFelem: felem -> z: felem -> r: felem -> da: felem ->result: felem -> Stack unit
+  (requires fun h -> live h kFelem /\ live h z /\ live h r /\ live h da /\ as_nat h z < prime /\ as_nat h r < prime /\ as_nat h da < prime /\ as_nat h kFelem < prime /\ live h result)
   (ensures fun h0 _ h1 -> True)
 
-let ecdsa_signature_step6 kFelem z r da = 
+let ecdsa_signature_step6 kFelem z r da result = 
   push_frame();
     let rda = create (size 4) (u64 0) in 
-    let zInv = create (size 4) (u64 0) in 
+    let zBuffer = create (size 4) (u64 0) in 
+    let kInv = create (size 4) (u64 0) in 
+
 	let h0 = ST.get() in 
       montgomery_multiplication_ecdsa_module r da rda;
 	let h1 = ST.get() in 
-	(*lemmaFromDomain (as_nat h0 r * as_nat h0 da); *)
+	lemmaFromDomain (as_nat h0 r * as_nat h0 da); 
 	assert(as_nat h1 rda = fromDomain_ (as_nat h0 r * as_nat h0 da));
-     fromDomainImpl z zInv;
+     fromDomainImpl z zBuffer;
        let h2 = ST.get() in 
-       assert(as_nat h2 zInv = fromDomain_ (as_nat h0 z));
-     felem_add rda zInv zInv;  
+       assert(as_nat h2 zBuffer = fromDomain_ (as_nat h0 z));
+     felem_add rda zBuffer zBuffer;  
+       let h3 = ST.get() in 
+     lemma_felem_add (as_nat h0 r * as_nat h0 da) (as_nat h0 z);
+     
+     assert(as_nat h3 zBuffer = fromDomain_ (as_nat h0 z + as_nat h0 r * as_nat h0 da));
+     copy kInv kFelem;
+       let h4 = ST.get() in 
+       assert(as_nat h4 kInv = as_nat h0 kFelem);
+     montgomery_ladder_exponent kInv;
+       let h5 = ST.get() in 
+       assert(fromDomain_ (as_nat h5 kInv) == Hacl.Spec.ECDSA.exponent_spec (fromDomain_ (as_nat h0 kFelem)));
+     montgomery_multiplication_ecdsa_module zBuffer kInv result;
+       let h6 = ST.get() in 
+       assert(as_nat h6 result = toDomain_ (fromDomain_ ((fromDomain_ (as_nat h0 z + as_nat h0 r * as_nat h0 da))) * Hacl.Spec.ECDSA.exponent_spec (fromDomain_ (as_nat h0 kFelem)) % prime_p256_order));
+     admit();
      
   pop_frame()
 
