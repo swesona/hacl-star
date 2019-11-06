@@ -123,7 +123,7 @@ let multiplicationInDomain #k #l a b =
   lemma_twice_brackets k (pow2 256) 1 l (pow2 256) 1 (modp_inv2 (pow2 256));
   assert_norm (pow2 256 * modp_inv2 (pow2 256) % prime == 1);
   modulo_distributivity_mult_last_two k (pow2 256) l (pow2 256) (modp_inv2 (pow2 256)) prime;
-  lemma_distr_mult3 k (pow2 256) l
+  lemma_mul_ass3 k (pow2 256) l
 
 
 val additionInDomain: #k: nat -> #l: nat -> 

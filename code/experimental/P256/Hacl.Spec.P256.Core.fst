@@ -538,11 +538,11 @@ let quatre_tuple (a0, a1, a2, a3) =
      lemma_brackets ((as_nat4 a * as_nat4 a * modp_inv2 (pow2 256)) % prime256) ((as_nat4 a * as_nat4 a * modp_inv2 (pow2 256)) % prime256) (modp_inv2 (pow2 256));
     lemma_mod_mul_distr_l (as_nat4 a * as_nat4 a * modp_inv2 (pow2 256)) (((as_nat4 a * as_nat4 a * modp_inv2 (pow2 256)) % prime256) * modp_inv2 (pow2 256)) prime256;
     lemma_brackets (as_nat4 a * as_nat4 a * modp_inv2 (pow2 256)) ((as_nat4 a * as_nat4 a * modp_inv2 (pow2 256)) % prime256) (modp_inv2 (pow2 256));
-    lemma_distr_mult3 (as_nat4 a * as_nat4 a * modp_inv2 (pow2 256)) ((as_nat4 a * as_nat4 a * modp_inv2 (pow2 256)) % prime256) (modp_inv2 (pow2 256));
+    lemma_mul_ass3 (as_nat4 a * as_nat4 a * modp_inv2 (pow2 256)) ((as_nat4 a * as_nat4 a * modp_inv2 (pow2 256)) % prime256) (modp_inv2 (pow2 256));
     lemma_brackets_l (as_nat4 a * as_nat4 a * modp_inv2 (pow2 256)) (modp_inv2 (pow2 256)) ((as_nat4 a * as_nat4 a * modp_inv2 (pow2 256)) % prime256);
     lemma_mod_mul_distr_r ((as_nat4 a * as_nat4 a * modp_inv2 (pow2 256)) * modp_inv2 (pow2 256)) (as_nat4 a * as_nat4 a * modp_inv2 (pow2 256)) prime256;
     lemma_brackets_l (as_nat4 a * as_nat4 a * modp_inv2 (pow2 256))(modp_inv2 (pow2 256)) (as_nat4 a * as_nat4 a * modp_inv2 (pow2 256));
-    lemma_distr_mult3 (as_nat4 a * as_nat4 a * modp_inv2 (pow2 256)) (modp_inv2 (pow2 256)) (as_nat4 a * as_nat4 a * modp_inv2 (pow2 256));
+    lemma_mul_ass3 (as_nat4 a * as_nat4 a * modp_inv2 (pow2 256)) (modp_inv2 (pow2 256)) (as_nat4 a * as_nat4 a * modp_inv2 (pow2 256));
     lemma_twice_brackets (as_nat4 a) (as_nat4 a) (modp_inv2 (pow2 256)) (as_nat4 a) (as_nat4 a) (modp_inv2 (pow2 256)) (modp_inv2 (pow2 256));
     lemma_distr_mult7  (as_nat4 a) (as_nat4 a) (modp_inv2 (pow2 256)) (as_nat4 a) (as_nat4 a) (modp_inv2 (pow2 256)) (modp_inv2 (pow2 256));
     (c0, c1, c2, c3)
