@@ -316,12 +316,11 @@ let point_double_condition_seq u1 u2 s1 s2 z1 z2 =
     lognot_lemma z1NotZero;
     lognot_lemma z2NotZero;
     logand_lemma (lognot z1NotZero) (lognot z2NotZero);
-    lemma_log_and1 (lognot z1NotZero) (lognot z2NotZero);  
+    logand_lemma (lognot z1NotZero) (lognot z2NotZero);  
   let onetwo = logand one two in 
     logand_lemma one two;
-    lemma_log_and1 one two;
   let result = logand onetwo pointsInfinity in 
-    lemma_log_and1 onetwo pointsInfinity;
+    logand_lemma onetwo pointsInfinity;
     lemmaFromDomain (felem_seq_as_nat u1);
     lemmaFromDomain (felem_seq_as_nat u2);
     lemmaFromDomain (felem_seq_as_nat s1);

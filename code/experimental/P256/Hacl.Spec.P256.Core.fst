@@ -515,7 +515,7 @@ let montgomery_multiplication (a0, a1, a2, a3) (b0, b1, b2, b3) =
     lemma_decrease_pow (as_nat4  (a0, a1, a2, a3) * as_nat4 (b0, b1, b2, b3));
     lemma_less_than_primes (as_nat4  (a0, a1, a2, a3)) (as_nat4 (b0, b1, b2, b3));
     assert(wide_as_nat4  (st30, st31, st32, st33, st34, st35, st36, st37) < 2 * prime256);
-    lemma_prime_as_wild_nat  (st30, st31, st32, st33, st34, st35, st36, st37);
+    lemma_prime_as_wide_nat  (st30, st31, st32, st33, st34, st35, st36, st37);
   reduction_prime_2prime_with_carry st34 (st30, st31, st32, st33)
 
 
@@ -605,9 +605,9 @@ let isOne_tuple (a0, a1, a2, a3) =
   let r01 = logand r0 r1 in 
     logand_lemma r0 r1;
   let r23 = logand r2 r3 in 
-    lemma_log_and1 r2 r3;
+    logand_lemma r2 r3;
   let r = logand r01 r23 in 
-    lemma_log_and1 r01 r23;
+    logand_lemma r01 r23;
   let f = eq_u64 r (u64 0xffffffffffffffff) in  
   f
 
@@ -637,11 +637,11 @@ let isZero_tuple_u (a0, a1, a2, a3)  =
   let r2 = eq_mask a2 (u64 0) in 
   let r3 = eq_mask a3 (u64 0) in 
   let r01 = logand r0 r1 in 
-     lemma_log_and1 r0 r1;
+     logand_lemma r0 r1;
   let r23 = logand r2 r3 in 
-     lemma_log_and1 r2 r3;
+     logand_lemma r2 r3;
   let r = logand r01 r23 in 
-   lemma_log_and1 r01 r23;
+  logand_lemma r01 r23;
       r
   
 
@@ -652,11 +652,11 @@ let isZero_tuple_b (a0, a1, a2, a3)  =
   let r2 = eq_mask a2 (u64 0) in 
   let r3 = eq_mask a3 (u64 0) in 
   let r01 = logand r0 r1 in 
-    lemma_log_and1 r0 r1;
+   logand_lemma r0 r1;
   let r23 = logand r2 r3 in 
-    lemma_log_and1 r2 r3;
+    logand_lemma r2 r3;
   let r = logand r01 r23 in 
-    lemma_log_and1 r01 r23;    
+    logand_lemma r01 r23;    
   let f = eq_u64 r (u64 0xffffffffffffffff) in  
    f
    

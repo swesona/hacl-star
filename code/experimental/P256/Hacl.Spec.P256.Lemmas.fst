@@ -403,12 +403,12 @@ val lemma_distr_mult7: a: int -> b: int -> c: int -> d: int -> e: int -> f: int 
 let lemma_distr_mult7 a b c d e f h = ()
 
 
-val lemma_prime_as_wild_nat: a: felem8 {wide_as_nat4 a < 2 * prime256} -> Lemma (
+val lemma_prime_as_wide_nat: a: felem8 {wide_as_nat4 a < 2 * prime256} -> Lemma (
   let (t0, t1, t2, t3, t4, t5, t6, t7) = a in 
   uint_v t7 = 0 /\ uint_v t6 = 0 /\ uint_v t5 = 0 /\ (uint_v t4 = 0 \/ uint_v t4 = 1) /\
   as_nat4 (t0, t1, t2, t3) + uint_v t4 * pow2 256 = wide_as_nat4 a)
 
-let lemma_prime_as_wild_nat (t0, t1, t2, t3, t4, t5, t6, t7) = 
+let lemma_prime_as_wide_nat (t0, t1, t2, t3, t4, t5, t6, t7) = 
    assert_norm(pow2 64 * pow2 64 = pow2 128);
    assert_norm(pow2 64 * pow2 64 * pow2 64 = pow2 192);
    assert_norm(pow2 64 * pow2 64 * pow2 64 * pow2 64 = pow2 256);
@@ -446,18 +446,18 @@ val lemma_mul_nat5: a: nat -> b: nat -> c: nat -> d: nat -> e: nat -> Lemma (a *
 let lemma_mul_nat5 a b c d e = ()
 
 
+#reset-options " --z3rlimit 200" 
+
 val modulo_distributivity_mult2: a: int -> b: int -> c: int -> d: pos -> Lemma (((a % d) * (b % d) * c) % d = (a * b * c)% d)
 
 let modulo_distributivity_mult2 a b c d = 
   lemma_mod_mul_distr_l a ((b % d) * c) d;
     assert((a % d * ((b % d) * c)) % d == (a * ((b % d) * c)) % d);
-  let open FStar.Tactics in 
-  let open FStar.Tactics.Canon in 
     assert_by_tactic (a * ((b % d) * c) == (b % d) * a * c) canon;
   lemma_mod_mul_distr_l b (a * c) d
 
 
-val lemma_minus_distr (a: int) (b: int): Lemma ((a % prime256 - b % prime256) % prime256 = (a - b)%prime256)
+val lemma_minus_distr (a: int) (b: int): Lemma ((a % prime256 - b % prime256) % prime256 = (a - b) %prime256)
 
 let lemma_minus_distr a b = 
   lemma_mod_sub_distr (a % prime256) b prime256;
@@ -482,27 +482,21 @@ let lemma_modular_multiplication_p256 a b = admit()
 
 val lemma_mod_sub_distr (a:int) (b:int) (n:pos) : Lemma ((a - b % n) % n = (a - b) % n)
 
-val lemma_mod_add_distr (a:int) (b:int) (n:pos) : Lemma ((a + b % n) % n = (a + b) % n)
-
 let lemma_mod_sub_distr (a:int) (b:int) (n:pos) =
   lemma_div_mod b n;
   distributivity_sub_left 0 (b / n) n;
   lemma_mod_plus (a - (b % n)) (-(b / n)) n
+
+
+val lemma_mod_add_distr (a:int) (b:int) (n:pos) : Lemma ((a + b % n) % n = (a + b) % n)
 
 let lemma_mod_add_distr (a:int) (b:int) (n:pos) =
   lemma_div_mod b n;
   lemma_mod_plus (a + (b % n)) (b / n) n
 
 
-val lemma_log_and1: a: uint64 {v a = 0 \/ v a = maxint U64} ->
-  b: uint64 {v b = 0 \/ v b = maxint U64}  -> 
-  Lemma (uint_v a = pow2 64 - 1 && uint_v b = pow2 64 - 1 <==> uint_v (logand a b) == pow2 64 - 1)
-
-let lemma_log_and1 a b = logand_lemma a b
-
-
-val lemma_xor_copy_cond: a: uint64 -> b: uint64 -> mask: uint64{uint_v mask = 0 \/ uint_v mask = pow2 64 -1} ->
-  Lemma(let r = logxor a (logand mask (logxor a b)) in 
+val lemma_xor_copy_cond: a: uint64 -> b: uint64 -> mask: uint64{uint_v mask = 0 \/ uint_v mask = pow2 64 -1} -> Lemma(
+  let r = logxor a (logand mask (logxor a b)) in 
   if uint_v mask = pow2 64 - 1 then r == b else r == a)
 
 let lemma_xor_copy_cond a b mask = 
@@ -514,11 +508,11 @@ let lemma_xor_copy_cond a b mask =
     logxor_lemma a b
 
 
-val lemma_equality: a: felem4 -> b: felem4 -> Lemma
-    (
-      let (a_0, a_1, a_2, a_3) = a in 
-      let (b_0, b_1, b_2, b_3) = b in 
-      if  (uint_v a_0 = uint_v b_0 && uint_v a_1 = uint_v b_1 && uint_v a_2 = uint_v b_2 && uint_v a_3 = uint_v b_3) then as_nat4 a == as_nat4 b else as_nat4 a <> as_nat4 b)
+val lemma_equality: a: felem4 -> b: felem4 -> Lemma (
+  let (a_0, a_1, a_2, a_3) = a in 
+  let (b_0, b_1, b_2, b_3) = b in 
+  if  (uint_v a_0 = uint_v b_0 && uint_v a_1 = uint_v b_1 && uint_v a_2 = uint_v b_2 && uint_v a_3 = uint_v b_3) 
+  then as_nat4 a == as_nat4 b else as_nat4 a <> as_nat4 b)
 
 let lemma_equality a b = ()
 
@@ -539,12 +533,12 @@ let cmovznz4_lemma cin x y =
     log_or (logand y x2) (logand x (lognot x2))
 
 
-val lemma_equ_felem: a: nat{ a < pow2 64} -> b: nat {b < pow2 64} -> c: nat {c < pow2 64} -> d: nat {d < pow2 64} ->
-   a1: nat{a1 < pow2 64} -> b1: nat {b1 < pow2 64} -> c1: nat {c1 < pow2 64} -> d1: nat {d1 < pow2 64} ->
-  Lemma (requires (
-    a + b * pow2 64 + c * pow2 64 * pow2 64 + d *  pow2 64 * pow2 64 * pow2 64 == 
-    a1 + b1 * pow2 64 + c1 * pow2 64 * pow2 64  + d1 *  pow2 64 * pow2 64 * pow2 64))
-  (ensures (a == a1 /\ b == b1 /\ c == c1 /\ d == d1))
+val lemma_equ_felem: a: nat {a < pow2 64} -> b: nat {b < pow2 64} -> c: nat {c < pow2 64} -> d: nat {d < pow2 64} ->    
+  a1: nat{a1 < pow2 64} -> b1: nat {b1 < pow2 64} -> c1: nat {c1 < pow2 64} -> d1: nat {d1 < pow2 64} -> Lemma 
+    (requires (
+      a + b * pow2 64 + c * pow2 64 * pow2 64 + d *  pow2 64 * pow2 64 * pow2 64 == 
+      a1 + b1 * pow2 64 + c1 * pow2 64 * pow2 64  + d1 *  pow2 64 * pow2 64 * pow2 64))
+    (ensures (a == a1 /\ b == b1 /\ c == c1 /\ d == d1))
 
 
 let lemma_equ_felem a b c d  a1 b1 c1 d1  = 
@@ -554,44 +548,26 @@ let lemma_equ_felem a b c d  a1 b1 c1 d1  =
   assert(c == c1);
   assert(d == d1)
 
+
 val lemma_eq_funct: a: felem_seq -> b: felem_seq -> Lemma
    (requires (felem_seq_as_nat a == felem_seq_as_nat b))
    (ensures (a == b))
 
 let lemma_eq_funct a b = 
-  let a_seq = felem_seq_as_nat a in 
-  let b_seq = felem_seq_as_nat b in 
-
-  
   let a0 = Lib.Sequence.index a 0 in 
-  let a1 =  Lib.Sequence.index a 1 in 
-  let a2 =  Lib.Sequence.index  a 2 in 
-  let a3 =  Lib.Sequence.index a 3 in 
+  let a1 = Lib.Sequence.index a 1 in 
+  let a2 = Lib.Sequence.index a 2 in 
+  let a3 = Lib.Sequence.index a 3 in 
 
   let b0 = Lib.Sequence.index b 0 in 
   let b1 = Lib.Sequence.index b 1 in 
   let b2 = Lib.Sequence.index b 2 in 
   let b3 = Lib.Sequence.index b 3 in 
 
-  assert(uint_v a0 < pow2 64);
-  assert(uint_v b0 < pow2 64);
-  
-  assert(uint_v a0 < pow2 64);
-  assert(uint_v b0 < pow2 64);
-
   assert_norm (pow2 64 * pow2 64 = pow2 128);
   assert_norm (pow2 64 * pow2 64 * pow2 64 = pow2 192);
-  
-  assert(
-  uint_v a0 + uint_v a1 * pow2 64 + uint_v a2 * pow2 128 + uint_v a3 * pow2 192 == 
-  uint_v b0 + uint_v b1 * pow2 64 + uint_v b2 * pow2 128 + uint_v b3 * pow2 192);
 
   lemma_equ_felem (uint_v a0) (uint_v a1) (uint_v a2) (uint_v a3) (uint_v b0) (uint_v b1) (uint_v b2) (uint_v b3);
-
-  assert(Lib.Sequence.index a 0 == Lib.Sequence.index b 0);
-  assert(Lib.Sequence.index a 1 == Lib.Sequence.index b 1);
-  assert(Lib.Sequence.index a 2 == Lib.Sequence.index b 2);
-  assert(Lib.Sequence.index a 3 == Lib.Sequence.index b 3);  
-
+  
   assert(Lib.Sequence.equal a b)
 
