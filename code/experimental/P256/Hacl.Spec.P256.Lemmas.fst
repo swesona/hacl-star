@@ -49,32 +49,28 @@ let log_or a b =
 	logor_lemma a b
       end
 
+type elem (n:pos) = x:nat{x < n}
 
+let fmul (#n:pos) (x:elem n) (y:elem n) : elem n = (x * y) % n
 
+val exp: #n:pos -> a:elem n -> b:pos -> Tot (res:elem n) (decreases b)
 
-noextract
-let rec exp (e: nat) (n:nat {n > 0}) (prime: pos {e < prime}) : Tot (r: nat) (decreases n)  =
-  let ( *%) a b =  (a * b) % prime in 
-  if n = 1 then e
+let rec exp #n a b =
+  if b = 1 then a
   else
-    if n % 2 = 0 then 
-    begin
-      exp (e *% e) (n/2) prime
-    end
-    else e *% (exp (e *% e)((n-1)/2) prime)
+    if b % 2 = 0 then exp (fmul a a) (b / 2)
+    else fmul a (exp (fmul a a) (b / 2))
 
 
 noextract 
-let modp_inv_prime (prime: pos {prime > 3}) (x: nat {x < prime})  : Tot (r: nat{r < prime}) = 
-  (exp x (prime - 2) prime) % prime
-
-
-noextract
-let modp_inv2_prime (x: int) (p: nat {p > 3}) : Tot (r: nat {r < p}) = modp_inv_prime p (x % p)
-
+let modp_inv_prime (prime: pos {prime > 3}) (x: elem prime)  : Tot (r: elem prime) = 
+  (exp #prime x (prime - 2)) % prime
 
 noextract
-let modp_inv2 (x: nat) : Tot (r: nat {r < prime256}) = 
+let modp_inv2_prime (x: int) (p: nat {p > 3}) : Tot (r: elem p) = modp_inv_prime p (x % p)
+
+noextract
+let modp_inv2 (x: nat) : Tot (r: elem prime256) = 
   assert_norm (prime256 > 3);
   modp_inv2_prime x prime256
 
@@ -86,7 +82,6 @@ val modulo_distributivity_mult: a: int -> b: int -> c: pos -> Lemma ((a * b) % c
 let modulo_distributivity_mult a b c = 
   lemma_mod_mul_distr_l a b c;
   lemma_mod_mul_distr_r (a % c) b c
-
 
 
 val power_one: a: nat -> Lemma (pow 1 a == 1) 
@@ -145,28 +140,93 @@ let rec power_mult a b c =
     pow_plus a (b * (c - 1)) b
 
 
-val lemma_exponent1: a: nat -> b: pos{b > 1} -> prime: pos { a < prime} -> Lemma ((exp a (b - 1) prime * a) % prime = exp a b prime)
+(* Start of Marina RSA PSS code *)
+val lemma_fpow_unfold0: a: nat -> b: pos {1 < b /\ b % 2 = 0} -> prime: pos { a < prime} -> Lemma (
+  exp #prime a b = exp #prime (fmul a a) (b / 2))
 
-let rec lemma_exponent1 a b prime = 
-  match b with 
-  |2 -> ()
-  |_ -> 
-    lemma_exponent1 a (b - 1) prime;
-    assert((exp a (b - 2) prime * a) % prime = exp a (b - 1) prime);
-    admit()
+let lemma_fpow_unfold0 a b prime = ()
 
 
+val lemma_fpow_unfold1: a: nat -> b: pos {1 < b /\ b % 2 = 1} -> prime: pos { a < prime} -> Lemma (
+  exp #prime a b = fmul (exp #prime (fmul a a) (b / 2)) a)
 
-val lemma_exponent_is_power: a: nat -> b: pos -> prime: pos{a < prime} ->  Lemma (exp a b prime == (pow a b) % prime)
+let lemma_fpow_unfold1 a b prime = ()
 
-let rec lemma_exponent_is_power a b prime = 
-  match b with 
-  | 1 -> ()
-  | _ -> 
-    lemma_exponent_is_power a (b - 1) prime;
-    lemma_exponent1 a b prime;
-    lemma_mod_mul_distr_l (pow a (b - 1)) (pow a 1) prime
 
+val lemma_pow_unfold: a:nat -> b:pos -> Lemma (a * pow a (b - 1) == pow a b)
+let lemma_pow_unfold a b = ()
+
+
+val lemma_mul_ass3: a:nat -> b:nat -> c:nat -> Lemma
+  (a * b * c == a * c * b)
+let lemma_mul_ass3 a b c = ()
+
+
+val lemma_pow_double: a:nat -> b:nat -> Lemma
+  (pow (a * a) b == pow a (b + b))
+let rec lemma_pow_double a b =
+  if b = 0 then ()
+  else begin
+    calc (==) {
+      pow (a * a) b;
+      (==) { lemma_pow_unfold (a * a) b }
+      a * a * pow (a * a) (b - 1);
+      (==) { lemma_pow_double a (b - 1) }
+      a * a * pow a (b + b - 2);
+      (==) {power_one  a }
+      pow a 1 * pow a 1 * pow a (b + b - 2);
+      (==) { pow_plus a 1 1 }
+      pow a 2 * pow a (b + b - 2);
+      (==) { pow_plus a 2 (b + b - 2) }
+      pow a (b + b);
+    };
+    assert (pow (a * a) b == pow a (b + b))
+  end
+
+
+val lemma_pow_mod_n_is_fpow: n:pos -> a:nat{a < n} -> b:pos -> Lemma
+  (ensures (exp #n a b == pow a b % n)) (decreases b)
+  
+let rec lemma_pow_mod_n_is_fpow n a b =
+  if b = 1 then ()
+  else begin
+    if b % 2 = 0 then begin
+      calc (==) {
+	exp #n a b;
+	(==) { lemma_fpow_unfold0 a b n}
+	exp #n (fmul #n a a) (b / 2);
+	(==) { lemma_pow_mod_n_is_fpow n (fmul #n a a) (b / 2) }
+	pow (fmul #n a a) (b / 2) % n;
+	(==) { power_distributivity (a * a) (b / 2) n }
+	pow (a * a) (b / 2) % n;
+	(==) { lemma_pow_double a (b / 2) }
+	pow a b % n;
+      };
+      assert (exp #n a b == pow a b % n) end
+    else begin
+      calc (==) {
+	exp #n a b;
+	(==) { lemma_fpow_unfold1 a b n }
+	fmul a (exp (fmul #n a a) (b / 2));
+	(==) { lemma_pow_mod_n_is_fpow n (fmul #n a a) (b / 2) }
+	fmul a (pow (fmul #n a a) (b / 2) % n);
+	(==) { power_distributivity (a * a) (b / 2) n }
+	fmul a (pow (a * a) (b / 2) % n);
+	(==) { lemma_pow_double a (b / 2) }
+	fmul a (pow a (b / 2 * 2) % n);
+	(==) { Math.Lemmas.lemma_mod_mul_distr_r a (pow a (b / 2 * 2)) n }
+	a * pow a (b / 2 * 2) % n;
+	(==) { power_one a }
+	pow a 1 * pow a (b / 2 * 2) % n;
+	(==) { power_distributivity_2 a 1 (b / 2 * 2) }
+	pow a (b / 2 * 2 + 1) % n;
+	(==) { Math.Lemmas.euclidean_division_definition b 2 }
+	pow a b % n;
+      };
+      assert (exp #n a b == pow a b % n) end
+  end
+
+(* End of Marina RSA PSS code *) 
 
 
 val modulo_distributivity_mult_last_two: a: int -> b: int -> c: int -> d: int -> e: int -> f: pos -> 
