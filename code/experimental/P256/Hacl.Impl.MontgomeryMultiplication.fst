@@ -17,39 +17,7 @@ open Hacl.Spec.P256.Core
 
 open FStar.Mul
 
-(* takes 8 variables and writes them down to a given buffer *)
 #reset-options "--z3refresh --z3rlimit 200"
-inline_for_extraction noextract
-val load_buffer8: 
-  a0: uint64 -> a1: uint64 -> 
-  a2: uint64 -> a3: uint64 -> 
-  a4: uint64 -> a5: uint64 -> 
-  a6: uint64 -> a7: uint64 ->  
-  o: lbuffer uint64 (size 8) -> 
-  Stack unit
-    (requires fun h -> live h o)
-    (ensures fun h0 _ h1 -> modifies (loc o) h0 h1 /\ wide_as_nat h1 o == wide_as_nat4 (a0, a1, a2, a3, a4, a5, a6, a7))
-
-
-let load_buffer8 a0 a1 a2 a3 a4 a5 a6 a7  o = 
-    let h0 = ST.get() in 
-  assert_norm (pow2 64 * pow2 64 = pow2 128);
-  assert_norm (pow2 64 * pow2 64 * pow2 64 = pow2 192);
-  assert_norm (pow2 64 * pow2 64 * pow2 64 * pow2 64 = pow2 256);
-  assert_norm (pow2 64 * pow2 64 * pow2 64 * pow2 64 * pow2 64 = pow2 (5 * 64));
-  assert_norm (pow2 64 * pow2 64 * pow2 64 * pow2 64 * pow2 64 * pow2 64 = pow2 (6 * 64));
-  assert_norm (pow2 64 * pow2 64 * pow2 64 * pow2 64 * pow2 64 * pow2 64 * pow2 64 = pow2 (7 * 64));
-
-  upd o (size 0) a0;
-  upd o (size 1) a1;
-  upd o (size 2) a2;
-  upd o (size 3) a3;
-  
-  upd o (size 4) a4;
-  upd o (size 5) a5;
-  upd o (size 6) a6;
-  upd o (size 7) a7
-  
 (*wide_as_nat h1 out == as_nat h0 f1 * as_nat h0 r *)
 val mul: f1: felem -> r: felem -> out: widefelem
   -> Stack unit

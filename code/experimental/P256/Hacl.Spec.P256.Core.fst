@@ -595,22 +595,6 @@ let multByMinusThree_tuple (a0, a1, a2, a3) =
   lemma_minus_three (as_nat4 (a0, a1, a2, a3));
   (c0, c1, c2, c3)
 
- 
-(* takes felem4 and returns boolean *)
-let isOne_tuple (a0, a1, a2, a3) = 
-  let r0 = eq_mask a0 (u64 1) in 
-  let r1 = eq_mask a1 (u64 0) in 
-  let r2 = eq_mask a2 (u64 0) in 
-  let r3 = eq_mask a3 (u64 0) in  
-  let r01 = logand r0 r1 in 
-    logand_lemma r0 r1;
-  let r23 = logand r2 r3 in 
-    logand_lemma r2 r3;
-  let r = logand r01 r23 in 
-    logand_lemma r01 r23;
-  let f = eq_u64 r (u64 0xffffffffffffffff) in  
-  f
-
 
 let equalFelem (a_0, a_1, a_2, a_3) (b_0, b_1, b_2, b_3) = 
     let r_0 = eq_mask a_0 b_0 in 
@@ -643,20 +627,4 @@ let isZero_tuple_u (a0, a1, a2, a3)  =
   let r = logand r01 r23 in 
   logand_lemma r01 r23;
       r
-  
-
-let isZero_tuple_b (a0, a1, a2, a3)  = 
-  assert_norm (0xffffffffffffffff = pow2 64 - 1);
-  let r0 = eq_mask a0 (u64 0) in 
-  let r1 = eq_mask a1 (u64 0) in 
-  let r2 = eq_mask a2 (u64 0) in 
-  let r3 = eq_mask a3 (u64 0) in 
-  let r01 = logand r0 r1 in 
-   logand_lemma r0 r1;
-  let r23 = logand r2 r3 in 
-    logand_lemma r2 r3;
-  let r = logand r01 r23 in 
-    logand_lemma r01 r23;    
-  let f = eq_u64 r (u64 0xffffffffffffffff) in  
-   f
-   
+ 
