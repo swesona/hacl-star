@@ -126,6 +126,16 @@ let multiplicationInDomain #k #l a b =
   lemma_mul_ass3 k (pow2 256) l
 
 
+let multiplicationInDomainNat #k #l a b = 
+  assert_norm (prime256 > 3);
+  let multResult = a * b * modp_inv2_prime (pow2 256) prime256 % prime256 in 
+  modulo_distributivity_mult2 (k * pow2 256) (l * pow2 256) (modp_inv2_prime (pow2 256) prime256) prime;
+   lemma_twice_brackets k (pow2 256) 1 l (pow2 256) 1 (modp_inv2 (pow2 256));
+  assert_norm (pow2 256 * modp_inv2 (pow2 256) % prime == 1);
+  modulo_distributivity_mult_last_two k (pow2 256) l (pow2 256) (modp_inv2 (pow2 256)) prime;
+  lemma_mul_ass3 k (pow2 256) l
+
+
 val additionInDomain: #k: nat -> #l: nat -> 
   a: felem4 {as_nat4 a == toDomain_ (k) /\ as_nat4 a < prime} -> 
   b: felem4 {as_nat4 b == toDomain_ (l) /\ as_nat4 b < prime} -> Lemma 
@@ -297,33 +307,6 @@ let montgomery_multiplication_seq a b  =
   let r = upd r 2 r2 in 
   let r = upd r 3 r3 in 
    r
-
-
-let montgomery_multiplication_buffer a b r= 
-
-  let a0 = Lib.Buffer.index a (size 0) in 
-  let a1 = Lib.Buffer.index a (size 1) in 
-  let a2 = Lib.Buffer.index a (size 2) in 
-  let a3 = Lib.Buffer.index a (size 3) in 
-
-  let b0 = Lib.Buffer.index b (size 0) in 
-  let b1 = Lib.Buffer.index b (size 1) in 
-  let b2 = Lib.Buffer.index b (size 2) in 
-  let b3 = Lib.Buffer.index b (size 3) in 
-
-    let h0 = ST.get() in 
-  let (r0, r1, r2, r3) = montgomery_multiplication (a0, a1, a2, a3) (b0, b1, b2, b3) in 
-  Lib.Buffer.upd r (size 0) r0;
-  Lib.Buffer.upd r (size 1) r1;
-  Lib.Buffer.upd r (size 2) r2;
-  Lib.Buffer.upd r (size 3) r3;
-
-    let h1 = ST.get() in 
-
-  lemmaFromDomainToDomain (as_nat4 (a0, a1, a2, a3));
-  lemmaFromDomainToDomain (as_nat4 (b0, b1, b2, b3));
-  multiplicationInDomain #(fromDomain_ (as_nat4 (a0, a1, a2, a3) )) #(fromDomain_ (as_nat4 (b0, b1, b2, b3))) (a0, a1, a2, a3)  (b0, b1, b2, b3);
-  assert(Lib.Sequence.equal  (montgomery_multiplication_seq (as_seq h0 a) (as_seq h0 b))  (as_seq h1 r))
 
 #reset-options "--z3refresh --z3rlimit 100" 
 

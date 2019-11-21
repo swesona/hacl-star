@@ -20,8 +20,7 @@ open Hacl.Impl.P256.LowLevel
 open Lib.Loops
 open Hacl.Spec.P256.MontgomeryMultiplication
 
-
-#reset-options "--z3rlimit 100"
+#set-options "--z3rlimit 100"
 
 inline_for_extraction noextract
 val add8_without_carry1:  t: widefelem -> t1: widefelem -> result: widefelem  -> Stack unit
@@ -80,6 +79,7 @@ val montgomery_multiplication_round_twice: t: widefelem -> result: widefelem -> 
  )
 
 let montgomery_multiplication_round_twice t result = 
+  assert_norm(prime256 > 3);
   push_frame();
     let tempRound = create (size 8) (u64 0) in 
       let h0 = ST.get() in 
@@ -96,7 +96,10 @@ let montgomery_multiplication_round_twice t result =
 val montgomery_multiplication_buffer_by_one: a: felem -> result: felem ->  Stack unit
   (requires (fun h -> live h a /\ as_nat h a < prime256 /\ live h result)) 
   (ensures (fun h0 _ h1 -> modifies (loc result) h0 h1 /\ 
-    as_nat h1 result  = (as_nat h0 a * modp_inv2_prime (pow2 256) prime256) % prime256))
+    as_nat h1 result  = (as_nat h0 a * modp_inv2_prime (pow2 256) prime256) % prime256 /\
+    as_nat h1 result = fromDomain_ (as_nat h0 a))
+  )
+
 
 let montgomery_multiplication_buffer_by_one a result = 
   assert_norm (prime256 > 3);
@@ -129,14 +132,17 @@ let montgomery_multiplication_buffer_by_one a result =
 	  let round3 = (round2 + prime256 * (round2 % pow2 64)) / pow2 64 in   
 	  round3 % pow2 64) (pow2 64 - 1) prime256;
     reduction_prime256_2prime256_8_with_carry_impl round4 result;
+    lemmaFromDomain (as_nat h0 a);
   pop_frame()  
-
 
 
 val montgomery_multiplication_buffer: a: felem -> b: felem -> result: felem ->  Stack unit
   (requires (fun h -> live h a /\ as_nat h a < prime256 /\ live h b /\ live h result /\ as_nat h b < prime256)) 
   (ensures (fun h0 _ h1 -> modifies (loc result) h0 h1 /\  
-    as_nat h1 result  = (as_nat h0 a * as_nat h0 b * modp_inv2_prime (pow2 256) prime256) % prime256))
+    as_nat h1 result = (as_nat h0 a * as_nat h0 b * modp_inv2_prime (pow2 256) prime256) % prime256 /\
+    as_nat h1 result = toDomain_ (fromDomain_ (as_nat h0 a) * fromDomain_ (as_nat h0 b)))
+  )
+
 
 let montgomery_multiplication_buffer a b result = 
   assert_norm(prime256 > 3);
@@ -171,33 +177,36 @@ let montgomery_multiplication_buffer a b result =
 	round3 % pow2 64) (pow2 64) prime256;  
       assert_norm((prime256 * pow2 64 + (prime256 * pow2 64 + (prime256 * pow2 64 + ((pow2 64 - 1) * prime256 + prime256 * prime256) / pow2 64) / pow2 64)/ pow2 64) / pow2 64 < 2 * prime256);
   reduction_prime256_2prime256_8_with_carry_impl round4 result; 
+  lemmaFromDomainToDomain (as_nat h0 a);
+  lemmaFromDomainToDomain (as_nat h0 b);
+  multiplicationInDomainNat #(fromDomain_ (as_nat h0 a)) #(fromDomain_ (as_nat h0 b))  (as_nat h0 a) (as_nat h0 b);
   pop_frame()  
-
 
 let prime = prime256
 
-#reset-options "--z3refresh --z3rlimit 500" 
+#reset-options "--z3rlimit 500" 
 
 val fsquarePowN: n: size_t -> a: felem -> Stack unit 
   (requires (fun h -> live h a /\ as_nat h a < prime256)) 
-  (ensures (fun h0 _ h1 -> modifies1 a h0 h1 /\  as_nat h1 a < prime256 /\ (let k = fromDomain_(as_nat h0 a) in as_nat h1 a = toDomain_ (pow k (pow2 (v n))))))
+  (ensures (fun h0 _ h1 -> modifies1 a h0 h1 /\  as_nat h1 a < prime256 /\ 
+    (let k = fromDomain_(as_nat h0 a) in as_nat h1 a = toDomain_ (pow k (pow2 (v n))))))
 
 let fsquarePowN n a = 
   let h0 = ST.get() in  
   lemmaFromDomainToDomain (as_nat h0 a); 
   assert_norm (pow2 0 == 1); 
   let inv (h0: HyperStack.mem) (h1: HyperStack.mem) (i: nat) : Type0 =
-    let k_before_d = as_nat h0 a in let k = fromDomain_ k_before_d in 
-    as_nat h1 a = toDomain_ (pow k (pow2 i)) /\ 
-    as_nat h1 a < prime /\ live h1 a /\ modifies1 a h0 h1 in 
-  power_one (fromDomain_ (as_nat h0 a));
+    let k = fromDomain_ (as_nat h0 a) in 
+    as_nat h1 a = toDomain_ (pow k (pow2 i))  (* /\
+    as_nat h1 a < prime256 /\ live h1 a /\ modifies1 a h0 h1 *) in 
+  power_one (fromDomain_ (as_nat h0 a)); 
   for (size 0) n (inv h0) (fun x -> 
     let h0_ = ST.get() in 
      montgomery_multiplication_buffer a a a; 
      let k = fromDomain_ (as_nat h0 a) in  
      inDomain_mod_is_not_mod (fromDomain_ (as_nat h0_ a) * fromDomain_ (as_nat h0_ a)); 
      lemmaFromDomainToDomainModuloPrime (let k = fromDomain_ (as_nat h0 a) in pow k (pow2 (v x)));
-     modulo_distributivity_mult (pow k (pow2 (v x))) (pow k (pow2 (v x))) prime; 
+     modulo_distributivity_mult (pow k (pow2 (v x))) (pow k (pow2 (v x))) prime256; 
      pow_plus k  (pow2 (v x)) (pow2 (v x )); 
      pow2_double_sum (v x);
      inDomain_mod_is_not_mod (pow k (pow2 (v x + 1)))

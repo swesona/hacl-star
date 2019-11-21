@@ -51,6 +51,13 @@ val lemmaFromDomainToDomainModuloPrime: a: int -> Lemma (a % prime256 == fromDom
 (* the lemma shows the equivalence between toDomain(a:nat) and toDomain(a % prime256) *)
 val inDomain_mod_is_not_mod: a: int -> Lemma (toDomain_ a == toDomain_ (a % prime256))
 
+val multiplicationInDomainNat: #k: nat -> #l: nat ->
+  a: nat {a == toDomain_ k /\ a < prime256} -> 
+  b: nat {b == toDomain_ l /\ b < prime256} ->
+  Lemma (
+    let multResult = a * b * modp_inv2_prime (pow2 256) prime256 % prime256 in 
+    multResult == toDomain_ (k * l))
+
 val additionInDomain2Nat: a: nat {a < prime256} -> b: nat {b < prime256} -> Lemma 
   (
     let result = (a + b) % prime256 in 
@@ -77,12 +84,6 @@ val montgomery_multiplication_seq: a: felem_seq {felem_seq_as_nat a < prime256} 
   felem_seq_as_nat r = toDomain_ (fromDomain_ (felem_seq_as_nat a) * fromDomain_(felem_seq_as_nat b) % prime256)
   }) 
    
-val montgomery_multiplication_buffer: a: felem -> b: felem -> r: felem ->  Stack unit
-  (requires (fun h -> live h a /\ as_nat h a < prime256 /\ live h b /\ live h r /\ as_nat h b < prime256)) 
-  (ensures (fun h0 _ h1 -> modifies1 r h0 h1 /\ 
-    as_nat h1 r < prime256 /\
-    as_seq h1 r == montgomery_multiplication_seq (as_seq h0 a) (as_seq h0 b)))
-
 noextract
 val mm_cube_seq: a: felem_seq {felem_seq_as_nat a < prime256}-> 
   Tot (r: felem_seq {felem_seq_as_nat r < prime256 /\ 
