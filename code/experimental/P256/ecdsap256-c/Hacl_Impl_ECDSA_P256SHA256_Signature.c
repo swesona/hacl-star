@@ -5,45 +5,69 @@
   KreMLin version: 27ce15c8
  */
 
-#include "kremlib.h"
-#ifndef __Hacl_Impl_ECDSA_MontgomeryMultiplication_H
-#define __Hacl_Impl_ECDSA_MontgomeryMultiplication_H
-
-#include "Hacl_Impl_P256.h"
-#include "FStar.h"
-#include "kremlib.h"
-#include "FStar_UInt_8_16_32_64.h"
-#include "c/Lib_PrintBuffer.h"
-#include "FStar_UInt_8_16_32_64.h"
-
-extern uint64_t Hacl_Impl_ECDSA_MontgomeryMultiplication_prime256order_buffer[4U];
+#include "Hacl_Impl_ECDSA_P256SHA256_Signature.h"
 
 void
-Hacl_Impl_ECDSA_MontgomeryMultiplication_reduction_prime_prime_2prime_with_carry2(
-  uint64_t cin,
-  uint64_t *x,
+Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_step01(
+  uint32_t mLen,
+  uint8_t *m,
+  uint64_t *hashAsFelem
+)
+{
+  uint8_t mHash[32U] = { 0U };
+  Hacl_Hash_SHA2_hash_256(m, mLen, mHash);
+  Hacl_Impl_ECDSA_P256SHA256_Verification_toUint64(mHash, hashAsFelem);
+  Hacl_Impl_ECDSA_MontgomeryMultiplication_reduction_prime_2prime_order(hashAsFelem,
+    hashAsFelem);
+}
+
+void
+Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_step6(
+  uint64_t *kFelem,
+  uint64_t *z,
+  uint64_t *r,
+  uint64_t *da,
   uint64_t *result
-);
+)
+{
+  uint64_t rda[4U] = { 0U };
+  uint64_t zBuffer[4U] = { 0U };
+  uint64_t kInv[4U] = { 0U };
+  Hacl_Impl_ECDSA_MontgomeryMultiplication_montgomery_multiplication_ecdsa_module(r, da, rda);
+  Hacl_Impl_ECDSA_MM_Exponent_fromDomainImpl(z, zBuffer);
+  Hacl_Impl_ECDSA_MontgomeryMultiplication_felem_add(rda, zBuffer, zBuffer);
+  memcpy(kInv, kFelem, (uint32_t)4U * sizeof kFelem[0U]);
+  Hacl_Impl_ECDSA_MM_Exponent_montgomery_ladder_exponent(kInv);
+  Hacl_Impl_ECDSA_MontgomeryMultiplication_montgomery_multiplication_ecdsa_module(zBuffer,
+    kInv,
+    result);
+}
 
 void
-Hacl_Impl_ECDSA_MontgomeryMultiplication_reduction_prime_2prime_order(
-  uint64_t *x,
+Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_core(
+  uint32_t mLen,
+  uint8_t *m,
+  uint64_t *privKey,
+  uint64_t *k,
   uint64_t *result
-);
+)
+{
+  uint64_t hashAsFelem[4U] = { 0U };
+  Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_step01(mLen, m, hashAsFelem);
+}
 
-void
-Hacl_Impl_ECDSA_MontgomeryMultiplication_montgomery_multiplication_ecdsa_module(
-  uint64_t *a,
-  uint64_t *b,
+bool
+Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature(
+  uint32_t mLen,
+  uint8_t *m,
+  uint64_t *privKey,
+  uint64_t *k,
   uint64_t *result
-);
+)
+{
+  bool f = Hacl_Impl_ECDSA_P256SHA256_Verification_isMoreThanZeroLessThanOrderMinusOne(privKey);
+  bool s1 = Hacl_Impl_ECDSA_P256SHA256_Verification_isMoreThanZeroLessThanOrderMinusOne(k);
+  Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_core(mLen, m, privKey, k, result);
+  return f && s1;
+}
 
-void
-Hacl_Impl_ECDSA_MontgomeryMultiplication_felem_add(
-  uint64_t *arg1,
-  uint64_t *arg2,
-  uint64_t *out
-);
-
-#define __Hacl_Impl_ECDSA_MontgomeryMultiplication_H_DEFINED
-#endif

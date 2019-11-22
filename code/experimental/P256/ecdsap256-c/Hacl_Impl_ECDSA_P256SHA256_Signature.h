@@ -6,44 +6,51 @@
  */
 
 #include "kremlib.h"
-#ifndef __Hacl_Impl_ECDSA_MontgomeryMultiplication_H
-#define __Hacl_Impl_ECDSA_MontgomeryMultiplication_H
+#ifndef __Hacl_Impl_ECDSA_P256SHA256_Signature_H
+#define __Hacl_Impl_ECDSA_P256SHA256_Signature_H
 
-#include "Hacl_Impl_P256.h"
-#include "FStar.h"
+#include "Hacl_Impl_ECDSA_MM_Exponent.h"
+#include "Hacl_Impl_ECDSA_P256SHA256_Verification.h"
+#include "Hacl_Hash_SHA2.h"
+#include "Hacl_Impl_ECDSA_MontgomeryMultiplication.h"
 #include "kremlib.h"
 #include "FStar_UInt_8_16_32_64.h"
 #include "c/Lib_PrintBuffer.h"
 #include "FStar_UInt_8_16_32_64.h"
 
-extern uint64_t Hacl_Impl_ECDSA_MontgomeryMultiplication_prime256order_buffer[4U];
+void
+Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_step01(
+  uint32_t mLen,
+  uint8_t *m,
+  uint64_t *hashAsFelem
+);
 
 void
-Hacl_Impl_ECDSA_MontgomeryMultiplication_reduction_prime_prime_2prime_with_carry2(
-  uint64_t cin,
-  uint64_t *x,
+Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_step6(
+  uint64_t *kFelem,
+  uint64_t *z,
+  uint64_t *r,
+  uint64_t *da,
   uint64_t *result
 );
 
 void
-Hacl_Impl_ECDSA_MontgomeryMultiplication_reduction_prime_2prime_order(
-  uint64_t *x,
+Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_core(
+  uint32_t mLen,
+  uint8_t *m,
+  uint64_t *privKey,
+  uint64_t *k,
   uint64_t *result
 );
 
-void
-Hacl_Impl_ECDSA_MontgomeryMultiplication_montgomery_multiplication_ecdsa_module(
-  uint64_t *a,
-  uint64_t *b,
+bool
+Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature(
+  uint32_t mLen,
+  uint8_t *m,
+  uint64_t *privKey,
+  uint64_t *k,
   uint64_t *result
 );
 
-void
-Hacl_Impl_ECDSA_MontgomeryMultiplication_felem_add(
-  uint64_t *arg1,
-  uint64_t *arg2,
-  uint64_t *out
-);
-
-#define __Hacl_Impl_ECDSA_MontgomeryMultiplication_H_DEFINED
+#define __Hacl_Impl_ECDSA_P256SHA256_Signature_H_DEFINED
 #endif

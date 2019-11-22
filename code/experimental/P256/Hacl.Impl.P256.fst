@@ -33,7 +33,7 @@ open FStar.Mul
 inline_for_extraction noextract 
 val toDomain: value: felem -> result: felem ->  Stack unit 
   (requires fun h ->  as_nat h value < prime /\ live h value /\live h result /\ eq_or_disjoint value result)
-  (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\ as_nat h1 result = toDomain_ (as_nat h0 value)) 
+  (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\ as_nat h1 result = toDomain_ (as_nat h0 value))
  
 let toDomain value result = 
   push_frame();
@@ -42,7 +42,7 @@ let toDomain value result =
     solinas_reduction_impl multBuffer result;
   pop_frame()  
 
-(*to prove *)
+
 let pointToDomain p result = 
     let p_x = sub p (size 0) (size 4) in 
     let p_y = sub p (size 4) (size 4) in 
@@ -56,30 +56,10 @@ let pointToDomain p result =
     toDomain p_y r_y;
     toDomain p_z r_z
 
-
-inline_for_extraction noextract 
-val multiplication_partially_opened: a: felem4 -> b: felem -> result: felem ->Stack unit
-  (requires fun h -> as_nat4 a < prime /\ as_nat h b < prime /\ live h b /\ live h result)
-  (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\ as_nat h1 result = (as_nat4 a * as_nat h0 b * modp_inv2(pow2 256)) % prime)
-
-let multiplication_partially_opened (a0, a1, a2, a3) b result = 
-  let b0 = index b (size 0) in 
-  let b1 = index b (size 1) in 
-  let b2 = index b (size 2) in 
-  let b3 = index b (size 3) in 
-
-  let (r0, r1, r2, r3) = montgomery_multiplication (a0, a1, a2, a3) (b0, b1, b2, b3) in 
-  assert(as_nat4 (r0, r1, r2, r3) = as_nat4 (a0, a1, a2, a3) * as_nat4 (b0, b1, b2, b3) * modp_inv2(pow2 256) % prime);
- 
-  upd result (size 0) r0;
-  upd result (size 1) r1;
-  upd result (size 2) r2;
-  upd result (size 3) r3
-
-
 val fromDomain: f: felem-> result: felem-> Stack unit 
   (requires fun h -> live h f /\ live h result /\ as_nat h f < prime)
-  (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\ as_nat h1 result = (as_nat h0 f * modp_inv2(pow2 256)) % prime/\ as_nat h1 result = fromDomain_ (as_nat h0 f))
+  (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\ as_nat h1 result = (as_nat h0 f * modp_inv2(pow2 256)) % prime 
+    /\ as_nat h1 result = fromDomain_ (as_nat h0 f))
 
 let fromDomain f result = 
   montgomery_multiplication_buffer_by_one f result
@@ -102,76 +82,91 @@ let pointFromDomain p result =
 val quatre: a: felem -> result: felem -> Stack unit
   (requires fun h -> live h a /\ live h result /\ disjoint a result /\ as_nat h a < prime)
   (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\ 
-    as_nat h1 result = felem_seq_as_nat (mm_quatre_seq (as_seq h0 a)) /\ 
-    as_nat h1 result < prime /\ as_seq h1 result == mm_quatre_seq (as_seq h0 a))
-
-#reset-options "--z3refresh --z3rlimit 500" 
+    as_nat h1 result = toDomain_ (fromDomain_ (as_nat h0 a) * fromDomain_ (as_nat h0 a) * fromDomain_ (as_nat h0 a) * fromDomain_ (as_nat h0 a) % prime256) /\ 
+    as_nat h1 result = toDomain_ (fromDomain_ (as_nat h0 a) * fromDomain_ (as_nat h0 a) * fromDomain_ (as_nat h0 a) * fromDomain_ (as_nat h0 a)))
 
 let quatre a result = 
-  let open Hacl.Impl.P256.MontgomeryMultiplication in 
     let h0 = ST.get() in 
-  Hacl.Impl.P256.MontgomeryMultiplication.montgomery_multiplication_buffer a a result;
+  montgomery_multiplication_buffer a a result;
   montgomery_multiplication_buffer result result result;
-    let h1 = ST.get() in 
-  assert(Lib.Sequence.equal (mm_quatre_seq (as_seq h0 a))  (as_seq h1 result))
+    inDomain_mod_is_not_mod ((fromDomain_ (as_nat h0 a) * fromDomain_ (as_nat h0 a) % prime256) * (fromDomain_ (as_nat h0 a) * fromDomain_ (as_nat h0 a) % prime256));
+    modulo_distributivity_mult2 (fromDomain_ (as_nat h0 a) * fromDomain_ (as_nat h0 a)) (fromDomain_ (as_nat h0 a) * fromDomain_ (as_nat h0 a)) 1 prime256;
+    lemma_brackets (fromDomain_ (as_nat h0 a) * fromDomain_ (as_nat h0 a)) (fromDomain_ (as_nat h0 a)) (fromDomain_ (as_nat h0 a));
+    inDomain_mod_is_not_mod (fromDomain_ (as_nat h0 a) * fromDomain_ (as_nat h0 a) * fromDomain_ (as_nat h0 a) * fromDomain_ (as_nat h0 a))
 
 
 val multByTwo: a: felem -> result: felem -> Stack unit 
   (requires fun h -> live h a /\ live h result /\ eq_or_disjoint a result /\ as_nat h a < prime )
   (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\ 
-    as_seq h1 result == mm_byTwo_seq (as_seq h0 a) /\ as_nat h1 result < prime)
+    as_nat h1 result == toDomain_ (2 * fromDomain_ (as_nat h0 a) % prime256) /\ 
+    as_nat h1 result == toDomain_ (2 * fromDomain_ (as_nat h0 a)) /\ 
+    as_nat h1 result < prime)
 
 let multByTwo a out = 
     let h0 = ST.get() in 
   p256_add a a out;
-    let h1 = ST.get() in 
-    assert(let out = as_seq h1 out in out == felem_add_seq (as_seq h0 a) (as_seq h0 a));
-    lemma_add_same_value_is_by_two (as_seq h0 a)
+    inDomain_mod_is_not_mod (2 * fromDomain_ (as_nat h0 a))
 
 
 val multByThree: a: felem -> result: felem -> Stack unit 
   (requires fun h -> live h a /\ live h result /\ disjoint a result /\ as_nat h a < prime )
   (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\ as_nat h1 result < prime /\ 
-  as_seq h1 result == mm_byThree_seq (as_seq h0 a))
+    as_nat h1 result == toDomain_ (3 * fromDomain_ (as_nat h0 a) % prime256) /\ 
+    as_nat h1 result == toDomain_ (3 * fromDomain_ (as_nat h0 a))
+  )
 
 let multByThree a result = 
     let h0 = ST.get() in 
   multByTwo a result;
   p256_add a result result;
-  lemma_add_same_value_is_by_three (as_seq h0 a)
+    lemma_add_same_value_is_by_three (as_seq h0 a);
+    inDomain_mod_is_not_mod (3 * fromDomain_ (as_nat h0 a))
+  
 
 
 val multByFour: a: felem -> result: felem -> Stack unit 
   (requires fun h -> live h a /\ live h result /\ eq_or_disjoint a result /\ as_nat h a < prime )
-  (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\ as_nat h1 result < prime /\ as_seq h1 result == mm_byFour_seq (as_seq h0 a))
+  (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\ as_nat h1 result < prime /\ 
+    as_nat h1 result == toDomain_ (4 * fromDomain_ (as_nat h0 a) % prime256) /\ 
+    as_nat h1 result == toDomain_ (4 * fromDomain_ (as_nat h0 a))
+)
 
 let multByFour a result  = 
     let h0 = ST.get() in 
   multByTwo a result;
-    let h1 = ST.get() in 
-    assert(as_seq h1 result == mm_byTwo_seq (as_seq h0 a));
   multByTwo result result;
-    let h2 = ST.get() in 
-    lemma_add_same_value_is_by_four (as_seq h0 a)
+    lemma_mod_mul_distr_r 2 (2 * fromDomain_ (as_nat h0 a)) prime256;
+    lemma_brackets 2 2 (fromDomain_ (as_nat h0 a)); 
+    inDomain_mod_is_not_mod (4 * fromDomain_ (as_nat h0 a))
 
 
 val multByEight: a: felem -> result: felem -> Stack unit 
   (requires fun h -> live h a /\ live h result /\ disjoint a result /\ as_nat h a < prime )
   (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\ as_nat h1 result < prime /\ 
-    as_seq h1 result == mm_byEight_seq (as_seq h0 a))
+    as_nat h1 result == toDomain_ (8 * fromDomain_ (as_nat h0 a) % prime256) /\ 
+    as_nat h1 result == toDomain_ (8 * fromDomain_ (as_nat h0 a))
+)
 
 let multByEight a result  = 
     let h0 = ST.get() in 
   multByTwo a result;
   multByTwo result result;
+    lemma_mod_mul_distr_r 2 (2 * fromDomain_ (as_nat h0 a)) prime256;
+    lemma_brackets 2 2 (fromDomain_ (as_nat h0 a)); 
+    inDomain_mod_is_not_mod (4 * fromDomain_ (as_nat h0 a));
   multByTwo result result;
-  lemma_add_same_value_is_by_eight (as_seq h0 a)
+    lemma_mod_mul_distr_r 2 (4 * fromDomain_ (as_nat h0 a)) prime256;
+    lemma_brackets 2 4 (fromDomain_ (as_nat h0 a));
+    inDomain_mod_is_not_mod (8 * fromDomain_ (as_nat h0 a))
 
 
 val multByMinusThree: a: felem -> result: felem -> Stack unit 
   (requires fun h -> live h a /\ live h result /\ disjoint a result /\ as_nat h a < prime )
   (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\ 
-    as_nat h1 result < prime /\ as_seq h1 result == mm_byMinusThree_seq (as_seq h0 a))
+    as_nat h1 result < prime /\ 
+    as_nat h1 result == toDomain_ ((-3) * fromDomain_ (as_nat h0 a) % prime256) /\
+    as_nat h1 result == toDomain_ ((-3) * fromDomain_ (as_nat h0 a)) /\
+    as_seq h1 result == mm_byMinusThree_seq (as_seq h0 a))
 
 let multByMinusThree a result  = 
   let h0 = ST.get() in 
@@ -181,7 +176,8 @@ let multByMinusThree a result  =
       let h1 = ST.get() in 
     p256_sub zeros result result;
   pop_frame();
-  lemma_add_same_value_is_by_minus_three (as_seq h0 a) (as_seq h1 zeros)
+  lemma_add_same_value_is_by_minus_three (as_seq h0 a) (as_seq h1 zeros);
+  admit()
 
 
 val isZero_uint64:  f: felem -> Stack uint64
@@ -205,29 +201,31 @@ let copy_point p result = copy result p
  
 
 (* https://crypto.stackexchange.com/questions/43869/point-at-infinity-and-error-handling*)
-#reset-options "--z3rlimit 500" 
-inline_for_extraction noextract 
+#reset-options "--z3rlimit 300" 
+
 val point_double_compute_s_m: p: point -> s: felem -> m: felem -> tempBuffer:lbuffer uint64 (size 24) -> Stack unit
   (requires fun h -> live h p /\ live h s /\ live h m /\ live h tempBuffer /\
-    disjoint p s /\ disjoint p m /\ disjoint p tempBuffer /\
-    disjoint s m /\ disjoint s tempBuffer /\ disjoint m tempBuffer /\
-    as_nat h (gsub p (size 8) (size 4)) < prime /\ 
-    as_nat h (gsub p (size 0) (size 4)) < prime /\ 
-    as_nat h (gsub p (size 4) (size 4)) < prime)
+    LowStar.Monotonic.Buffer.all_disjoint [loc p; loc s; loc m; loc tempBuffer] /\
+    as_nat h (gsub p (size 8) (size 4)) < prime256 /\ 
+    as_nat h (gsub p (size 0) (size 4)) < prime256 /\ 
+    as_nat h (gsub p (size 4) (size 4)) < prime256 
+  )
   (ensures fun h0 _ h1 -> 
-    let x_sequence = Lib.Sequence.sub (as_seq h0 p) 0 4 in 
-    let y_sequence = Lib.Sequence.sub (as_seq h0 p) 4 4 in 
-    let z_sequence = Lib.Sequence.sub (as_seq h0 p) 8 4 in 
-     felem_seq_as_nat x_sequence < prime /\
-     felem_seq_as_nat y_sequence < prime /\
-     felem_seq_as_nat z_sequence < prime /\  
-     modifies (loc tempBuffer |+| loc s |+| loc m) h0 h1 /\ 
-     as_nat h1 s < prime  /\ as_nat h1 m < prime /\
-     (let (s_, m_) = point_double_compute_s_m_seq (as_seq h0 p) in as_seq h1 s == s_ /\ as_seq h1 m == m_))
+    modifies (loc tempBuffer |+| loc s |+| loc m) h0 h1 /\ (
+      let x = as_nat h0 (gsub p (size 0) (size 4)) in 
+      let y = as_nat h0 (gsub p (size 4) (size 4)) in 
+      let z = as_nat h0 (gsub p (size 8) (size 4)) in 
+
+      let pxD = fromDomain_ x in 
+      let pyD = fromDomain_ y in 
+      let pzD = fromDomain_ z in 
+
+      as_nat h1 s == toDomain_(4 * pxD * pyD * pyD % prime256) /\
+      as_nat h1 m == toDomain_(((-3) * pzD * pzD * pzD * pzD + 3 * pxD * pxD) % prime))
+)
 
 
 let point_double_compute_s_m p s m tempBuffer =
-  let h0 = ST.get() in 
     let px = sub p (size 0) (size 4) in 
     let py = sub p (size 4) (size 4) in 
     let pz = sub p (size 8) (size 4) in 
@@ -239,18 +237,31 @@ let point_double_compute_s_m p s m tempBuffer =
     let xx = sub tempBuffer (size 16) (size 4) in 
     let threeXx = sub tempBuffer (size 20) (size 4) in 
 
+      let h0 = ST.get() in 
     montgomery_multiplication_buffer py py yy; 
     montgomery_multiplication_buffer px yy xyy;
+      lemmaToDomainAndBackIsTheSame (fromDomain_ (as_nat h0 py) * fromDomain_ (as_nat h0 py) % prime256);
+      lemma_mod_mul_distr_r (fromDomain_ (as_nat h0 px)) (fromDomain_ (as_nat h0 py) * fromDomain_ (as_nat h0 py)) prime256; 
+      lemma_brackets (fromDomain_ (as_nat h0 px)) (fromDomain_ (as_nat h0 py)) (fromDomain_ (as_nat h0 py));
     multByFour xyy s;
-
+      lemma_mod_mul_distr_r 4 (fromDomain_ (as_nat h0 px) * fromDomain_ (as_nat h0 py) * fromDomain_ (as_nat h0 py)) prime256;
+      lemma_brackets4 4 (fromDomain_ (as_nat h0 px)) (fromDomain_ (as_nat h0 py)) (fromDomain_ (as_nat h0 py));
+      
     quatre pz zzzz; 
     multByMinusThree zzzz minThreeZzzz;
+      let h5 = ST.get() in 
+      lemma_mod_mul_distr_r (-3) (fromDomain_ (as_nat h0 pz) * fromDomain_ (as_nat h0 pz) * fromDomain_ (as_nat h0 pz) * fromDomain_ (as_nat h0 pz)) prime256;
+      lemma_brackets5_0 (-3) (fromDomain_ (as_nat h0 pz)) (fromDomain_ (as_nat h0 pz))  (fromDomain_ (as_nat h0 pz))  (fromDomain_ (as_nat h0 pz));
     montgomery_multiplication_buffer px px xx;
     multByThree xx threeXx;
+      let h7 = ST.get() in 
+      lemma_mod_mul_distr_r 3 (fromDomain_ (as_nat h5 px) * fromDomain_ (as_nat h5 px)) prime256;
+      lemma_brackets 3 (fromDomain_ (as_nat h5 px)) (fromDomain_ (as_nat h5 px));
     p256_add minThreeZzzz threeXx m;
-  let h1 = ST.get() in 
-  assert(let s_, m_ = point_double_compute_s_m_seq (as_seq h0 p) in Lib.Sequence.equal (s_) (as_seq h1 s)
-    /\ Lib.Sequence.equal m_ (as_seq h1 m))
+      additionInDomain2Nat (as_nat h7 minThreeZzzz) (as_nat h7 threeXx);
+      inDomain_mod_is_not_mod ((3 * fromDomain_ (as_nat h5 px) * fromDomain_ (as_nat h5 px) % prime256) + ((-3) * fromDomain_ (as_nat h0 pz) * fromDomain_ (as_nat h0 pz) * fromDomain_ (as_nat h0 pz) * fromDomain_ (as_nat h0 pz) % prime256));
+      lemma_mod_add_distr ((-3) * fromDomain_ (as_nat h0 pz) * fromDomain_ (as_nat h0 pz) * fromDomain_ (as_nat h0 pz) * fromDomain_ (as_nat h0 pz) % prime256)  (3 * fromDomain_ (as_nat h5 px) * fromDomain_ (as_nat h5 px)) prime256;
+      lemma_mod_add_distr (3 * fromDomain_ (as_nat h5 px) * fromDomain_ (as_nat h5 px)) ((-3) * fromDomain_ (as_nat h0 pz) * fromDomain_ (as_nat h0 pz) * fromDomain_ (as_nat h0 pz) * fromDomain_ (as_nat h0 pz)) prime256
 
 
 inline_for_extraction noextract 
@@ -261,10 +272,14 @@ val point_double_compute_x3: x3: felem ->
     LowStar.Monotonic.Buffer.all_disjoint [loc x3; loc s; loc m; loc tempBuffer] /\
     as_nat h s < prime /\ as_nat h m < prime 
   )
-  (ensures fun h0 _ h1 -> modifies (loc x3 |+| loc tempBuffer) h0 h1 /\
+  (ensures fun h0 _ h1 -> modifies (loc x3 |+| loc tempBuffer) h0 h1 /\ (
+    let mD = fromDomain_ (as_nat h0 m) in 
+    let sD = fromDomain_ (as_nat h0 s) in 
+    as_nat h1 x3 = toDomain_ (mD * mD - 2 * sD) /\ 
     as_seq h1 x3 == point_double_compute_x3_seq (as_seq h0 s) (as_seq h0 m) /\ 
     as_nat h1 x3 < prime
    )
+)
 
 #reset-options "--z3rlimit 500 --z3refresh" 
 
@@ -273,7 +288,8 @@ let point_double_compute_x3 x3 s m tempBuffer =
    let mm = sub tempBuffer (size 4) (size 4) in 
     multByTwo s twoS;
     montgomery_multiplication_buffer m m mm;
-    p256_sub mm twoS x3
+    p256_sub mm twoS x3;
+    admit()
  
 
 inline_for_extraction noextract 

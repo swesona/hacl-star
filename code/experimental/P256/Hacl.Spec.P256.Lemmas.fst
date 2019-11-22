@@ -379,6 +379,13 @@ val lemma_brackets5: a: nat -> b: nat -> c: nat -> d: nat -> e: nat -> Lemma (a 
 
 let lemma_brackets5 a b c d e = ()
 
+val lemma_brackets4 : a: int -> b: int -> c: int -> d: nat -> Lemma (a * b * c * d = a * (b * c * d))
+
+let lemma_brackets4 a b c d = ()
+
+val lemma_brackets5_0 : a: int -> b: int -> c: int -> d: nat ->e: nat ->  Lemma (a * b * c * d * e = a * (b * c * d * e))
+
+let lemma_brackets5_0 a b c d e= ()
 
 val lemma_brackets5_twice: a: int -> b: int -> c: int -> d: int -> e: int -> Lemma (a * b * c * d * e = (a * d) * (b * e) * c)
 

@@ -140,6 +140,7 @@ val montgomery_multiplication_buffer: a: felem -> b: felem -> result: felem ->  
   (requires (fun h -> live h a /\ as_nat h a < prime256 /\ live h b /\ live h result /\ as_nat h b < prime256)) 
   (ensures (fun h0 _ h1 -> modifies (loc result) h0 h1 /\  
     as_nat h1 result = (as_nat h0 a * as_nat h0 b * modp_inv2_prime (pow2 256) prime256) % prime256 /\
+    as_nat h1 result = toDomain_ (fromDomain_ (as_nat h0 a) * fromDomain_ (as_nat h0 b) % prime256) /\
     as_nat h1 result = toDomain_ (fromDomain_ (as_nat h0 a) * fromDomain_ (as_nat h0 b)))
   )
 
@@ -180,9 +181,9 @@ let montgomery_multiplication_buffer a b result =
   lemmaFromDomainToDomain (as_nat h0 a);
   lemmaFromDomainToDomain (as_nat h0 b);
   multiplicationInDomainNat #(fromDomain_ (as_nat h0 a)) #(fromDomain_ (as_nat h0 b))  (as_nat h0 a) (as_nat h0 b);
+  inDomain_mod_is_not_mod (fromDomain_ (as_nat h0 a) * fromDomain_ (as_nat h0 b));
   pop_frame()  
 
-let prime = prime256
 
 #reset-options "--z3rlimit 500" 
 
@@ -197,8 +198,8 @@ let fsquarePowN n a =
   assert_norm (pow2 0 == 1); 
   let inv (h0: HyperStack.mem) (h1: HyperStack.mem) (i: nat) : Type0 =
     let k = fromDomain_ (as_nat h0 a) in 
-    as_nat h1 a = toDomain_ (pow k (pow2 i))  (* /\
-    as_nat h1 a < prime256 /\ live h1 a /\ modifies1 a h0 h1 *) in 
+    as_nat h1 a = toDomain_ (pow k (pow2 i)) /\
+    as_nat h1 a < prime256 /\ live h1 a /\ modifies1 a h0 h1  in 
   power_one (fromDomain_ (as_nat h0 a)); 
   for (size 0) n (inv h0) (fun x -> 
     let h0_ = ST.get() in 
@@ -212,7 +213,7 @@ let fsquarePowN n a =
      inDomain_mod_is_not_mod (pow k (pow2 (v x + 1)))
   )
 
-
+let prime = prime256
 val fsquarePowNminusOne: n: size_t -> a: felem -> tempBuffer: felem -> Stack unit 
   (requires (fun h -> live h a /\ live h tempBuffer /\ as_nat h a < prime /\ disjoint a tempBuffer)) 
   (ensures (fun h0 _ h1 -> as_nat h1 a < prime /\ as_nat h1 tempBuffer < prime /\ modifies2 a tempBuffer h0 h1 
