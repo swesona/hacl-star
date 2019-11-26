@@ -15,7 +15,7 @@ open Hacl.Spec.ECDSA
 open FStar.Math.Lemmas
 open FStar.Mul
 
-#reset-options "--z3refresh --z3rlimit 100"
+#reset-options "--z3rlimit 100"
 
 inline_for_extraction noextract
 val load_buffer8: 
@@ -66,7 +66,7 @@ let add_carry cin x y result1 =
   Lib.Buffer.upd result1 (size 0) res;
   c
 
-inline_for_extraction noextract
+
 val add4: x: felem -> y: felem -> result: felem -> 
   Stack uint64
     (requires fun h -> live h x /\ live h y /\ live h result /\ eq_or_disjoint x result /\ eq_or_disjoint y result)
@@ -74,31 +74,29 @@ val add4: x: felem -> y: felem -> result: felem ->
       as_nat h1 result + v c * pow2 256 == as_nat h0 x + as_nat h0 y)   
 
 let add4 x y result =    
-    let h0 = ST.get() in
+  let h0 = ST.get() in
   
-    let r0 = sub result (size 0) (size 1) in 
-    let r1 = sub result (size 1) (size 1) in 
-    let r2 = sub result (size 2) (size 1) in 
-    let r3 = sub result (size 3) (size 1) in 
+  let r0 = sub result (size 0) (size 1) in 
+  let r1 = sub result (size 1) (size 1) in 
+  let r2 = sub result (size 2) (size 1) in 
+  let r3 = sub result (size 3) (size 1) in 
     
-    let cc = add_carry (u64 0) x.(0ul) y.(0ul) r0 in 
-    let cc = add_carry cc x.(1ul) y.(1ul) r1 in 
-    let cc = add_carry cc x.(2ul) y.(2ul) r2 in 
-    let cc = add_carry cc x.(3ul) y.(3ul) r3 in   
+  let cc = add_carry (u64 0) x.(0ul) y.(0ul) r0 in 
+  let cc = add_carry cc x.(1ul) y.(1ul) r1 in 
+  let cc = add_carry cc x.(2ul) y.(2ul) r2 in 
+  let cc = add_carry cc x.(3ul) y.(3ul) r3 in   
+  
+    assert(let r1_0 = as_seq h0 r1 in let r0_ = as_seq h0 result in Seq.index r0_ 1 == Seq.index r1_0 0);
+    assert(let r2_0 = as_seq h0 r2 in let r0_ = as_seq h0 result in Seq.index r0_ 2 == Seq.index r2_0 0);
+    assert(let r3_0 = as_seq h0 r3 in let r0_ = as_seq h0 result in Seq.index r0_ 3 == Seq.index r3_0 0);   
     
-      assert(let r1_0 = as_seq h0 r1 in let r0_ = as_seq h0 result in Seq.index r0_ 1 == Seq.index r1_0 0);
-      assert(let r2_0 = as_seq h0 r2 in let r0_ = as_seq h0 result in Seq.index r0_ 2 == Seq.index r2_0 0);
-      assert(let r3_0 = as_seq h0 r3 in let r0_ = as_seq h0 result in Seq.index r0_ 3 == Seq.index r3_0 0);
-    
-    cc
+  cc
 
 
-
-#reset-options "--z3refresh --z3rlimit 300"
-inline_for_extraction noextract
 val add4_with_carry: c: uint64 ->  x: felem -> y: felem -> result: felem -> 
   Stack uint64
-    (requires fun h -> uint_v c <= 1 /\ live h x /\ live h y /\ live h result /\ eq_or_disjoint x result /\ eq_or_disjoint y result)
+    (requires fun h -> uint_v c <= 1 /\ live h x /\ live h y /\ live h result /\ eq_or_disjoint x result /\ 
+      eq_or_disjoint y result)
     (ensures fun h0 carry h1 -> modifies (loc result) h0 h1 /\ uint_v carry <= 1 /\ 
       as_nat h1 result + v carry * pow2 256 == as_nat h0 x + as_nat h0 y + uint_v c)   
 
@@ -138,15 +136,18 @@ let add8 x y result =
 
     let carry0 = add4 a0 b0 c0 in
     let carry1 = add4_with_carry carry0 a1 b1 c1 in 
-    assert_norm (pow2 256 * pow2 256 = pow2 512); 
+      
+      assert_norm (pow2 256 * pow2 256 = pow2 512); 
+    
     carry1
 
 
-val add4_variables: x: felem -> cin: uint64 {uint_v cin <=1} ->  y0: uint64 -> y1: uint64 -> y2: uint64 -> y3: uint64 -> result: felem -> 
+val add4_variables: x: felem -> cin: uint64 {uint_v cin <=1} ->  y0: uint64 -> y1: uint64 -> y2: uint64 -> y3: uint64 -> 
+  result: felem -> 
   Stack uint64
     (requires fun h -> live h x /\ live h result /\ eq_or_disjoint x result)
     (ensures fun h0 c h1 -> modifies (loc result) h0 h1 /\ v c <= 1 /\  
-	as_nat h1 result  + uint_v c * pow2 256 == as_nat h0 x + uint_v y0 + uint_v y1 * pow2 64 + uint_v y2 * pow2 128 + uint_v y3 * pow2 192 + uint_v cin)   
+      as_nat h1 result  + uint_v c * pow2 256 == as_nat h0 x + uint_v y0 + uint_v y1 * pow2 64 + uint_v y2 * pow2 128 + uint_v y3 * pow2 192 + uint_v cin)   
 
 let add4_variables x cin y0 y1 y2 y3 result = 
     let h0 = ST.get() in 
@@ -173,7 +174,8 @@ let add4_variables x cin y0 y1 y2 y3 result =
 val sub_borrow: cin: uint64{uint_v cin <= 1} -> x: uint64 -> y: uint64 -> r: lbuffer uint64 (size 1) -> 
   Stack uint64
     (requires fun h -> live h r)
-    (ensures fun h0 c h1 -> modifies1 r h0 h1 /\ (let r = Seq.index (as_seq h1 r) 0 in v r - v c * pow2 64 == v x - v y - v cin))
+    (ensures fun h0 c h1 -> modifies1 r h0 h1 /\ 
+      (let r = Seq.index (as_seq h1 r) 0 in v r - v c * pow2 64 == v x - v y - v cin))
 
 let sub_borrow cin x y result1 = 
   let res = x -. y -. cin in
@@ -207,6 +209,7 @@ let sub4_il x y result =
     let cc = sub_borrow cc x.(size 1) y.(size 1) r1 in 
     let cc = sub_borrow cc x.(size 2) y.(size 2) r2 in 
     let cc = sub_borrow cc x.(size 3) y.(size 3) r3 in 
+    
     cc
 
 
@@ -231,6 +234,7 @@ let sub4 x y result =
     assert(let r1_0 = as_seq h0 r1 in let r0_ = as_seq h0 result in Seq.index r0_ 1 == Seq.index r1_0 0);
     assert(let r2_0 = as_seq h0 r2 in let r0_ = as_seq h0 result in Seq.index r0_ 2 == Seq.index r2_0 0);
     assert(let r3_0 = as_seq h0 r3 in let r0_ = as_seq h0 result in Seq.index r0_ 3 == Seq.index r3_0 0);
+    
   cc
 
 
@@ -296,125 +300,131 @@ let mult64_c x u cin result temp =
 
 
 
-
-#reset-options "--z3refresh --z3rlimit 500"
-private let mul_lemma_1 (a: nat) (c: nat) (b: nat) (d: nat) : Lemma (requires (a < c && b < d)) (ensures (a * b < c * d)) = ()
-
-val l1: o0: nat -> o1: nat -> o2: nat -> o3: nat -> 
-  f0: nat  -> 
-  f1: nat -> 
-  f2: nat -> 
+val l1: o0: nat -> o1: nat -> o2: nat -> o3: nat -> f0: nat  ->  f1: nat -> f2: nat -> 
   f3: nat {f0 + f1 * pow2 64 + f2 * pow2 128  + f3 * pow2 192 < pow2 256} -> 
-  u: nat {u < pow2 64} -> 
-  h2: nat -> c1: nat -> c2: nat -> c3: nat -> h3: nat -> h4: nat ->
+  u: nat {u < pow2 64} -> h2: nat -> c1: nat -> c2: nat -> c3: nat -> h3: nat -> h4: nat ->
   Lemma
-    (requires (
+  (requires (
     h2 * pow2 64 * pow2 64 +  o0 + o1 * pow2 64 + c1 * pow2 64 * pow2 64 ==  f0 * u + f1 * u * pow2 64 /\
     o2 + c2 * pow2 64 + h3 * pow2 64 - h2 - c1  == f2 * u /\
     o3 + c3 * pow2 64 + h4 * pow2 64 - h3 - c2 == f3 * u)
+  )
+  (ensures 
+    (o0 + o1 * pow2 64 + o2 * pow2 128 +  o3 * pow2 192 + (c3 + h4) * pow2 256  == (f0  + f1 * pow2 64 + f2  * pow2 128  + f3 * pow2 192) * u /\
+    f0 * u + f1 * u * pow2 64 + f2 * u * pow2 128  + f3 * u * pow2 192 < pow2 320 /\
+  (c3 + h4) < pow2 64)
 )
-  (ensures (o0 + o1 * pow2 64 + o2 * pow2 128 +  o3 * pow2 192 + (c3 + h4) * pow2 256  == 
-    (f0  + f1 * pow2 64 + f2  * pow2 128  + f3 * pow2 192) * u /\
-   f0 * u + f1 * u * pow2 64 + f2 * u * pow2 128  + f3 * u * pow2 192 < pow2 320 /\
-    (c3 + h4) < pow2 64  
-  ))
     
 
 let l1 o0 o1 o2 o3 f0 f1 f2 f3 u h2 c1 c2 c3 h3 h4 = 
-      assert_norm (pow2 64 * pow2 64 = pow2 128);
-      assert_norm (pow2 64 * pow2 64 * pow2 64 = pow2 192);
-      assert_norm (pow2 64 * pow2 64 * pow2 64 * pow2 64 = pow2 256);  
-      assert_norm (pow2 64 * pow2 64 * pow2 64 * pow2 64 * pow2 64 = pow2 320);  
-    assert(
-    h2 * pow2 64 * pow2 64 +  o0 + o1 * pow2 64 + c1 * pow2 64 * pow2 64 + 
-    o2 + c2 * pow2 64 + h3 * pow2 64 - h2 - c1 + 
+  assert_norm (pow2 64 * pow2 64 = pow2 128);
+  assert_norm (pow2 64 * pow2 64 * pow2 64 = pow2 192);
+  assert_norm (pow2 64 * pow2 64 * pow2 64 * pow2 64 = pow2 256);  
+  assert_norm (pow2 64 * pow2 64 * pow2 64 * pow2 64 * pow2 64 = pow2 320);  
+  assert(h2 * pow2 64 * pow2 64 +  o0 + o1 * pow2 64 + c1 * pow2 64 * pow2 64 + o2 + c2 * pow2 64 + h3 * pow2 64 - h2 - c1 + 
     o3 + c3 * pow2 64 + h4 * pow2 64 - h3 - c2 == f0 * u + f1 * u * pow2 64 + f2 * u  + f3 * u);
-        assert(
-    h2 * pow2 64 * pow2 64 +  o0 + o1 * pow2 64 + c1 * pow2 64 * pow2 64 + 
-    o2 * pow2 128 + c2 * pow2 64 * pow2 128 + h3 * pow2 64 * pow2 128 - h2 * pow2 128- c1 * pow2 128 + 
-    o3 * pow2 192 + c3 * pow2 64 * pow2 192 + h4 * pow2 64 * pow2 192 - h3 * pow2 192 - c2 * pow2 192 == f0 * u + f1 * u * pow2 64 + f2 * u * pow2 128  + f3 * u * pow2 192);
-    assert(
-    o0 + o1 * pow2 64 + o2 * pow2 128 +  o3 * pow2 192 + (c3 + h4) * pow2 256  == f0 * u + f1 * u * pow2 64 + f2 * u * pow2 128  + f3 * u * pow2 192);
-    assert(f0 * u + f1 * u * pow2 64 + f2 * u * pow2 128  + f3 * u * pow2 192 == (f0 + f1 * pow2 64 + f2 * pow2 128 + f3 * pow2 192) * u);
-    mul_lemma_1  (f0 + f1 * pow2 64 + f2 * pow2 128 + f3 * pow2 192) (pow2 256) u (pow2 64);
-    assert((f0 + f1 * pow2 64 + f2 * pow2 128 + f3 * pow2 192) * u < pow2 320);
-    assert((c3 + h4) * pow2 256 < pow2 320);
-    assert(c3 + h4 < pow2 64)
-    
+  assert(h2 * pow2 64 * pow2 64 +  o0 + o1 * pow2 64 + c1 * pow2 64 * pow2 64 + o2 * pow2 128 + c2 * pow2 64 * pow2 128 + h3 * pow2 64 * pow2 128 - h2 * pow2 128- c1 * pow2 128 + o3 * pow2 192 + c3 * pow2 64 * pow2 192 + h4 * pow2 64 * pow2 192 - h3 * pow2 192 - c2 * pow2 192 == f0 * u + f1 * u * pow2 64 + f2 * u * pow2 128  + f3 * u * pow2 192);
+  assert(o0 + o1 * pow2 64 + o2 * pow2 128 +  o3 * pow2 192 + (c3 + h4) * pow2 256  == f0 * u + f1 * u * pow2 64 + f2 * u * pow2 128  + f3 * u * pow2 192);
+  assert(f0 * u + f1 * u * pow2 64 + f2 * u * pow2 128  + f3 * u * pow2 192 == (f0 + f1 * pow2 64 + f2 * pow2 128 + f3 * pow2 192) * u);
+  mul_lemma_3  (f0 + f1 * pow2 64 + f2 * pow2 128 + f3 * pow2 192) (pow2 256) u (pow2 64);
+  assert((f0 + f1 * pow2 64 + f2 * pow2 128 + f3 * pow2 192) * u < pow2 320);
+  assert((c3 + h4) * pow2 256 < pow2 320);
+  assert(c3 + h4 < pow2 64)
 
-val mul1: f:  ilbuffer uint64 (size 4) -> u: uint64 -> result: lbuffer uint64 (size 4) -> Stack uint64
+
+val mul1: f:  lbuffer uint64 (size 4) -> u: uint64 -> result: lbuffer uint64 (size 4) -> Stack uint64
   (requires fun h -> live h result /\ live h f)
   (ensures fun h0 c h1 -> 
     modifies (loc result) h0 h1 /\ 
-    as_nat_il h0 f * uint_v u = uint_v c * pow2 256 + as_nat h1 result /\ 
-    as_nat_il h0 f * uint_v u < pow2 320
+    as_nat h0 f * uint_v u = uint_v c * pow2 256 + as_nat h1 result /\ 
+    as_nat h0 f * uint_v u < pow2 320 /\
+    uint_v c < pow2 64 - 1
   )
 
 
 let mul1 f u result = 
   push_frame();
 
-assert_norm (pow2 64 * pow2 64 = pow2 128);
-      assert_norm (pow2 64 * pow2 64 * pow2 64 = pow2 192);
-      assert_norm (pow2 64 * pow2 64 * pow2 64 * pow2 64 = pow2 256);  
-      assert_norm (pow2 64 * pow2 64 * pow2 64 * pow2 64 * pow2 64 = pow2 320); 
+    assert_norm (pow2 64 * pow2 64 = pow2 128);
+    assert_norm (pow2 64 * pow2 64 * pow2 64 = pow2 192);
+    assert_norm (pow2 64 * pow2 64 * pow2 64 * pow2 64 = pow2 256);  
+    assert_norm (pow2 64 * pow2 64 * pow2 64 * pow2 64 * pow2 64 = pow2 320); 
 
-    let temp = create (size 1) (u64 0) in 
+  let temp = create (size 1) (u64 0) in 
 
-    let f0 = index f (size 0) in 
-    let f1 = index f (size 1) in 
-    let f2 = index f (size 2) in 
-    let f3 = index f (size 3) in 
+  let f0 = index f (size 0) in 
+  let f1 = index f (size 1) in 
+  let f2 = index f (size 2) in 
+  let f3 = index f (size 3) in 
     
-    let o0 = sub result (size 0) (size 1) in 
-    let o1 = sub result (size 1) (size 1) in 
-    let o2 = sub result (size 2) (size 1) in 
-    let o3 = sub result (size 3) (size 1) in 
+  let o0 = sub result (size 0) (size 1) in 
+  let o1 = sub result (size 1) (size 1) in 
+  let o2 = sub result (size 2) (size 1) in 
+  let o3 = sub result (size 3) (size 1) in 
     
     let h0 = ST.get() in 
-    mult64_0u f u o0 temp;
-      let h1 = ST.get() in 
-    let c1 = mult64_c f1 u (u64 0) o1 temp in 
-      let h2 = ST.get() in 
-	assert(
-	  let o0 = Seq.index (as_seq h1 o0) 0 in 
-	  let o1 = Seq.index (as_seq h2 o1) 0 in 
-	  let h2_ = Seq.index (as_seq h2 temp) 0 in 
-      
-	  uint_v h2_ * pow2 64 * pow2 64 + uint_v o0 + uint_v o1 * pow2 64 + uint_v c1 * pow2 64 * pow2 64 == 
-	  uint_v f0 * uint_v u + uint_v f1 * uint_v u * pow2 64);
-
-    let c2 = mult64_c f2 u c1 o2 temp in 
-      let h3 = ST.get() in 
-      assert(
-	let o2 = Seq.index (as_seq h3 o2) 0 in 
-	let h3_ = Seq.index (as_seq h3 temp) 0 in 
-	let h2_ = Seq.index (as_seq h2 temp) 0 in 
-	uint_v o2 + uint_v c2 * pow2 64 + uint_v h3_ * pow2 64 - uint_v h2_ - uint_v c1  == uint_v f2 * uint_v u); 
-
-
-    let c3 = mult64_c f3 u c2 o3 temp in 
-      let h4 = ST.get() in 
-	assert(
-	  let o3 = Seq.index (as_seq h4 o3) 0 in 
-	  let h4 = Seq.index (as_seq h4 temp) 0 in 
-	  let h3 = Seq.index (as_seq h3 temp) 0 in 
-	  uint_v o3 + uint_v c3 * pow2 64 + uint_v h4 * pow2 64 - uint_v h3 - uint_v c2 == 
-	  uint_v f3 * uint_v u); 
-
-  let h4_ = index temp (size 0) in 
-    l1 (uint_v(Seq.index (as_seq h1 o0) 0)) (uint_v (Seq.index (as_seq h2 o1) 0)) (uint_v (Seq.index (as_seq h3 o2) 0)) (uint_v (Seq.index (as_seq h4 o3) 0))
-    (uint_v f0) (uint_v f1) (uint_v f2) (uint_v f3) (uint_v u) (uint_v (Seq.index (as_seq h2 temp) 0)) (uint_v c1) (uint_v c2) (uint_v c3) (uint_v (Seq.index (as_seq h3 temp) 0)) (uint_v h4_);
+  mult64_0 f u o0 temp;
+    let h1 = ST.get() in 
+  let c1 = mult64_c f1 u (u64 0) o1 temp in 
+    let h2 = ST.get() in 
+  let c2 = mult64_c f2 u c1 o2 temp in 
+    let h3 = ST.get() in 
+  let c3 = mult64_c f3 u c2 o3 temp in 
+    let h4 = ST.get() in 
+  let temp0 = index temp (size 0) in 
+    l1 (uint_v(Seq.index (as_seq h1 o0) 0)) (uint_v (Seq.index (as_seq h2 o1) 0)) (uint_v (Seq.index (as_seq h3 o2) 0)) (uint_v (Seq.index (as_seq h4 o3) 0)) (uint_v f0) (uint_v f1) (uint_v f2) (uint_v f3) (uint_v u) (uint_v (Seq.index (as_seq h2 temp) 0)) (uint_v c1) (uint_v c2) (uint_v c3) (uint_v (Seq.index (as_seq h3 temp) 0)) (uint_v temp0); 
+    
+  mul_lemma_4 (as_nat h0 f) (uint_v u) (pow2 256 - 1) (pow2 64 - 1);
+  assert_norm((pow2 256 - 1) * (pow2 64 - 1) == pow2 320 - pow2 256 - pow2 64 + 1);
+  assert_norm((pow2 320 - pow2 256) / pow2 256 == pow2 64 - 1);
 
   pop_frame();  
-  c3 +! h4_
+  c3 +! temp0
+
+
+val add4_il: x: ilbuffer uint64 (size 4) -> y: felem -> result: felem -> 
+  Stack uint64
+    (requires fun h -> live h x /\ live h y /\ live h result /\ eq_or_disjoint x result /\ eq_or_disjoint y result)
+    (ensures fun h0 c h1 -> modifies (loc result) h0 h1 /\ v c <= 1 /\ 
+      as_nat h1 result + v c * pow2 256 == as_nat_il h0 x + as_nat h0 y)  
+
+
+let add4_il x y result =    
+  let h0 = ST.get() in
   
+  let r0 = sub result (size 0) (size 1) in 
+  let r1 = sub result (size 1) (size 1) in 
+  let r2 = sub result (size 2) (size 1) in 
+  let r3 = sub result (size 3) (size 1) in 
+    
+  let cc = add_carry (u64 0) x.(0ul) y.(0ul) r0 in 
+  let cc = add_carry cc x.(1ul) y.(1ul) r1 in 
+  let cc = add_carry cc x.(2ul) y.(2ul) r2 in 
+  let cc = add_carry cc x.(3ul) y.(3ul) r3 in   
+  
+    assert(let r1_0 = as_seq h0 r1 in let r0_ = as_seq h0 result in Seq.index r0_ 1 == Seq.index r1_0 0);
+    assert(let r2_0 = as_seq h0 r2 in let r0_ = as_seq h0 result in Seq.index r0_ 2 == Seq.index r2_0 0);
+    assert(let r3_0 = as_seq h0 r3 in let r0_ = as_seq h0 result in Seq.index r0_ 3 == Seq.index r3_0 0);   
+    
+  cc
+
+
+
 val mul1_add: f1: felem -> u2: uint64 -> f3: felem -> result: felem -> 
   Stack uint64 
-  (requires fun h -> True)
-  (ensures fun h0 _ h1 -> True)
+  (requires fun h -> live h f1 /\ live h f3 /\ live h result /\ eq_or_disjoint f3 result /\ disjoint f1 result)
+  (ensures fun h0 c h1 -> modifies (loc result) h0 h1  /\
+    as_nat h1 result + uint_v c * pow2 256 == as_nat h0 f1 * uint_v u2 + as_nat h0 f3 )
 
-  
+let mul1_add f1 u2 f3 result = 
+  push_frame();
+    let temp = create (size 4) (u64 0) in 
+  let c = mul1 f1 u2 temp in 
+  let c3 = add4 temp f3 result in 
+  pop_frame();  
+  c +! c3
+
+
 val mul: f1: felem -> r: felem -> out: widefelem
   -> Stack unit
     (requires fun h -> live h out /\ live h f1 /\ live h r)
@@ -422,18 +432,34 @@ val mul: f1: felem -> r: felem -> out: widefelem
       
 [@ CInline]
 let mul f1 r out =
+  push_frame();
+    let temp = create (size 8) (u64 0) in 
+    
   let f10 = f1.(0ul) in
   let f11 = f1.(1ul) in
   let f12 = f1.(2ul) in
   let f13 = f1.(3ul) in
 
-  let r0 = r.(0ul) in
-  let r1 = r.(1ul) in
-  let r2 = r.(2ul) in
-  let r3 = r.(3ul) in
-  let (o0, o1, o2, o3, o4, o5, o6, o7) = mul4 (f10, f11, f12, f13) (r0, r1, r2, r3) in
-    assert(wide_as_nat4  (o0, o1, o2, o3, o4, o5, o6, o7) == as_nat4 (f10, f11, f12, f13) * as_nat4 (r0, r1, r2, r3));
-  load_buffer8 o0 o1 o2 o3 o4 o5 o6 o7 out
+
+  let b00 = sub temp (size 0) (size 4) in 
+  let c0 = mul1 r f10 b00 in 
+    upd temp (size 4) c0;
+  
+  let b0 = sub temp (size 1) (size 4) in   
+  let c1 = mul1_add r f11 b0 b0 in 
+    upd temp (size 5) c1;
+  
+  let b1 = sub temp (size 2) (size 4) in 
+  let c2 = mul1_add r f12 b1 b1 in 
+    upd temp (size 6) c2;
+
+  let b2 = sub temp (size 3) (size 4) in 
+  let c3 = mul1_add r f13 b2 b2 in 
+    upd out (size 7) c3;
+
+  let finToCopy = sub temp (size 0) (size 7) in 
+  let stCopy = sub out (size 0) (size 7) in 
+  copy stCopy finToCopy
 
 
 val cmovznz4: cin: uint64 -> x: felem -> y: felem -> result: felem ->
@@ -513,7 +539,7 @@ let shortened_mul_tuple (a0, a1, a2, a3) b =
   f0, f1, f2, f3, c, (u64 0), (u64 0), u64(0)   *)
 
 
-val shortened_mul: a: ilbuffer uint64 (size 4) -> b: uint64 -> result: widefelem -> Stack unit
+val shortened_mul: a: lbuffer uint64 (size 4) -> b: uint64 -> result: widefelem -> Stack unit
   (requires fun h -> live h a /\ live h result)
   (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\ 
     felem_seq_as_nat (as_seq h0 a) * uint_v b = wide_as_nat h1 result /\ wide_as_nat h1 result < pow2 320)

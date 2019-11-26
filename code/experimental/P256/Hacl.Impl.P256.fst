@@ -268,28 +268,32 @@ inline_for_extraction noextract
 val point_double_compute_x3: x3: felem -> 
   s: felem -> m: felem -> tempBuffer: lbuffer uint64 (size 8) -> Stack unit 
   (requires fun h -> live h x3 /\ live h s /\ live h m /\ live h tempBuffer /\
-    
     LowStar.Monotonic.Buffer.all_disjoint [loc x3; loc s; loc m; loc tempBuffer] /\
     as_nat h s < prime /\ as_nat h m < prime 
   )
   (ensures fun h0 _ h1 -> modifies (loc x3 |+| loc tempBuffer) h0 h1 /\ (
     let mD = fromDomain_ (as_nat h0 m) in 
     let sD = fromDomain_ (as_nat h0 s) in 
-    as_nat h1 x3 = toDomain_ (mD * mD - 2 * sD) /\ 
-    as_seq h1 x3 == point_double_compute_x3_seq (as_seq h0 s) (as_seq h0 m) /\ 
+    as_nat h1 x3 = toDomain_ ((mD * mD - 2 * sD) % prime256) /\ 
     as_nat h1 x3 < prime
    )
 )
 
-#reset-options "--z3rlimit 500 --z3refresh" 
 
 let point_double_compute_x3 x3 s m tempBuffer = 
    let twoS = sub tempBuffer (size 0) (size 4) in 
    let mm = sub tempBuffer (size 4) (size 4) in 
-    multByTwo s twoS;
-    montgomery_multiplication_buffer m m mm;
-    p256_sub mm twoS x3;
-    admit()
+     let h0 = ST.get() in 
+   multByTwo s twoS;
+   montgomery_multiplication_buffer m m mm;
+     let h2 = ST.get() in 
+     assert(as_nat h2 mm == toDomain_ (fromDomain_ (as_nat h0 m) * fromDomain_ (as_nat h0 m) % prime256));
+   p256_sub mm twoS x3; 
+     substractionInDomain2Nat (as_nat h2 mm) (as_nat h2 twoS);
+     inDomain_mod_is_not_mod (fromDomain_ (as_nat h2 mm) - fromDomain_ (as_nat h2 twoS));
+     lemma_mod_add_distr (-((2 * fromDomain_ (as_nat h0 s) % prime256))) (fromDomain_ (as_nat h0 m) * fromDomain_ (as_nat h0 m))
+     prime256;
+     lemma_mod_sub_distr (fromDomain_ (as_nat h0 m) * fromDomain_ (as_nat h0 m)) (2 * fromDomain_ (as_nat h0 s)) prime256
  
 
 inline_for_extraction noextract 
