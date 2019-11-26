@@ -268,6 +268,19 @@ let mult64_0 x u result temp =
   let f0 = index x (size 0) in 
   mul64 f0 u result temp
 
+ val mult64_0il: x: ilbuffer uint64 (size 4) -> u: uint64 -> result:  lbuffer uint64 (size 1) -> temp: lbuffer uint64 (size 1) -> Stack unit 
+  (requires fun h -> live h x /\ live h result /\ live h temp /\ disjoint result temp)
+  (ensures fun h0 _ h1 -> 
+    let result_ = Seq.index (as_seq h1 result) 0 in 
+    let c = Seq.index (as_seq h1 temp) 0 in 
+    let f0 = Seq.index (as_seq h0 x) 0 in 
+    uint_v result_ + uint_v c * pow2 64 = uint_v f0 * uint_v u /\ modifies (loc result |+| loc temp) h0 h1)
+
+
+let mult64_0il x u result temp = 
+  let f0 = index x (size 0) in 
+  mul64 f0 u result temp
+
 
 val mult64_0u: x: ilbuffer uint64 (size 4) -> u: uint64 -> result:  lbuffer uint64 (size 1) -> temp: lbuffer uint64 (size 1) -> Stack unit 
   (requires fun h -> live h x /\ live h result /\ live h temp /\ disjoint result temp)
@@ -330,6 +343,58 @@ let l1 o0 o1 o2 o3 f0 f1 f2 f3 u h2 c1 c2 c3 h3 h4 =
   assert((f0 + f1 * pow2 64 + f2 * pow2 128 + f3 * pow2 192) * u < pow2 320);
   assert((c3 + h4) * pow2 256 < pow2 320);
   assert(c3 + h4 < pow2 64)
+
+
+val mul1_il: f:  ilbuffer uint64 (size 4) -> u: uint64 -> result: lbuffer uint64 (size 4) -> Stack uint64
+  (requires fun h -> live h result /\ live h f)
+  (ensures fun h0 c h1 -> 
+    modifies (loc result) h0 h1 /\ 
+    as_nat_il h0 f * uint_v u = uint_v c * pow2 256 + as_nat h1 result /\ 
+    as_nat_il h0 f * uint_v u < pow2 320 /\
+    uint_v c < pow2 64 - 1 
+  )
+
+
+let mul1_il f u result = 
+  push_frame();
+
+    assert_norm (pow2 64 * pow2 64 = pow2 128);
+    assert_norm (pow2 64 * pow2 64 * pow2 64 = pow2 192);
+    assert_norm (pow2 64 * pow2 64 * pow2 64 * pow2 64 = pow2 256);  
+    assert_norm (pow2 64 * pow2 64 * pow2 64 * pow2 64 * pow2 64 = pow2 320); 
+
+  let temp = create (size 1) (u64 0) in 
+
+  let f0 = index f (size 0) in 
+  let f1 = index f (size 1) in 
+  let f2 = index f (size 2) in 
+  let f3 = index f (size 3) in 
+    
+  let o0 = sub result (size 0) (size 1) in 
+  let o1 = sub result (size 1) (size 1) in 
+  let o2 = sub result (size 2) (size 1) in 
+  let o3 = sub result (size 3) (size 1) in 
+    
+    let h0 = ST.get() in 
+  mult64_0il f u o0 temp;
+    let h1 = ST.get() in 
+  let c1 = mult64_c f1 u (u64 0) o1 temp in 
+    let h2 = ST.get() in 
+  let c2 = mult64_c f2 u c1 o2 temp in 
+    let h3 = ST.get() in 
+  let c3 = mult64_c f3 u c2 o3 temp in 
+    let h4 = ST.get() in 
+  let temp0 = index temp (size 0) in 
+    l1 (uint_v(Seq.index (as_seq h1 o0) 0)) (uint_v (Seq.index (as_seq h2 o1) 0)) (uint_v (Seq.index (as_seq h3 o2) 0)) (uint_v (Seq.index (as_seq h4 o3) 0)) (uint_v f0) (uint_v f1) (uint_v f2) (uint_v f3) (uint_v u) (uint_v (Seq.index (as_seq h2 temp) 0)) (uint_v c1) (uint_v c2) (uint_v c3) (uint_v (Seq.index (as_seq h3 temp) 0)) (uint_v temp0); 
+    
+  mul_lemma_4 (as_nat_il h0 f) (uint_v u) (pow2 256 - 1) (pow2 64 - 1);
+  assert_norm((pow2 256 - 1) * (pow2 64 - 1) == pow2 320 - pow2 256 - pow2 64 + 1);
+  assert_norm((pow2 320 - pow2 256) / pow2 256 == pow2 64 - 1);
+
+  pop_frame();  
+  c3 +! temp0
+
+
 
 
 val mul1: f:  lbuffer uint64 (size 4) -> u: uint64 -> result: lbuffer uint64 (size 4) -> Stack uint64
@@ -539,19 +604,20 @@ let shortened_mul_tuple (a0, a1, a2, a3) b =
   f0, f1, f2, f3, c, (u64 0), (u64 0), u64(0)   *)
 
 
-val shortened_mul: a: lbuffer uint64 (size 4) -> b: uint64 -> result: widefelem -> Stack unit
+val shortened_mul: a: ilbuffer uint64 (size 4) -> b: uint64 -> result: widefelem -> Stack unit
   (requires fun h -> live h a /\ live h result)
   (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\ 
     felem_seq_as_nat (as_seq h0 a) * uint_v b = wide_as_nat h1 result /\ wide_as_nat h1 result < pow2 320)
 
 let shortened_mul a b result = 
-  let result04 = sub result (size 0) (size 4) in 
-  let c = mul1 a b result04 in 
+    let result04 = sub result (size 0) (size 4) in 
+    let c = mul1_il a b result04 in 
+    admit();
   upd result (size 4) c
    
   
   (*
-
+*
   let a0 = index a (size 0) in 
   let a1 = index a (size 1) in 
   let a2 = index a (size 2) in 
