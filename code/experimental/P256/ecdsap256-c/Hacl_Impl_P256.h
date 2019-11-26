@@ -15,14 +15,7 @@
 #include "c/Lib_PrintBuffer.h"
 #include "FStar_UInt_8_16_32_64.h"
 
-typedef struct K___uint64_t_uint64_t_s
-{
-  uint64_t fst;
-  uint64_t snd;
-}
-K___uint64_t_uint64_t;
-
-uint64_t Hacl_Impl_LowLevel_add_carry(uint64_t cin, uint64_t x, uint64_t y, uint64_t *result1);
+uint64_t Hacl_Impl_LowLevel_add4(uint64_t *x, uint64_t *y, uint64_t *result);
 
 uint64_t Hacl_Impl_LowLevel_add8(uint64_t *x, uint64_t *y, uint64_t *result);
 

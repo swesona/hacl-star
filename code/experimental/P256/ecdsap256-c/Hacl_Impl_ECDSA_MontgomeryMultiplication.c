@@ -16,6 +16,13 @@ Hacl_Impl_ECDSA_MontgomeryMultiplication_prime256order_buffer[4U] =
     (uint64_t)18446744069414584320U
   };
 
+typedef struct K___uint64_t_uint64_t_s
+{
+  uint64_t fst;
+  uint64_t snd;
+}
+K___uint64_t_uint64_t;
+
 static void
 Hacl_Impl_ECDSA_MontgomeryMultiplication_montgomery_multiplication_round(
   uint64_t *t,
@@ -131,15 +138,7 @@ Hacl_Impl_ECDSA_MontgomeryMultiplication_felem_add(
   uint64_t *out
 )
 {
-  uint64_t *r0 = out;
-  uint64_t *r1 = out + (uint32_t)1U;
-  uint64_t *r2 = out + (uint32_t)2U;
-  uint64_t *r3 = out + (uint32_t)3U;
-  uint64_t cc = Hacl_Impl_LowLevel_add_carry((uint64_t)0U, arg1[0U], arg2[0U], r0);
-  uint64_t cc1 = Hacl_Impl_LowLevel_add_carry(cc, arg1[1U], arg2[1U], r1);
-  uint64_t cc2 = Hacl_Impl_LowLevel_add_carry(cc1, arg1[2U], arg2[2U], r2);
-  uint64_t cc3 = Hacl_Impl_LowLevel_add_carry(cc2, arg1[3U], arg2[3U], r3);
-  uint64_t t = cc3;
+  uint64_t t = Hacl_Impl_LowLevel_add4(arg1, arg2, out);
   Hacl_Impl_ECDSA_MontgomeryMultiplication_reduction_prime_prime_2prime_with_carry2(t, out, out);
 }
 
