@@ -15,6 +15,9 @@ open Hacl.Spec.ECDSA
 open FStar.Math.Lemmas
 open FStar.Mul
 
+open FStar.Tactics
+open FStar.Tactics.Canon 
+
 #reset-options "--z3rlimit 100"
 
 inline_for_extraction noextract
@@ -282,19 +285,6 @@ let mult64_0il x u result temp =
   mul64 f0 u result temp
 
 
-val mult64_0u: x: ilbuffer uint64 (size 4) -> u: uint64 -> result:  lbuffer uint64 (size 1) -> temp: lbuffer uint64 (size 1) -> Stack unit 
-  (requires fun h -> live h x /\ live h result /\ live h temp /\ disjoint result temp)
-  (ensures fun h0 _ h1 -> 
-    let result_ = Seq.index (as_seq h1 result) 0 in 
-    let c = Seq.index (as_seq h1 temp) 0 in 
-    let f0 = Seq.index (as_seq h0 x) 0 in 
-    uint_v result_ + uint_v c * pow2 64 = uint_v f0 * uint_v u /\ modifies (loc result |+| loc temp) h0 h1)
-
-let mult64_0u x u result temp = 
-  let f0 = index x (size 0) in 
-  mul64 f0 u result temp
-
-
 val mult64_c: x: uint64 -> u: uint64 -> cin: uint64 -> result: lbuffer uint64 (size 1) -> temp: lbuffer uint64 (size 1) -> Stack uint64 
   (requires fun h -> live h result /\ live h temp /\ disjoint result temp)
   (ensures fun h0 c2 h1 -> modifies (loc result |+| loc temp) h0 h1 /\ uint_v c2 <= 2 /\
@@ -312,6 +302,8 @@ let mult64_c x u cin result temp =
   add_carry cin l h result
 
 
+
+#reset-options "--z3rlimit 200"
 
 val l1: o0: nat -> o1: nat -> o2: nat -> o3: nat -> f0: nat  ->  f1: nat -> f2: nat -> 
   f3: nat {f0 + f1 * pow2 64 + f2 * pow2 128  + f3 * pow2 192 < pow2 256} -> 
@@ -447,34 +439,6 @@ let mul1 f u result =
   c3 +! temp0
 
 
-val add4_il: x: ilbuffer uint64 (size 4) -> y: felem -> result: felem -> 
-  Stack uint64
-    (requires fun h -> live h x /\ live h y /\ live h result /\ eq_or_disjoint x result /\ eq_or_disjoint y result)
-    (ensures fun h0 c h1 -> modifies (loc result) h0 h1 /\ v c <= 1 /\ 
-      as_nat h1 result + v c * pow2 256 == as_nat_il h0 x + as_nat h0 y)  
-
-
-let add4_il x y result =    
-  let h0 = ST.get() in
-  
-  let r0 = sub result (size 0) (size 1) in 
-  let r1 = sub result (size 1) (size 1) in 
-  let r2 = sub result (size 2) (size 1) in 
-  let r3 = sub result (size 3) (size 1) in 
-    
-  let cc = add_carry (u64 0) x.(0ul) y.(0ul) r0 in 
-  let cc = add_carry cc x.(1ul) y.(1ul) r1 in 
-  let cc = add_carry cc x.(2ul) y.(2ul) r2 in 
-  let cc = add_carry cc x.(3ul) y.(3ul) r3 in   
-  
-    assert(let r1_0 = as_seq h0 r1 in let r0_ = as_seq h0 result in Seq.index r0_ 1 == Seq.index r1_0 0);
-    assert(let r2_0 = as_seq h0 r2 in let r0_ = as_seq h0 result in Seq.index r0_ 2 == Seq.index r2_0 0);
-    assert(let r3_0 = as_seq h0 r3 in let r0_ = as_seq h0 result in Seq.index r0_ 3 == Seq.index r3_0 0);   
-    
-  cc
-
-
-
 val mul1_add: f1: felem -> u2: uint64 -> f3: felem -> result: felem -> 
   Stack uint64 
   (requires fun h -> live h f1 /\ live h f3 /\ live h result /\ eq_or_disjoint f3 result /\ disjoint f1 result)
@@ -490,41 +454,62 @@ let mul1_add f1 u2 f3 result =
   c +! c3
 
 
-val mul: f1: felem -> r: felem -> out: widefelem
+val mul: f: felem -> r: felem -> out: widefelem
   -> Stack unit
-    (requires fun h -> live h out /\ live h f1 /\ live h r)
-    (ensures  fun h0 _ h1 -> modifies (loc out) h0 h1 /\ wide_as_nat h1 out == as_nat h0 f1 * as_nat h0 r)
+    (requires fun h -> live h out /\ live h f /\ live h r)
+    (ensures  fun h0 _ h1 -> modifies(loc out) h0 h1 /\ wide_as_nat h1 out =  as_nat h0 r * as_nat h0 f )
       
-[@ CInline]
-let mul f1 r out =
+let mul f r out =
   push_frame();
     let temp = create (size 8) (u64 0) in 
     
-  let f10 = f1.(0ul) in
-  let f11 = f1.(1ul) in
-  let f12 = f1.(2ul) in
-  let f13 = f1.(3ul) in
+  let f0 = f.(0ul) in
+  let f1 = f.(1ul) in
+  let f2 = f.(2ul) in
+  let f3 = f.(3ul) in
 
-
-  let b00 = sub temp (size 0) (size 4) in 
-  let c0 = mul1 r f10 b00 in 
+    let h0 = ST.get() in 
+  let b0 = sub temp (size 0) (size 4) in 
+  let c0 = mul1 r f0 b0 in 
     upd temp (size 4) c0;
-  
-  let b0 = sub temp (size 1) (size 4) in   
-  let c1 = mul1_add r f11 b0 b0 in 
-    upd temp (size 5) c1;
-  
-  let b1 = sub temp (size 2) (size 4) in 
-  let c2 = mul1_add r f12 b1 b1 in 
+
+    let h1 = ST.get() in 
+    let bk0 = sub temp (size 0) (size 1) in 
+  let b1 = sub temp (size 1) (size 4) in   
+  let c1 = mul1_add r f1 b1 b1 in 
+      upd temp (size 5) c1; 
+    let h2 = ST.get() in
+      assert(Lib.Sequence.index (as_seq h1 bk0) 0 == Lib.Sequence.index (as_seq h1 temp) 0);
+
+      let bk1 = sub temp (size 0) (size 2) in 
+  let b2 = sub temp (size 2) (size 4) in 
+  let c2 = mul1_add r f2 b2 b2 in 
     upd temp (size 6) c2;
+    
+    let h3 = ST.get() in 
 
-  let b2 = sub temp (size 3) (size 4) in 
-  let c3 = mul1_add r f13 b2 b2 in 
-    upd out (size 7) c3;
+    assert(Lib.Sequence.index (as_seq h2 bk1) 0 == Lib.Sequence.index (as_seq h2 temp) 0);
+    assert(Lib.Sequence.index (as_seq h2 bk1) 1 == Lib.Sequence.index (as_seq h2 temp) 1);
+    assert_norm (pow2 64 * pow2 64 * pow2 64 * pow2 64 = pow2 256);
 
-  let finToCopy = sub temp (size 0) (size 7) in 
-  let stCopy = sub out (size 0) (size 7) in 
-  copy stCopy finToCopy
+     let bk2 = sub temp (size 0) (size 3) in 
+  let b3 = sub temp (size 3) (size 4) in 
+  let c3 = mul1_add r f3 b3 b3 in 
+    upd temp (size 7) c3;
+
+    assert(Lib.Sequence.index (as_seq h3 bk2) 0 == Lib.Sequence.index (as_seq h3 temp) 0);
+    assert(Lib.Sequence.index (as_seq h3 bk2) 1 == Lib.Sequence.index (as_seq h3 temp) 1);
+    assert(Lib.Sequence.index (as_seq h3 bk2) 2 == Lib.Sequence.index (as_seq h3 temp) 2);
+
+  assert_by_tactic (as_nat h0 r * (uint_v f2 * pow2 64 * pow2 64) == as_nat h0 r * uint_v f2 * pow2 64 * pow2 64) canon;
+  assert_by_tactic (as_nat h0 r * (uint_v f0) == as_nat h0 r * uint_v f0) canon;
+  assert_by_tactic (as_nat h0 r * (uint_v f1 * pow2 64) == as_nat h0 r * uint_v f1 * pow2 64) canon;
+  assert_by_tactic (as_nat h0 r * (uint_v f3 * pow2 64 * pow2 64 * pow2 64) == as_nat h0 r * uint_v f3 * pow2 64 * pow2 64 * pow2 64) canon;
+
+  dist_lemma_0 (as_nat h0 r) (uint_v f2 * pow2 64 * pow2 64) (uint_v f1 * pow2 64) (uint_v f0) (uint_v f3 * pow2 64 * pow2 64 * pow2 64);
+
+  copy out temp; 
+  pop_frame()
 
 
 val cmovznz4: cin: uint64 -> x: felem -> y: felem -> result: felem ->
