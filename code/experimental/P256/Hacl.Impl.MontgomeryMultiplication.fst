@@ -47,34 +47,6 @@ val mod64: a: widefelem -> Stack uint64
 
 let mod64 a = index a (size 0)
 
-(*  as_nat4 a * uint_v b = wide_as_nat4 r for a that are less than pow2 320 *)
-inline_for_extraction noextract
-val shortened_mul_tuple: a: felem4 -> b: uint64 -> Tot (r: felem8 {as_nat4 a * uint_v b = wide_as_nat4 r /\ wide_as_nat4 r < pow2 320})
-
-let shortened_mul_tuple (a0, a1, a2, a3) b = 
-  let (c, (f0, f1, f2, f3)) = mul1 (a0, a1, a2, a3) b in 
-   assert_norm(pow2 64 * pow2 64 = pow2 128);
-   assert_norm(pow2 64 * pow2 64 * pow2 64 = pow2 192);
-   assert_norm(pow2 64 * pow2 64 * pow2 64 * pow2 64 = pow2 256);
-   assert_norm(pow2 64 * pow2 64 * pow2 64  * pow2 64 * pow2 64= pow2 320);
-   assert_norm(pow2 64 * pow2 64 * pow2 64  * pow2 64 * pow2 64 * pow2 64 = pow2 (6 * 64));
-   assert_norm(pow2 64 * pow2 64 * pow2 64  * pow2 64 * pow2 64* pow2 64 * pow2 64 = pow2 (7 * 64));
-  f0, f1, f2, f3, c, (u64 0), (u64 0), u64(0)  
-
-
-(*as_nat4 a * uint_v b = wide_as_nat4 r for a that are less than pow2 320*)
-val shortened_mul: a: ilbuffer uint64 (size 4) -> b: uint64 -> result: widefelem -> Stack unit
-  (requires fun h -> live h a /\ live h result)
-  (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\ 
-    felem_seq_as_nat (as_seq h0 a) * uint_v b = wide_as_nat h1 result /\ wide_as_nat h1 result < pow2 320)
-
-let shortened_mul a b result = 
-  let a0 = index a (size 0) in 
-  let a1 = index a (size 1) in 
-  let a2 = index a (size 2) in 
-  let a3 = index a (size 3) in 
-  let (f0, f1, f2, f3, f4, f5, f6, f7) = shortened_mul_tuple (a0, a1, a2, a3) b in 
-  load_buffer8 f0 f1 f2 f3 f4 f5 f6 f7 result
 
 (*wide_as_nat4 r = wide_as_nat4 a + wide_as_nat4 b *)
 inline_for_extraction noextract
