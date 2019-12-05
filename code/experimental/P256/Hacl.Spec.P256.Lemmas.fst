@@ -16,6 +16,13 @@ open FStar.Tactics.Canon
 
 
 noextract
+val pow: a:nat -> b:nat -> res:nat
+
+let rec pow a b =
+  if b = 0 then 1
+  else a * (pow a (b - 1))
+
+noextract
 val modulo_distributivity_mult: a: int -> b: int -> c: pos -> Lemma ((a * b) % c = ((a % c) * (b % c)) % c)
 
 let modulo_distributivity_mult a b c = 

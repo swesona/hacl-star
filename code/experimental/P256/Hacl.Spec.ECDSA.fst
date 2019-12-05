@@ -11,6 +11,8 @@ open Lib.Sequence
 open Spec.Hash
 open Hacl.Spec.P256 
 
+open Hacl.Spec.P256.Lemmas
+
 (*
 def toB(x):
     for i in range(4):
@@ -209,8 +211,8 @@ let ecdsa_verification publicKey r s mLen input =
   let hashResult = Spec.Hash.hash Spec.Hash.Definitions.SHA2_256 input in 
   let hashNat = felem_seq_as_nat (changeEndian(Lib.ByteSequence.uints_from_bytes_be hashResult)) % prime_p256_order in 
 
-  let u1 = (Hacl.Spec.P256.Definitions.pow s (prime_p256_order - 2) * hashNat) % prime_p256_order in 
-  let u2 = (Hacl.Spec.P256.Definitions.pow s (prime_p256_order - 2) * r) % prime_p256_order in 
+  let u1 = (pow s (prime_p256_order - 2) * hashNat) % prime_p256_order in 
+  let u2 = (pow s (prime_p256_order - 2) * r) % prime_p256_order in 
 
   let u1Buffer = Lib.ByteSequence.uints_to_bytes_le (Hacl.Spec.ECDSAP256.Definition.nat_as_seq u1) in
   let u2Buffer = Lib.ByteSequence.uints_to_bytes_le (Hacl.Spec.ECDSAP256.Definition.nat_as_seq u2) in 

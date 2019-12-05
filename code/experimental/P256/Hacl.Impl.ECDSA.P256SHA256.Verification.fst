@@ -18,6 +18,7 @@ open Hacl.Spec.ECDSAP256.Definition
 open Hacl.Spec.ECDSA
 open Hacl.Spec.P256 
 open Hacl.Spec.P256.Ladder
+open Hacl.Spec.P256.Lemmas
 
 open Hacl.Impl.P256.LowLevel
 
@@ -345,8 +346,8 @@ val ecdsa_verification_step4: r: felem -> s: felem -> hash: felem -> bufferU1: l
     LowStar.Monotonic.Buffer.all_disjoint [loc r; loc s; loc hash; loc bufferU1; loc bufferU2] 
   )
   (ensures fun h0 _ h1 -> modifies (loc bufferU1 |+| loc  bufferU2) h0 h1 /\
-    as_seq h1 bufferU1 == Lib.ByteSequence.uints_to_bytes_le (nat_as_seq((Hacl.Spec.P256.Definitions.pow (as_nat h0 s) (prime_p256_order - 2)  * (as_nat h0 hash)) % prime_p256_order)) /\ 
-    as_seq h1 bufferU2 == Lib.ByteSequence.uints_to_bytes_le (nat_as_seq((Hacl.Spec.P256.Definitions.pow (as_nat h0 s) (prime_p256_order - 2)  * (as_nat h0 r)) % prime_p256_order))  
+    as_seq h1 bufferU1 == Lib.ByteSequence.uints_to_bytes_le (nat_as_seq((pow (as_nat h0 s) (prime_p256_order - 2)  * (as_nat h0 hash)) % prime_p256_order)) /\ 
+    as_seq h1 bufferU2 == Lib.ByteSequence.uints_to_bytes_le (nat_as_seq((pow (as_nat h0 s) (prime_p256_order - 2)  * (as_nat h0 r)) % prime_p256_order))  
   )
 
 let ecdsa_verification_step4 r s hash bufferU1 bufferU2 = 
@@ -368,18 +369,18 @@ let ecdsa_verification_step4 r s hash bufferU1 bufferU2 =
   multPowerPartial s inverseS r u2; 
     
     let h3 = ST.get() in 
-    assert(as_nat h3 u1 = (Hacl.Spec.P256.Definitions.pow (as_nat h0 s) (prime_p256_order - 2)  * (as_nat h0 hash)) % prime_p256_order);
+    assert(as_nat h3 u1 = (pow (as_nat h0 s) (prime_p256_order - 2)  * (as_nat h0 hash)) % prime_p256_order);
     lemmaSeq2Nat (as_seq h3 u1);
     lemmaSeq2Nat (as_seq h3 u2);
 
-    assert(as_seq h3 u1 == nat_as_seq((Hacl.Spec.P256.Definitions.pow (as_nat h0 s) (prime_p256_order - 2)  * (as_nat h0 hash)) % prime_p256_order));
-    assert(as_seq h3 u2 == nat_as_seq((Hacl.Spec.P256.Definitions.pow (as_nat h0 s) (prime_p256_order - 2)  * (as_nat h0 r)) % prime_p256_order));
+    assert(as_seq h3 u1 == nat_as_seq((pow (as_nat h0 s) (prime_p256_order - 2)  * (as_nat h0 hash)) % prime_p256_order));
+    assert(as_seq h3 u2 == nat_as_seq((pow (as_nat h0 s) (prime_p256_order - 2)  * (as_nat h0 r)) % prime_p256_order));
 
   toUint8 u1 bufferU1;
   toUint8 u2 bufferU2;
     let h4 = ST.get() in 
-    assert(as_seq h4 bufferU1 == Lib.ByteSequence.uints_to_bytes_le (nat_as_seq((Hacl.Spec.P256.Definitions.pow (as_nat h0 s) (prime_p256_order - 2)  * (as_nat h0 hash)) % prime_p256_order)));
-    assert(as_seq h4 bufferU2 == Lib.ByteSequence.uints_to_bytes_le (nat_as_seq((Hacl.Spec.P256.Definitions.pow (as_nat h0 s) (prime_p256_order - 2)  * (as_nat h0 r)) % prime_p256_order)));
+    assert(as_seq h4 bufferU1 == Lib.ByteSequence.uints_to_bytes_le (nat_as_seq((pow (as_nat h0 s) (prime_p256_order - 2)  * (as_nat h0 hash)) % prime_p256_order)));
+    assert(as_seq h4 bufferU2 == Lib.ByteSequence.uints_to_bytes_le (nat_as_seq((pow (as_nat h0 s) (prime_p256_order - 2)  * (as_nat h0 r)) % prime_p256_order)));
   pop_frame()
 
 
@@ -589,8 +590,8 @@ val ecdsa_verification_core: publicKeyBuffer: point ->
        (
 	 let hash = Spec.Hash.hash Spec.Hash.Definitions.SHA2_256 (as_seq h0 m) in 
 	 let hashNat = felem_seq_as_nat (Hacl.Spec.ECDSA.changeEndian(Lib.ByteSequence.uints_from_bytes_be hash)) % prime_p256_order in 
-	   let u1 = (Hacl.Spec.P256.Definitions.pow (as_nat h0 s) (prime_p256_order - 2)  * hashNat) % prime_p256_order in 
-	   let u2 = (Hacl.Spec.P256.Definitions.pow (as_nat h0 s) (prime_p256_order - 2)  * (as_nat h0 r)) % prime_p256_order in 
+	   let u1 = (pow (as_nat h0 s) (prime_p256_order - 2)  * hashNat) % prime_p256_order in 
+	   let u2 = (pow (as_nat h0 s) (prime_p256_order - 2)  * (as_nat h0 r)) % prime_p256_order in 
 	   let bufferU1 = Lib.ByteSequence.uints_to_bytes_le (nat_as_seq u1) in 
 	   let bufferU2 = Lib.ByteSequence.uints_to_bytes_le (nat_as_seq u2) in 
 
@@ -647,8 +648,8 @@ let ecdsa_verification pubKey r s mLen m =
 	  let pointJac = toJacobianCoordinates (pubKeyX, pubKeyY) in 
 	 let hash = Spec.Hash.hash Spec.Hash.Definitions.SHA2_256 (as_seq h0 m) in 
 	 let hashNat = felem_seq_as_nat (Hacl.Spec.ECDSA.changeEndian(Lib.ByteSequence.uints_from_bytes_be hash)) % prime_p256_order in 
-	   let u1 = (Hacl.Spec.P256.Definitions.pow (as_nat h0 s) (prime_p256_order - 2)  * hashNat) % prime_p256_order in 
-	   let u2 = (Hacl.Spec.P256.Definitions.pow (as_nat h0 s) (prime_p256_order - 2)  * (as_nat h0 r)) % prime_p256_order in 
+	   let u1 = (pow (as_nat h0 s) (prime_p256_order - 2)  * hashNat) % prime_p256_order in 
+	   let u2 = (pow (as_nat h0 s) (prime_p256_order - 2)  * (as_nat h0 r)) % prime_p256_order in 
 	   let bufferU1 = Lib.ByteSequence.uints_to_bytes_le (nat_as_seq u1) in 
 	   let bufferU2 = Lib.ByteSequence.uints_to_bytes_le (nat_as_seq u2) in 
 

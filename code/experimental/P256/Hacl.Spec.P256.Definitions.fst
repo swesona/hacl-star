@@ -213,11 +213,3 @@ let rec exp (e: nat) (n:nat {n > 0}) (prime: pos) : Tot (r: nat) (decreases n)  
     else e *% (exp (e *% e)((n-1)/2) prime) 
 *)
 
-
-noextract
-val pow: a:nat -> b:nat -> res:nat
-
-let rec pow a b =
-  if b = 0 then 1
-  else a * (pow a (b - 1))
-

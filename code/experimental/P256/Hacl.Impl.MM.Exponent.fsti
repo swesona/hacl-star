@@ -18,6 +18,8 @@ open Hacl.Spec.P256.Basic
 open Hacl.Spec.P256.Core
 open Hacl.Spec.P256.Ladder
 
+open Hacl.Spec.P256.Lemmas
+
 open FStar.Mul
 
 open Hacl.Impl.MontgomeryMultiplication
@@ -56,7 +58,7 @@ val fromDomainImpl: a: felem -> result: felem -> Stack unit
 val multPower: a: felem -> b: felem ->  result: felem -> Stack unit 
   (requires fun h -> live h a /\ live h b /\ live h result /\ as_nat h a < prime /\ as_nat h b < prime)
   (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\ 
-    as_nat h1 result = (Hacl.Spec.P256.Definitions.pow (as_nat h0 a) (prime_p256_order - 2)  * (as_nat h0 b)) % prime_p256_order)
+    as_nat h1 result = (pow (as_nat h0 a) (prime_p256_order - 2)  * (as_nat h0 b)) % prime_p256_order)
 
 
 val multPowerPartial: s: felem -> a: felem -> b: felem -> result: felem -> Stack unit 
@@ -67,4 +69,4 @@ val multPowerPartial: s: felem -> a: felem -> b: felem -> result: felem -> Stack
       fromDomain_ (as_nat h a) == r0D)
   )
   (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\ 
-    as_nat h1 result = (Hacl.Spec.P256.Definitions.pow (as_nat h0 s) (prime_p256_order - 2)  * (as_nat h0 b)) % prime_p256_order)
+    as_nat h1 result = (pow (as_nat h0 s) (prime_p256_order - 2)  * (as_nat h0 b)) % prime_p256_order)
