@@ -271,14 +271,14 @@ let mult64_0 x u result temp =
   let f0 = index x (size 0) in 
   mul64 f0 u result temp
 
- val mult64_0il: x: ilbuffer uint64 (size 4) -> u: uint64 -> result:  lbuffer uint64 (size 1) -> temp: lbuffer uint64 (size 1) -> Stack unit 
+
+val mult64_0il: x: ilbuffer uint64 (size 4) -> u: uint64 -> result:  lbuffer uint64 (size 1) -> temp: lbuffer uint64 (size 1) -> Stack unit 
   (requires fun h -> live h x /\ live h result /\ live h temp /\ disjoint result temp)
   (ensures fun h0 _ h1 -> 
     let result_ = Seq.index (as_seq h1 result) 0 in 
     let c = Seq.index (as_seq h1 temp) 0 in 
     let f0 = Seq.index (as_seq h0 x) 0 in 
     uint_v result_ + uint_v c * pow2 64 = uint_v f0 * uint_v u /\ modifies (loc result |+| loc temp) h0 h1)
-
 
 let mult64_0il x u result temp = 
   let f0 = index x (size 0) in 
@@ -301,46 +301,11 @@ let mult64_c x u cin result temp =
   let l = index result (size 0) in     
   add_carry cin l h result
 
-
-
 #reset-options "--z3rlimit 200"
-
-val l1: o0: nat -> o1: nat -> o2: nat -> o3: nat -> f0: nat  ->  f1: nat -> f2: nat -> 
-  f3: nat {f0 + f1 * pow2 64 + f2 * pow2 128  + f3 * pow2 192 < pow2 256} -> 
-  u: nat {u < pow2 64} -> h2: nat -> c1: nat -> c2: nat -> c3: nat -> h3: nat -> h4: nat ->
-  Lemma
-  (requires (
-    h2 * pow2 64 * pow2 64 +  o0 + o1 * pow2 64 + c1 * pow2 64 * pow2 64 ==  f0 * u + f1 * u * pow2 64 /\
-    o2 + c2 * pow2 64 + h3 * pow2 64 - h2 - c1  == f2 * u /\
-    o3 + c3 * pow2 64 + h4 * pow2 64 - h3 - c2 == f3 * u)
-  )
-  (ensures 
-    (o0 + o1 * pow2 64 + o2 * pow2 128 +  o3 * pow2 192 + (c3 + h4) * pow2 256  == (f0  + f1 * pow2 64 + f2  * pow2 128  + f3 * pow2 192) * u /\
-    f0 * u + f1 * u * pow2 64 + f2 * u * pow2 128  + f3 * u * pow2 192 < pow2 320 /\
-  (c3 + h4) < pow2 64)
-)
-    
-
-let l1 o0 o1 o2 o3 f0 f1 f2 f3 u h2 c1 c2 c3 h3 h4 = 
-  assert_norm (pow2 64 * pow2 64 = pow2 128);
-  assert_norm (pow2 64 * pow2 64 * pow2 64 = pow2 192);
-  assert_norm (pow2 64 * pow2 64 * pow2 64 * pow2 64 = pow2 256);  
-  assert_norm (pow2 64 * pow2 64 * pow2 64 * pow2 64 * pow2 64 = pow2 320);  
-  assert(h2 * pow2 64 * pow2 64 +  o0 + o1 * pow2 64 + c1 * pow2 64 * pow2 64 + o2 + c2 * pow2 64 + h3 * pow2 64 - h2 - c1 + 
-    o3 + c3 * pow2 64 + h4 * pow2 64 - h3 - c2 == f0 * u + f1 * u * pow2 64 + f2 * u  + f3 * u);
-  assert(h2 * pow2 64 * pow2 64 +  o0 + o1 * pow2 64 + c1 * pow2 64 * pow2 64 + o2 * pow2 128 + c2 * pow2 64 * pow2 128 + h3 * pow2 64 * pow2 128 - h2 * pow2 128- c1 * pow2 128 + o3 * pow2 192 + c3 * pow2 64 * pow2 192 + h4 * pow2 64 * pow2 192 - h3 * pow2 192 - c2 * pow2 192 == f0 * u + f1 * u * pow2 64 + f2 * u * pow2 128  + f3 * u * pow2 192);
-  assert(o0 + o1 * pow2 64 + o2 * pow2 128 +  o3 * pow2 192 + (c3 + h4) * pow2 256  == f0 * u + f1 * u * pow2 64 + f2 * u * pow2 128  + f3 * u * pow2 192);
-  assert(f0 * u + f1 * u * pow2 64 + f2 * u * pow2 128  + f3 * u * pow2 192 == (f0 + f1 * pow2 64 + f2 * pow2 128 + f3 * pow2 192) * u);
-  mul_lemma_3  (f0 + f1 * pow2 64 + f2 * pow2 128 + f3 * pow2 192) (pow2 256) u (pow2 64);
-  assert((f0 + f1 * pow2 64 + f2 * pow2 128 + f3 * pow2 192) * u < pow2 320);
-  assert((c3 + h4) * pow2 256 < pow2 320);
-  assert(c3 + h4 < pow2 64)
-
 
 val mul1_il: f:  ilbuffer uint64 (size 4) -> u: uint64 -> result: lbuffer uint64 (size 4) -> Stack uint64
   (requires fun h -> live h result /\ live h f)
-  (ensures fun h0 c h1 -> 
-    modifies (loc result) h0 h1 /\ 
+  (ensures fun h0 c h1 -> modifies (loc result) h0 h1 /\ 
     as_nat_il h0 f * uint_v u = uint_v c * pow2 256 + as_nat h1 result /\ 
     as_nat_il h0 f * uint_v u < pow2 320 /\
     uint_v c < pow2 64 - 1 
@@ -377,7 +342,7 @@ let mul1_il f u result =
   let c3 = mult64_c f3 u c2 o3 temp in 
     let h4 = ST.get() in 
   let temp0 = index temp (size 0) in 
-    l1 (uint_v(Seq.index (as_seq h1 o0) 0)) (uint_v (Seq.index (as_seq h2 o1) 0)) (uint_v (Seq.index (as_seq h3 o2) 0)) (uint_v (Seq.index (as_seq h4 o3) 0)) (uint_v f0) (uint_v f1) (uint_v f2) (uint_v f3) (uint_v u) (uint_v (Seq.index (as_seq h2 temp) 0)) (uint_v c1) (uint_v c2) (uint_v c3) (uint_v (Seq.index (as_seq h3 temp) 0)) (uint_v temp0); 
+    lemma_low_level0 (uint_v(Seq.index (as_seq h1 o0) 0)) (uint_v (Seq.index (as_seq h2 o1) 0)) (uint_v (Seq.index (as_seq h3 o2) 0)) (uint_v (Seq.index (as_seq h4 o3) 0)) (uint_v f0) (uint_v f1) (uint_v f2) (uint_v f3) (uint_v u) (uint_v (Seq.index (as_seq h2 temp) 0)) (uint_v c1) (uint_v c2) (uint_v c3) (uint_v (Seq.index (as_seq h3 temp) 0)) (uint_v temp0); 
     
   mul_lemma_4 (as_nat_il h0 f) (uint_v u) (pow2 256 - 1) (pow2 64 - 1);
   assert_norm((pow2 256 - 1) * (pow2 64 - 1) == pow2 320 - pow2 256 - pow2 64 + 1);
@@ -387,12 +352,9 @@ let mul1_il f u result =
   c3 +! temp0
 
 
-
-
 val mul1: f:  lbuffer uint64 (size 4) -> u: uint64 -> result: lbuffer uint64 (size 4) -> Stack uint64
   (requires fun h -> live h result /\ live h f)
-  (ensures fun h0 c h1 -> 
-    modifies (loc result) h0 h1 /\ 
+  (ensures fun h0 c h1 -> modifies (loc result) h0 h1 /\ 
     as_nat h0 f * uint_v u = uint_v c * pow2 256 + as_nat h1 result /\ 
     as_nat h0 f * uint_v u < pow2 320 /\
     uint_v c < pow2 64 - 1
@@ -429,7 +391,7 @@ let mul1 f u result =
   let c3 = mult64_c f3 u c2 o3 temp in 
     let h4 = ST.get() in 
   let temp0 = index temp (size 0) in 
-    l1 (uint_v(Seq.index (as_seq h1 o0) 0)) (uint_v (Seq.index (as_seq h2 o1) 0)) (uint_v (Seq.index (as_seq h3 o2) 0)) (uint_v (Seq.index (as_seq h4 o3) 0)) (uint_v f0) (uint_v f1) (uint_v f2) (uint_v f3) (uint_v u) (uint_v (Seq.index (as_seq h2 temp) 0)) (uint_v c1) (uint_v c2) (uint_v c3) (uint_v (Seq.index (as_seq h3 temp) 0)) (uint_v temp0); 
+    lemma_low_level0 (uint_v(Seq.index (as_seq h1 o0) 0)) (uint_v (Seq.index (as_seq h2 o1) 0)) (uint_v (Seq.index (as_seq h3 o2) 0)) (uint_v (Seq.index (as_seq h4 o3) 0)) (uint_v f0) (uint_v f1) (uint_v f2) (uint_v f3) (uint_v u) (uint_v (Seq.index (as_seq h2 temp) 0)) (uint_v c1) (uint_v c2) (uint_v c3) (uint_v (Seq.index (as_seq h3 temp) 0)) (uint_v temp0); 
     
   mul_lemma_4 (as_nat h0 f) (uint_v u) (pow2 256 - 1) (pow2 64 - 1);
   assert_norm((pow2 256 - 1) * (pow2 64 - 1) == pow2 320 - pow2 256 - pow2 64 + 1);
@@ -457,7 +419,7 @@ let mul1_add f1 u2 f3 result =
 val mul: f: felem -> r: felem -> out: widefelem
   -> Stack unit
     (requires fun h -> live h out /\ live h f /\ live h r)
-    (ensures  fun h0 _ h1 -> modifies(loc out) h0 h1 /\ wide_as_nat h1 out =  as_nat h0 r * as_nat h0 f )
+    (ensures  fun h0 _ h1 -> modifies(loc out) h0 h1 /\ wide_as_nat h1 out =  as_nat h0 r * as_nat h0 f)
       
 let mul f r out =
   push_frame();
@@ -574,20 +536,6 @@ val mod64: a: widefelem -> Stack uint64
 
 let mod64 a = index a (size 0)
 
-inline_for_extraction noextract
-val shortened_mul_tuple: a: felem4 -> b: uint64 -> Tot (r: felem8 {as_nat4 a * uint_v b = wide_as_nat4 r /\ wide_as_nat4 r < pow2 320})
-
-let shortened_mul_tuple (a0, a1, a2, a3) b = 
-  admit()
-  (*let (c, (f0, f1, f2, f3)) = mul1 (a0, a1, a2, a3) b in 
-   assert_norm(pow2 64 * pow2 64 = pow2 128);
-   assert_norm(pow2 64 * pow2 64 * pow2 64 = pow2 192);
-   assert_norm(pow2 64 * pow2 64 * pow2 64 * pow2 64 = pow2 256);
-   assert_norm(pow2 64 * pow2 64 * pow2 64  * pow2 64 * pow2 64= pow2 320);
-   assert_norm(pow2 64 * pow2 64 * pow2 64  * pow2 64 * pow2 64 * pow2 64 = pow2 (6 * 64));
-   assert_norm(pow2 64 * pow2 64 * pow2 64  * pow2 64 * pow2 64* pow2 64 * pow2 64 = pow2 (7 * 64));
-  f0, f1, f2, f3, c, (u64 0), (u64 0), u64(0)   *)
-
 
 val shortened_mul: a: ilbuffer uint64 (size 4) -> b: uint64 -> result: widefelem -> Stack unit
   (requires fun h -> live h a /\ live h result)
@@ -600,18 +548,7 @@ let shortened_mul a b result =
     admit();
   upd result (size 4) c
    
-  
-  (*
-*
-  let a0 = index a (size 0) in 
-  let a1 = index a (size 1) in 
-  let a2 = index a (size 2) in 
-  let a3 = index a (size 3) in 
-  let (f0, f1, f2, f3, f4, f5, f6, f7) = shortened_mul_tuple (a0, a1, a2, a3) b in 
-  load_buffer8 f0 f1 f2 f3 f4 f5 f6 f7 result *)
 
-
-(*wide_as_nat h0 t / pow2 64 = wide_as_nat h1 t1 *)
 val shift8: t: widefelem -> t1: widefelem -> Stack unit 
   (requires fun h -> live h t /\ live h t1 /\ eq_or_disjoint t t1)
   (ensures fun h0 _ h1 -> modifies (loc t1) h0 h1 /\ wide_as_nat h0 t / pow2 64 = wide_as_nat h1 t1)

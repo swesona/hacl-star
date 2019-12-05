@@ -243,36 +243,32 @@ Hacl_Impl_LowLevel_mul1_add(uint64_t *f1, uint64_t u2, uint64_t *f3, uint64_t *r
   return c + c3;
 }
 
-inline void Hacl_Impl_LowLevel_mul(uint64_t *f1, uint64_t *r, uint64_t *out)
+void Hacl_Impl_LowLevel_mul(uint64_t *f, uint64_t *r, uint64_t *out)
 {
   uint64_t temp[8U] = { 0U };
-  uint64_t f10 = f1[0U];
-  uint64_t f11 = f1[1U];
-  uint64_t f12 = f1[2U];
-  uint64_t f13 = f1[3U];
-  uint64_t *b00 = temp;
-  uint64_t c0 = Hacl_Impl_LowLevel_mul1(r, f10, b00);
-  uint64_t *b0;
-  uint64_t c1;
+  uint64_t f0 = f[0U];
+  uint64_t f1 = f[1U];
+  uint64_t f2 = f[2U];
+  uint64_t f3 = f[3U];
+  uint64_t *b0 = temp;
+  uint64_t c0 = Hacl_Impl_LowLevel_mul1(r, f0, b0);
   uint64_t *b1;
-  uint64_t c2;
+  uint64_t c1;
   uint64_t *b2;
+  uint64_t c2;
+  uint64_t *b3;
   uint64_t c3;
-  uint64_t *finToCopy;
-  uint64_t *stCopy;
   temp[4U] = c0;
-  b0 = temp + (uint32_t)1U;
-  c1 = Hacl_Impl_LowLevel_mul1_add(r, f11, b0, b0);
+  b1 = temp + (uint32_t)1U;
+  c1 = Hacl_Impl_LowLevel_mul1_add(r, f1, b1, b1);
   temp[5U] = c1;
-  b1 = temp + (uint32_t)2U;
-  c2 = Hacl_Impl_LowLevel_mul1_add(r, f12, b1, b1);
+  b2 = temp + (uint32_t)2U;
+  c2 = Hacl_Impl_LowLevel_mul1_add(r, f2, b2, b2);
   temp[6U] = c2;
-  b2 = temp + (uint32_t)3U;
-  c3 = Hacl_Impl_LowLevel_mul1_add(r, f13, b2, b2);
-  out[7U] = c3;
-  finToCopy = temp;
-  stCopy = out;
-  memcpy(stCopy, finToCopy, (uint32_t)7U * sizeof finToCopy[0U]);
+  b3 = temp + (uint32_t)3U;
+  c3 = Hacl_Impl_LowLevel_mul1_add(r, f3, b3, b3);
+  temp[7U] = c3;
+  memcpy(out, temp, (uint32_t)8U * sizeof temp[0U]);
 }
 
 void Hacl_Impl_LowLevel_cmovznz4(uint64_t cin, uint64_t *x, uint64_t *y, uint64_t *r)

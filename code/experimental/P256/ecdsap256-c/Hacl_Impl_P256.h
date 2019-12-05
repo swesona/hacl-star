@@ -24,7 +24,7 @@ Hacl_Impl_LowLevel_sub_borrow(uint64_t cin, uint64_t x, uint64_t y, uint64_t *re
 
 uint64_t Hacl_Impl_LowLevel_sub4_il(uint64_t *x, uint64_t *y, uint64_t *result);
 
-void Hacl_Impl_LowLevel_mul(uint64_t *f1, uint64_t *r, uint64_t *out);
+void Hacl_Impl_LowLevel_mul(uint64_t *f, uint64_t *r, uint64_t *out);
 
 void Hacl_Impl_LowLevel_cmovznz4(uint64_t cin, uint64_t *x, uint64_t *y, uint64_t *r);
 
