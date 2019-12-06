@@ -56,10 +56,12 @@ let pointToDomain p result =
     toDomain p_y r_y;
     toDomain p_z r_z
 
+
 val fromDomain: f: felem-> result: felem-> Stack unit 
   (requires fun h -> live h f /\ live h result /\ as_nat h f < prime)
-  (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\ as_nat h1 result = (as_nat h0 f * modp_inv2(pow2 256)) % prime 
-    /\ as_nat h1 result = fromDomain_ (as_nat h0 f))
+  (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\ 
+    as_nat h1 result = (as_nat h0 f * modp_inv2(pow2 256)) % prime /\ 
+    as_nat h1 result = fromDomain_ (as_nat h0 f))
 
 let fromDomain f result = 
   montgomery_multiplication_buffer_by_one f result
@@ -123,7 +125,6 @@ let multByThree a result =
     inDomain_mod_is_not_mod (3 * fromDomain_ (as_nat h0 a))
   
 
-
 val multByFour: a: felem -> result: felem -> Stack unit 
   (requires fun h -> live h a /\ live h result /\ eq_or_disjoint a result /\ as_nat h a < prime )
   (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\ as_nat h1 result < prime /\ 
@@ -178,18 +179,6 @@ let multByMinusThree a result  =
   pop_frame();
   lemma_add_same_value_is_by_minus_three (as_seq h0 a) (as_seq h1 zeros);
   admit()
-
-
-val isZero_uint64:  f: felem -> Stack uint64
-  (requires fun h -> live h f /\ as_nat h f < prime)
-  (ensures fun h0 r h1 -> modifies0 h0 h1 /\ r == isZero_seq (as_seq h0 f))
-
-let isZero_uint64 f = 
-  let a0 = index f (size 0) in 
-  let a1 = index f (size 1) in 
-  let a2 = index f (size 2) in 
-  let a3 = index f (size 3) in 
-  isZero_tuple_u (a0, a1, a2, a3)
 
 
 val copy_point: p: point -> result: point -> Stack unit 

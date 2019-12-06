@@ -322,6 +322,21 @@ void Hacl_Impl_LowLevel_shift8(uint64_t *t, uint64_t *out)
   out[7U] = (uint64_t)0U;
 }
 
+static uint64_t Hacl_Impl_LowLevel_isZero_uint64(uint64_t *f)
+{
+  uint64_t a0 = f[0U];
+  uint64_t a1 = f[1U];
+  uint64_t a2 = f[2U];
+  uint64_t a3 = f[3U];
+  uint64_t r0 = FStar_UInt64_eq_mask(a0, (uint64_t)0U);
+  uint64_t r1 = FStar_UInt64_eq_mask(a1, (uint64_t)0U);
+  uint64_t r2 = FStar_UInt64_eq_mask(a2, (uint64_t)0U);
+  uint64_t r3 = FStar_UInt64_eq_mask(a3, (uint64_t)0U);
+  uint64_t r01 = r0 & r1;
+  uint64_t r23 = r2 & r3;
+  return r01 & r23;
+}
+
 uint64_t
 Hacl_Impl_P256_LowLevel_prime256_buffer[4U] =
   {
@@ -901,21 +916,6 @@ static void multByMinusThree(uint64_t *a, uint64_t *result)
   }
 }
 
-static uint64_t isZero_uint64(uint64_t *f)
-{
-  uint64_t a0 = f[0U];
-  uint64_t a1 = f[1U];
-  uint64_t a2 = f[2U];
-  uint64_t a3 = f[3U];
-  uint64_t r0 = FStar_UInt64_eq_mask(a0, (uint64_t)0U);
-  uint64_t r1 = FStar_UInt64_eq_mask(a1, (uint64_t)0U);
-  uint64_t r2 = FStar_UInt64_eq_mask(a2, (uint64_t)0U);
-  uint64_t r3 = FStar_UInt64_eq_mask(a3, (uint64_t)0U);
-  uint64_t r01 = r0 & r1;
-  uint64_t r23 = r2 & r3;
-  return r01 & r23;
-}
-
 static void copy_point(uint64_t *p, uint64_t *result)
 {
   memcpy(result, p, (uint32_t)12U * sizeof p[0U]);
@@ -1026,7 +1026,7 @@ copy_point_conditional(
 )
 {
   uint64_t *z = maskPoint + (uint32_t)8U;
-  uint64_t mask = isZero_uint64(z);
+  uint64_t mask = Hacl_Impl_LowLevel_isZero_uint64(z);
   uint64_t *p_x = p;
   uint64_t *p_y = p + (uint32_t)4U;
   uint64_t *p_z = p + (uint32_t)8U;
@@ -1100,8 +1100,8 @@ void point_add(uint64_t *p, uint64_t *q, uint64_t *result, uint64_t *tempBuffer)
   Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_buffer(y2, z1Cube, s2);
   one1 = compare_felem(u11, u2);
   two = compare_felem(s1, s2);
-  z1notZero = isZero_uint64(z1);
-  z2notZero = isZero_uint64(z2);
+  z1notZero = Hacl_Impl_LowLevel_isZero_uint64(z1);
+  z2notZero = Hacl_Impl_LowLevel_isZero_uint64(z2);
   pointsInf = ~z1notZero & ~z2notZero;
   onetwo = one1 & two;
   result1 = onetwo & pointsInf;

@@ -20,21 +20,9 @@ open FStar.Tactics.Canon
 
 open FStar.Mul
 
-#reset-options "--z3refresh --z3rlimit 200"
+#reset-options "--z3rlimit 200"
 
-inline_for_extraction noextract
-val add8_without_carry:
-  a: felem8 {wide_as_nat4 a < prime_p256_order * prime_p256_order} -> 
-  b: felem8 {wide_as_nat4 b < pow2 320}  -> 
-  Tot (r:felem8 {wide_as_nat4 r = wide_as_nat4 a + wide_as_nat4 b})
-
-let add8_without_carry (a0, a1, a2, a3, a4, a5, a6, a7) (b0, b1, b2, b3, b4, b5, b6, b7) = 
-  let (carry, r0, r1, r2, r3, r4, r5, r6, r7)  = add8 (a0, a1, a2, a3, a4, a5, a6, a7) (b0, b1, b2, b3, b4, b5, b6, b7) in 
-  assert_norm (pow2 320 +  prime_p256_order * prime_p256_order  < pow2 512);
-  assert(uint_v carry = 0);
-  (r0, r1, r2, r3, r4, r5, r6, r7)
-
-inline_for_extraction noextract
+(* broken *)
 val add8_without_carry1:  t: widefelem -> t1: widefelem -> result: widefelem  -> Stack unit
   (requires fun h -> live h t /\ live h t1 /\ live h result /\ wide_as_nat h t1 < pow2 320 /\
     wide_as_nat h t <  prime_p256_order * prime_p256_order /\ eq_or_disjoint t result /\ eq_or_disjoint t1 result  )
@@ -43,12 +31,6 @@ val add8_without_carry1:  t: widefelem -> t1: widefelem -> result: widefelem  ->
 let add8_without_carry1 t t1 result  = 
   let _ = Hacl.Impl.LowLevel.add8 t t1 result in 
   admit()
-
-
-private let mul_lemma_1 (a: nat) (c: nat) (b: pos) : Lemma (requires (a < c)) (ensures (a * b < c * b)) = ()
-private let mul_lemma_ (a: nat) (b: nat) (c: nat) : Lemma (requires (a < c /\ b < c)) (ensures (a * b < c * c)) = ()
-private let add_l2 (a: int) (b: nat) (c: int) (d: nat) : Lemma (requires a <= c /\ b < d) (ensures (a + b < c + d)) = ()
-private let div_lemma (a: int) (b: pos) (c: nat) : Lemma (requires a < b) (ensures a / b <= c / b) = ()
 
 
 val lemma_montgomery_mult_1: t : int  -> 
@@ -60,10 +42,7 @@ let lemma_montgomery_mult_1 t k0 r =
   let t1 = t % pow2 64 in 
   let y = (t1 * k0) % pow2 64 in 
   let t2 = y * prime_p256_order in 
-    mul_lemma_1 y (pow2 64) prime_p256_order;
-  let t3 = t + t2 in
-    add_l2 t t2 r (pow2 64 * prime_p256_order); 
-    div_lemma t3 (r + pow2 64 * prime_p256_order) (pow2 64)
+    mul_lemma_1 y (pow2 64) prime_p256_order
 
 
 val lemma_montgomery_mult_result_less_than_prime_p256_order: 
@@ -146,7 +125,8 @@ let lemma_montgomery_mult_result_less_than_prime_p256_order a b k0 =
 
 val lemma_montgomery_mod_inverse_addition: a: nat -> 
   Lemma (
-    (a * modp_inv2_prime(pow2 64) prime_p256_order  * modp_inv2_prime (pow2 64) prime_p256_order) % prime_p256_order == (a * modp_inv2_prime(pow2 128) prime_p256_order) % prime_p256_order)
+    (a * modp_inv2_prime(pow2 64) prime_p256_order  * modp_inv2_prime (pow2 64) prime_p256_order) % prime_p256_order == 
+    (a * modp_inv2_prime(pow2 128) prime_p256_order) % prime_p256_order)
 
 let lemma_montgomery_mod_inverse_addition a =
     assert_norm ((modp_inv2_prime(pow2 64) prime_p256_order * modp_inv2_prime (pow2 64) prime_p256_order) % prime_p256_order == modp_inv2_prime (pow2 128) prime_p256_order % prime_p256_order);
@@ -157,7 +137,8 @@ let lemma_montgomery_mod_inverse_addition a =
 
 val lemma_montgomery_mod_inverse_addition2: a: nat -> 
   Lemma ( 
-    (a * modp_inv2_prime (pow2 128) prime_p256_order  * modp_inv2_prime (pow2 128) prime_p256_order) % prime_p256_order == (a * modp_inv2_prime (pow2 256) prime_p256_order) % prime_p256_order)
+    (a * modp_inv2_prime (pow2 128) prime_p256_order  * modp_inv2_prime (pow2 128) prime_p256_order) % prime_p256_order == 
+    (a * modp_inv2_prime (pow2 256) prime_p256_order) % prime_p256_order)
 
 let lemma_montgomery_mod_inverse_addition2 a = 
   assert_norm ((modp_inv2_prime (pow2 128) prime_p256_order * modp_inv2_prime (pow2 128) prime_p256_order) % prime_p256_order == (modp_inv2_prime (pow2 256) prime_p256_order) % prime_p256_order);
@@ -166,6 +147,7 @@ let lemma_montgomery_mod_inverse_addition2 a =
     lemma_mod_mul_distr_r a (modp_inv2_prime (pow2 256) prime_p256_order) prime_p256_order
 
 
+(* broken *)
 val montgomery_multiplication_one_round_proof: 
   t: nat ->
   k0: nat {k0 = modp_inv2_prime (-prime_p256_order) (pow2 64)}  ->  
@@ -174,6 +156,7 @@ val montgomery_multiplication_one_round_proof:
   Lemma (round  % prime_p256_order == co * (modp_inv2_prime (pow2 64) prime_p256_order) % prime_p256_order )
 
 let montgomery_multiplication_one_round_proof t k0 round co = 
+  admit();
   mult_one_round_ecdsa_prime t prime_p256_order co k0 
 
 
@@ -199,7 +182,6 @@ let montgomery_multiplication_round t round k0 =
   pop_frame()
 
 
-inline_for_extraction noextract
 val montgomery_multiplication_round_twice: t: widefelem -> result: widefelem -> k0: uint64-> 
   Stack unit 
     (
@@ -275,7 +257,7 @@ let reduction_prime_2prime_order x result  =
     lemma_reduction1 (as_nat h0 x) (as_nat h2 result);
   pop_frame()  
   
-
+(*
 val lemma_montgomery_mult_2: a: nat{a < prime_p256_order} -> b: nat {b < prime_p256_order} -> 
   Lemma (
     (
@@ -294,7 +276,7 @@ let lemma_montgomery_mult_2 a b  =
    assert_by_tactic ((a * b * k * k * k * k)  ==  ((a * b) * (k * k * k * k))) canon;
    lemma_mod_mul_distr_r (a * b) (k * k * k * k) prime_p256_order; 
    lemma_mod_mul_distr_r (a * b) (modp_inv2_prime (pow2 256) prime_p256_order) prime_p256_order
-  
+
 
 val upload_ecdsa_prime_p256_order: p: lbuffer uint64 (size 4) -> Stack unit
   (requires fun h -> live h p)
@@ -305,7 +287,7 @@ let upload_ecdsa_prime_p256_order p =
   upd p (size 1) (u64 13611842547513532036);
   upd p (size 2) (u64 18446744073709551615);
   upd p (size 3) (u64 18446744069414584320)
-
+*)
 
 val upload_k0: unit ->  Tot (r: uint64 {uint_v r == modp_inv2_prime (-prime_p256_order) (pow2 64)})
 
@@ -381,8 +363,9 @@ let lemmaToDomainFromDomain a =
   lemma_mod_mul_distr_r a (pow2 256 * modp_inv2_prime (pow2 256) prime_p256_order) prime_p256_order;
   assert_norm ((pow2 256 * modp_inv2_prime (pow2 256) prime_p256_order) % prime_p256_order == 1)
 
-
+(* broken *)
 let montgomery_multiplication_ecdsa_module a b result =
+  admit();
   push_frame();
     let t = create (size 8) (u64 0) in 
     let round2 = create (size 8) (u64 0) in 
@@ -411,8 +394,6 @@ let montgomery_multiplication_ecdsa_module a b result =
     pop_frame()
 
 
-
-#reset-options "--z3refresh --z3rlimit 100"
 
 let felem_add arg1 arg2 out = 
   let open Hacl.Impl.LowLevel in 

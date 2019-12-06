@@ -25,12 +25,10 @@ open FStar.Mul
 open Hacl.Impl.ECDSA.MontgomeryMultiplication
 open Lib.Loops
 
-#reset-options "--z3refresh --z3rlimit 200"
+#reset-options " --z3rlimit 200"
 
 noextract
 let prime = prime_p256_order
-
-
 
 let order_inverse_buffer: x: ilbuffer uint8 32ul {witnessed x prime_p256_order_inverse_seq /\ recallable x} = 
   createL_global prime_p256_order_inverse_list
