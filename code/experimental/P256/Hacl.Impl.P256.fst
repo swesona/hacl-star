@@ -22,6 +22,8 @@ open Hacl.Impl.P256.LowLevel
 open Hacl.Impl.P256.MontgomeryMultiplication
 open Hacl.Spec.P256
 
+open FStar.Tactics 
+open FStar.Tactics.Canon
 
 open FStar.Math.Lemmas
 
@@ -285,29 +287,50 @@ let point_double_compute_x3 x3 s m tempBuffer =
      lemma_mod_sub_distr (fromDomain_ (as_nat h0 m) * fromDomain_ (as_nat h0 m)) (2 * fromDomain_ (as_nat h0 s)) prime256
  
 
-inline_for_extraction noextract 
-val point_double_compute_y3: p_y: felem ->  y3: felem ->  x3: felem -> 
+val point_double_compute_y3: pY: felem ->  y3: felem ->  x3: felem -> 
   s: felem -> m: felem -> tempBuffer: lbuffer uint64 (size 16) -> Stack unit 
-  (requires fun h -> live h p_y /\ live h y3 /\ live h x3 /\ live h s /\ live h m /\ live h tempBuffer
-    /\ LowStar.Monotonic.Buffer.all_disjoint [loc p_y; loc y3; loc x3; loc s; loc m; loc tempBuffer]
-    /\ as_nat h x3 < prime /\ as_nat h s < prime /\ as_nat h m < prime /\
-    as_nat h p_y < prime)
-    
+  (requires fun h -> live h pY /\ live h y3 /\ live h x3 /\ live h s /\ live h m /\ live h tempBuffer
+    /\ LowStar.Monotonic.Buffer.all_disjoint [loc pY; loc y3; loc x3; loc s; loc m; loc tempBuffer]
+    /\ as_nat h x3 < prime /\ as_nat h s < prime /\ as_nat h m < prime /\ as_nat h pY < prime)
   (ensures fun h0 _ h1 -> modifies (loc y3 |+| loc tempBuffer) h0 h1 /\ 
-    as_seq h1 y3 == point_double_compute_y3_seq (as_seq h0 p_y) (as_seq h0 x3) (as_seq h0 s) (as_seq h0 m) /\
-    as_nat h1 y3 < prime
+    (
+      let mD = fromDomain_ (as_nat h0 m) in 
+      let sD = fromDomain_ (as_nat h0 s) in 
+      let x3D = fromDomain_ (as_nat h0 x3) in 
+      let pyD = fromDomain_ (as_nat h0 pY) in 
+      as_nat h1 y3 = toDomain_ ((mD * (sD - x3D) - (8 * pyD * pyD * pyD * pyD)) % prime256) /\ 
+      as_nat h1 y3 < prime
    )
+ )
 
-let point_double_compute_y3 p_y y3 x3 s m tempBuffer = 
+let point_double_compute_y3 pY y3 x3 s m tempBuffer = 
     let yyyy = sub tempBuffer (size 0) (size 4) in 
     let eightYyyy = sub tempBuffer (size 4) (size 4) in 
     let sx3 = sub tempBuffer (size 8) (size 4) in 
     let msx3 = sub tempBuffer (size 12) (size 4) in 
-    quatre p_y yyyy;
+      let h0 = ST.get() in 
+    quatre pY yyyy;
     multByEight yyyy eightYyyy;
+      let h2 = ST.get() in 
+	lemma_mod_mul_distr_r 8 (fromDomain_ (as_nat h0 pY) * fromDomain_ (as_nat h0 pY) * 
+	fromDomain_ (as_nat h0 pY) * fromDomain_ (as_nat h0 pY)) prime256;
+	assert_by_tactic (8 * (fromDomain_ (as_nat h0 pY) * fromDomain_ (as_nat h0 pY) * 
+	fromDomain_ (as_nat h0 pY) * fromDomain_ (as_nat h0 pY)) ==  8 * fromDomain_ (as_nat h0 pY) * fromDomain_ (as_nat h0 pY) * fromDomain_ (as_nat h0 pY) * fromDomain_ (as_nat h0 pY)) canon; 
     p256_sub s x3 sx3;
+      let h3 = ST.get() in 
+	substractionInDomain2Nat (as_nat h2 s) (as_nat h2 x3);
+	inDomain_mod_is_not_mod (fromDomain_ (as_nat h0 s) - fromDomain_ (as_nat h0 x3));
     montgomery_multiplication_buffer m sx3 msx3; 
-    p256_sub msx3 eightYyyy y3
+      let h4 = ST.get() in 
+	lemma_mod_mul_distr_r (fromDomain_ (as_nat h3 m)) (fromDomain_ (as_nat h0 s) - fromDomain_ (as_nat h0 x3)) prime256;
+    p256_sub msx3 eightYyyy y3;
+	substractionInDomain2Nat (as_nat h4 msx3) (as_nat h4 eightYyyy);
+	inDomain_mod_is_not_mod (fromDomain_ (as_nat h4 msx3) - fromDomain_ (as_nat h4 eightYyyy));
+	
+	lemma_mod_add_distr (-fromDomain_ (as_nat h4 eightYyyy)) (fromDomain_ (as_nat h3 m) * ((fromDomain_ (as_nat h0 s) - fromDomain_ (as_nat h0 x3)))) prime256;
+	lemma_mod_sub_distr (fromDomain_ (as_nat h3 m) * (fromDomain_ (as_nat h0 s) - fromDomain_ (as_nat h0 x3))) (8 * fromDomain_ (as_nat h0 pY) * fromDomain_ (as_nat h0 pY) * 
+	fromDomain_ (as_nat h0 pY) * fromDomain_ (as_nat h0 pY)) prime256
+
 
 #reset-options "--z3refresh --z3rlimit 500"
 
