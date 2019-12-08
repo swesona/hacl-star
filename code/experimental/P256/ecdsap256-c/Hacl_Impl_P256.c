@@ -975,8 +975,8 @@ void point_double(uint64_t *p, uint64_t *result, uint64_t *tempBuffer)
   uint64_t *x3 = tempBuffer + (uint32_t)60U;
   uint64_t *y3 = tempBuffer + (uint32_t)64U;
   uint64_t *z3 = tempBuffer + (uint32_t)68U;
-  uint64_t *p_y = p + (uint32_t)4U;
-  uint64_t *p_z = p + (uint32_t)8U;
+  uint64_t *pY = p + (uint32_t)4U;
+  uint64_t *pZ = p + (uint32_t)8U;
   uint64_t *twoS;
   uint64_t *mm;
   point_double_compute_s_m(p, s1, m, buffer_for_s_m);
@@ -985,8 +985,8 @@ void point_double(uint64_t *p, uint64_t *result, uint64_t *tempBuffer)
   multByTwo(s1, twoS);
   Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_buffer(m, m, mm);
   Hacl_Impl_P256_LowLevel_p256_sub(mm, twoS, x3);
-  point_double_compute_y3(p_y, y3, x3, s1, m, buffer_for_y3);
-  Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_buffer(p_y, p_z, pypz);
+  point_double_compute_y3(pY, y3, x3, s1, m, buffer_for_y3);
+  Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_buffer(pY, pZ, pypz);
   multByTwo(pypz, z3);
   memcpy(result, x3, (uint32_t)4U * sizeof x3[0U]);
   memcpy(result + (uint32_t)4U, y3, (uint32_t)4U * sizeof y3[0U]);

@@ -28,7 +28,7 @@ let point_prime_to_coordinates p  =
    felem_seq_as_nat (sub p 0 4), felem_seq_as_nat (sub p 4 4), felem_seq_as_nat (sub p 8 4) 
    
 
-val montgomery_ladder_step0: p: point_prime -> q: point_prime -> 
+assume val montgomery_ladder_step0: p: point_prime -> q: point_prime -> 
   Tot (r: tuple2 point_prime point_prime 
     {
       let r0, r1 = r in 
@@ -43,17 +43,17 @@ val montgomery_ladder_step0: p: point_prime -> q: point_prime ->
     } 
  )   
     
-
+(*
 let montgomery_ladder_step0 r0 r1 = 
   let r0 = point_add_seq r1 r0 in 
   let r1 = point_double_seq r1 in 
   (r0, r1)
-
+*)
 
 #reset-options "--z3refresh --z3rlimit  100"
 
 
-val montgomery_ladder_step1_seq: p: point_prime -> q: point_prime -> 
+assume val montgomery_ladder_step1_seq: p: point_prime -> q: point_prime -> 
   Tot (r: tuple2 point_prime point_prime 
     {
       let r0, r1 = r in
@@ -68,12 +68,12 @@ val montgomery_ladder_step1_seq: p: point_prime -> q: point_prime ->
     }
  )    
 
-
+(*
 let montgomery_ladder_step1_seq r0 r1 = 
   let r1 = point_add_seq r0 r1 in 
   let r0 = point_double_seq r0 in  
   (r0, r1)
-
+*)
 
 val swap: p: point_prime -> q: point_prime -> Tot (r: tuple2 point_prime point_prime {let pNew, qNew = r in 
   pNew == q /\ qNew == p})
@@ -179,7 +179,7 @@ let cswap bit p1 p2 =
 
 #reset-options "--z3refresh --z3rlimit 100"
 
-val lemma_swaped_steps: p: point_prime -> q: point_prime -> 
+assume val lemma_swaped_steps: p: point_prime -> q: point_prime -> 
   Lemma (
     let (afterSwapP, afterSwapQ) = swap p q in 
     let p1, q1 = montgomery_ladder_step1_seq afterSwapP afterSwapQ in 
@@ -187,6 +187,7 @@ val lemma_swaped_steps: p: point_prime -> q: point_prime ->
     let r0, r1 = montgomery_ladder_step0 p q in 
     p2 == r0 /\ q2 == r1)
 
+(*
 let lemma_swaped_steps p q = 
   let p0, q0 = montgomery_ladder_step0 p q in 
     assert(p0 == point_add_seq q p);
@@ -202,7 +203,7 @@ let lemma_swaped_steps p q =
     assert(q2 == point_double_seq q);
     assert(p2 == p0);
     assert(q2 == q0)
-
+*)
 
 val montgomery_ladder_step_swap: p: point_prime -> q: point_prime -> k: scalar -> i: nat {i < 256} -> 
   Tot (r: tuple2 point_prime point_prime 

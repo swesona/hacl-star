@@ -774,7 +774,7 @@ let lemma_xToSpecification_after_double p q result u1 u2 s1 s2 h r =
      lemmaFromDomainToDomain (felem_seq_as_nat y3);
      lemmaFromDomainToDomain (felem_seq_as_nat z3)
 
-
+(*
 #reset-options "--z3rlimit 500 --z3refresh" 
 noextract
 val point_add_seq: p: point_prime -> q: point_prime -> Tot (r: point_prime {
@@ -799,7 +799,7 @@ let point_add_seq p q =
   let flag = point_double_condition_seq u1 u2 s1 s2 z1 z2 in 
   
   if flag then begin  
-    let result = point_double_seq p in 
+    (*let result = point_double_seq p in  *)
     let x3, y3, z3  = sub result 0 4, sub result 4 4, sub result 8 4 in 
     lemma_xToSpecification (fromDomain_ (felem_seq_as_nat x1)) (fromDomain_ (felem_seq_as_nat y1)) (fromDomain_ (felem_seq_as_nat z1)) (fromDomain_ (felem_seq_as_nat x2)) (fromDomain_ (felem_seq_as_nat y2)) (fromDomain_ (felem_seq_as_nat z2)) u1 u2 s1 s2 x3 y3 z3;
     result end
@@ -810,3 +810,4 @@ let point_add_seq p q =
       lemma_xToSpecification_after_double p q result u1 u2 s1 s2 h r;
       result
   end
+*)
