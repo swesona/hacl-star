@@ -1130,8 +1130,8 @@ void point_add(uint64_t *p, uint64_t *q, uint64_t *result, uint64_t *tempBuffer)
     Hacl_Impl_P256_LowLevel_p256_sub(u2, u11, h);
     Hacl_Impl_P256_LowLevel_p256_sub(s2, s1, r);
     Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_buffer(h, h, temp);
-    Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_buffer(u11, temp, uh);
-    Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_buffer(h, temp, hCube);
+    Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_buffer(temp, u11, uh);
+    Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_buffer(temp, h, hCube);
     z11 = p + (uint32_t)8U;
     z21 = q + (uint32_t)8U;
     tempBuffer161 = tempBuffer28;

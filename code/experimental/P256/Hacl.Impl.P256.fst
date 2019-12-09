@@ -481,20 +481,48 @@ inline_for_extraction noextract
 val compute_common_params_point_add: h: felem -> r: felem -> uh: felem -> hCube: felem -> 
   u1: felem -> u2: felem -> s1: felem -> s2: felem -> tempBuffer: lbuffer uint64 (size 16) -> 
   Stack unit 
-    (requires fun h0 -> live h0 h /\ live h0 r /\ live h0 uh /\ live h0 hCube /\ live h0 u1 /\ live h0 u2 /\ live h0 s1 /\ live h0 s2 /\ live h0 tempBuffer /\  LowStar.Monotonic.Buffer.all_disjoint [loc u1; loc u2; loc s1; loc s2; loc h; loc r; loc uh; loc hCube; loc tempBuffer] /\ 
-  as_nat h0 u1 < prime /\ as_nat h0 u2 < prime /\ as_nat h0 s1 < prime /\ as_nat h0 s2 < prime)
-    (ensures fun h0 _ h1 ->  modifies (loc h |+| loc r |+| loc uh |+| loc hCube |+| loc tempBuffer) h0 h1 /\ as_nat h1 h < prime /\ as_nat h1 r < prime /\ as_nat h1 uh < prime /\ as_nat h1 hCube < prime /\
-      (let (hN, rN, uhN, hCubeN) = compute_common_params_point_add_seq (as_seq h0 u1) (as_seq h0 u2) (as_seq h0 s1) (as_seq h0 s2) in  as_seq h1 h == hN /\ as_seq h1 r == rN /\ as_seq h1 uh == uhN /\ as_seq h1 hCube == hCubeN)
-    )
+    (requires fun h0 -> live h0 h /\ live h0 r /\ live h0 uh /\ live h0 hCube /\ live h0 u1 /\ live h0 u2 /\ live h0 s1 /\ live h0 s2 /\ live h0 tempBuffer /\  
+      LowStar.Monotonic.Buffer.all_disjoint [loc u1; loc u2; loc s1; loc s2; loc h; loc r; loc uh; loc hCube; loc tempBuffer] /\ as_nat h0 u1 < prime /\ as_nat h0 u2 < prime /\ as_nat h0 s1 < prime /\ as_nat h0 s2 < prime)
+    (ensures fun h0 _ h1 ->  
+      modifies (loc h |+| loc r |+| loc uh |+| loc hCube |+| loc tempBuffer) h0 h1 /\ 
+      as_nat h1 h < prime /\ as_nat h1 r < prime /\ as_nat h1 uh < prime /\ as_nat h1 hCube < prime /\
+      (
+	let u1D = fromDomain_ (as_nat h0 u1) in 
+	let u2D = fromDomain_ (as_nat h0 u2) in 
+	let s1D = fromDomain_ (as_nat h0 s1) in 
+	let s2D = fromDomain_ (as_nat h0 s2) in 
+	
+	let hD = fromDomain_ (as_nat h1 h) in 
+
+	as_nat h1 h == toDomain_ ((u2D - u1D) % prime256) /\
+	as_nat h1 r == toDomain_ ((s2D - s1D) % prime256) /\
+	as_nat h1 uh == toDomain_ (hD * hD * u1D % prime256) /\
+	as_nat h1 hCube == toDomain_ (hD * hD * hD % prime256)
+  )
+)
 
 
 let compute_common_params_point_add h r uh hCube u1 u2 s1 s2 tempBuffer =  
-      let temp = sub tempBuffer (size 0) (size 4) in 
-      p256_sub u2 u1 h; 
-      p256_sub s2 s1 r; 
-      montgomery_multiplication_buffer h h temp;
-      montgomery_multiplication_buffer u1 temp uh;
-      montgomery_multiplication_buffer h temp hCube
+    let h0 = ST.get() in 
+  let temp = sub tempBuffer (size 0) (size 4) in 
+  p256_sub u2 u1 h; 
+    let h1 = ST.get() in 
+  p256_sub s2 s1 r; 
+    let h2 = ST.get() in   
+  montgomery_multiplication_buffer h h temp;
+    let h3 = ST.get() in   
+  montgomery_multiplication_buffer temp u1 uh;
+  montgomery_multiplication_buffer temp h hCube;
+
+    substractionInDomain2Nat (as_nat h0 u2) (as_nat h0 u1);
+    inDomain_mod_is_not_mod (fromDomain_ (as_nat h0 u2) - fromDomain_ (as_nat h0 u1));
+    substractionInDomain2Nat (as_nat h1 s2) (as_nat h1 s1);
+    
+    inDomain_mod_is_not_mod (fromDomain_ (as_nat h1 s2) - fromDomain_ (as_nat h1 s1));
+    lemma_mod_mul_distr_l (fromDomain_ (as_nat h2 h) * fromDomain_ (as_nat h2 h)) (fromDomain_ (as_nat h3 u1)) prime256;
+    lemma_mod_mul_distr_l (fromDomain_ (as_nat h2 h) * fromDomain_ (as_nat h2 h)) (fromDomain_ (as_nat h1 h)) prime256
+
+
 
 inline_for_extraction noextract 
 val computeX3_point_add: x3: felem -> hCube: felem -> uh: felem -> r: felem -> tempBuffer: lbuffer uint64 (size 16)->  Stack unit 
