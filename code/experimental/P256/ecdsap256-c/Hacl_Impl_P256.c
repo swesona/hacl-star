@@ -1121,8 +1121,8 @@ void point_add(uint64_t *p, uint64_t *q, uint64_t *result, uint64_t *tempBuffer)
     uint64_t *y3_out1;
     uint64_t *z3_out1;
     uint64_t *rSquare;
-    uint64_t *r_h;
-    uint64_t *twouh;
+    uint64_t *rH;
+    uint64_t *twoUh;
     uint64_t *s1hCube;
     uint64_t *u1hx3;
     uint64_t *ru1hx3;
@@ -1139,12 +1139,12 @@ void point_add(uint64_t *p, uint64_t *q, uint64_t *result, uint64_t *tempBuffer)
     y3_out1 = tempBuffer28 + (uint32_t)20U;
     z3_out1 = tempBuffer28 + (uint32_t)24U;
     rSquare = tempBuffer161;
-    r_h = tempBuffer161 + (uint32_t)4U;
-    twouh = tempBuffer161 + (uint32_t)8U;
+    rH = tempBuffer161 + (uint32_t)4U;
+    twoUh = tempBuffer161 + (uint32_t)8U;
     Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_buffer(r, r, rSquare);
-    Hacl_Impl_P256_LowLevel_p256_sub(rSquare, hCube, r_h);
-    multByTwo(uh, twouh);
-    Hacl_Impl_P256_LowLevel_p256_sub(r_h, twouh, x3_out1);
+    Hacl_Impl_P256_LowLevel_p256_sub(rSquare, hCube, rH);
+    multByTwo(uh, twoUh);
+    Hacl_Impl_P256_LowLevel_p256_sub(rH, twoUh, x3_out1);
     s1hCube = tempBuffer161;
     u1hx3 = tempBuffer161 + (uint32_t)4U;
     ru1hx3 = tempBuffer161 + (uint32_t)8U;

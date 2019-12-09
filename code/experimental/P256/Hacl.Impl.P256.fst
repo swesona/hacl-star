@@ -523,7 +523,6 @@ let compute_common_params_point_add h r uh hCube u1 u2 s1 s2 tempBuffer =
     lemma_mod_mul_distr_l (fromDomain_ (as_nat h2 h) * fromDomain_ (as_nat h2 h)) (fromDomain_ (as_nat h1 h)) prime256
 
 
-
 inline_for_extraction noextract 
 val computeX3_point_add: x3: felem -> hCube: felem -> uh: felem -> r: felem -> tempBuffer: lbuffer uint64 (size 16)->  Stack unit 
   (requires fun h0 -> live h0 x3 /\ live h0 hCube /\ live h0 uh /\ live h0 r /\ live h0 tempBuffer /\
@@ -531,17 +530,37 @@ val computeX3_point_add: x3: felem -> hCube: felem -> uh: felem -> r: felem -> t
     as_nat h0 hCube < prime /\as_nat h0 uh < prime /\ as_nat h0 r < prime
   )
   (ensures fun h0 _ h1 -> modifies (loc x3 |+| loc tempBuffer) h0 h1 /\ as_nat h1 x3 < prime /\ 
-    as_seq h1 x3 == computeX3_point_add_seq (as_seq h0 hCube) (as_seq h0 uh) (as_seq h0 r) 
+    (
+      let hCubeD = fromDomain_ (as_nat h0 hCube) in 
+      let uhD = fromDomain_ (as_nat h0 uh) in 
+      let rD = fromDomain_ (as_nat h0 r) in 
+      as_nat h1 x3 == toDomain_ ((rD * rD - hCubeD - 2 * uhD) % prime256)
+    )  
   )
 
 let computeX3_point_add x3 hCube uh r tempBuffer = 
-    let rSquare = sub tempBuffer (size 0) (size 4) in 
-    let r_h = sub tempBuffer (size 4) (size 4) in 
-    let twouh = sub tempBuffer (size 8) (size 4) in 
-    montgomery_multiplication_buffer r r rSquare; 
-    p256_sub rSquare hCube r_h;
-    multByTwo uh twouh;
-    p256_sub r_h twouh x3
+    let h0 = ST.get() in 
+  let rSquare = sub tempBuffer (size 0) (size 4) in 
+  let rH = sub tempBuffer (size 4) (size 4) in 
+  let twoUh = sub tempBuffer (size 8) (size 4) in 
+  montgomery_multiplication_buffer r r rSquare; 
+    let h1 = ST.get() in 
+  p256_sub rSquare hCube rH;
+    let h2 = ST.get() in 
+  multByTwo uh twoUh;
+    let h3 = ST.get() in 
+  p256_sub rH twoUh x3;  
+  
+    substractionInDomain2Nat (as_nat h1 rSquare) (as_nat h1 hCube);
+    inDomain_mod_is_not_mod (fromDomain_ (as_nat h1 rSquare) - fromDomain_ (as_nat h1 hCube));
+    lemma_mod_add_distr (-fromDomain_ (as_nat h1 hCube)) (fromDomain_ (as_nat h0 r) * fromDomain_ (as_nat h0 r)) prime256;
+    
+    substractionInDomain2Nat (as_nat h3 rH) (as_nat h3 twoUh);
+    inDomain_mod_is_not_mod (fromDomain_ (as_nat h3 rH) - fromDomain_ (as_nat h3 twoUh));
+    lemma_mod_add_distr (-fromDomain_ (as_nat h3 twoUh)) (fromDomain_ (as_nat h0 r) * fromDomain_ (as_nat h0 r) - fromDomain_ (as_nat h1 hCube)) prime256;
+    
+    lemma_mod_sub_distr (fromDomain_ (as_nat h0 r) * fromDomain_ (as_nat h0 r) - fromDomain_ (as_nat h1 hCube)) (2 * fromDomain_ (as_nat h2 uh)) prime256
+
 
 
 inline_for_extraction noextract 
