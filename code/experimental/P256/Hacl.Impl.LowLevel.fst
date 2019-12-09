@@ -624,8 +624,8 @@ let isZero_uint64 f =
 
 
 val copy_conditional: out: felem -> x: felem -> mask: uint64{uint_v mask = 0 \/ uint_v mask = pow2 64 - 1} -> Stack unit 
-  (requires fun h -> live h out /\ live h x /\ as_nat h out < prime /\ as_nat h x < prime)
-  (ensures fun h0 _ h1 -> modifies (loc out) h0 h1 /\ as_nat h1 out < prime /\ 
+  (requires fun h -> live h out /\ live h x)
+  (ensures fun h0 _ h1 -> modifies (loc out) h0 h1 /\ 
     (if uint_v mask = 0 then as_seq h1 out == as_seq h0 out else as_seq h1 out == as_seq h0 x)
   ) 
 
@@ -660,3 +660,39 @@ let copy_conditional out x mask =
   lemma_eq_funct_ (as_seq h1 out) (as_seq h0 out);
   lemma_eq_funct_ (as_seq h1 out) (as_seq h0 x)
   
+
+
+val compare_felem: a: felem -> b: felem -> Stack uint64
+  (requires fun h -> live h a /\ live h b) 
+  (ensures fun h0 r h1 -> modifies0 h0 h1 /\ (if as_nat h0 a = as_nat h0 b then uint_v r == pow2 64 - 1 else uint_v r = 0))
+
+
+let compare_felem a b = 
+  let a_0 = index a (size 0) in 
+  let a_1 = index a (size 1) in 
+  let a_2 = index a (size 2) in 
+  let a_3 = index a (size 3) in 
+
+  let b_0 = index b (size 0) in 
+  let b_1 = index b (size 1) in 
+  let b_2 = index b (size 2) in 
+  let b_3 = index b (size 3) in 
+
+  let r_0 = eq_mask a_0 b_0 in 
+      eq_mask_lemma a_0 b_0;
+  let r_1 = eq_mask a_1 b_1 in 
+      eq_mask_lemma a_1 b_1;
+  let r_2 = eq_mask a_2 b_2 in 
+      eq_mask_lemma a_2 b_2;
+  let r_3 = eq_mask a_3 b_3 in 
+      eq_mask_lemma a_3 b_3;
+  
+  let r01 = logand r_0 r_1 in 
+      logand_lemma r_0 r_1;
+  let r23 = logand r_2 r_3 in 
+      logand_lemma r_2 r_3;
+  
+  let r = logand r01 r23 in 
+      logand_lemma r01 r23;
+      lemma_equality (a_0, a_1, a_2, a_3) (b_0, b_1, b_2, b_3); 
+    r

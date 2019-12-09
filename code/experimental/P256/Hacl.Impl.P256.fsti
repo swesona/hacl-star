@@ -98,11 +98,6 @@ val point_double: p: point -> result: point -> tempBuffer: lbuffer uint64 (size 
 ) 
 
 
- 
-val compare_felem: a: felem -> b: felem -> Stack uint64
-  (requires fun h -> live h a /\ live h b /\ as_nat h a < prime /\ as_nat h b < prime ) 
-  (ensures fun h0 r h1 -> modifies0 h0 h1 /\ r == compare_felem_seq (as_seq h0 a) (as_seq h0 b)) 
-
 val point_add: p: point -> q: point -> result: point -> tempBuffer: lbuffer uint64 (size 88) -> 
    Stack unit (requires fun h -> live h p /\ live h q /\ live h result /\ live h tempBuffer /\ 
    eq_or_disjoint q result /\

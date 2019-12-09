@@ -357,6 +357,25 @@ static void Hacl_Impl_LowLevel_copy_conditional(uint64_t *out, uint64_t *x, uint
   out[3U] = r_3;
 }
 
+static uint64_t Hacl_Impl_LowLevel_compare_felem(uint64_t *a, uint64_t *b)
+{
+  uint64_t a_0 = a[0U];
+  uint64_t a_1 = a[1U];
+  uint64_t a_2 = a[2U];
+  uint64_t a_3 = a[3U];
+  uint64_t b_0 = b[0U];
+  uint64_t b_1 = b[1U];
+  uint64_t b_2 = b[2U];
+  uint64_t b_3 = b[3U];
+  uint64_t r_0 = FStar_UInt64_eq_mask(a_0, b_0);
+  uint64_t r_1 = FStar_UInt64_eq_mask(a_1, b_1);
+  uint64_t r_2 = FStar_UInt64_eq_mask(a_2, b_2);
+  uint64_t r_3 = FStar_UInt64_eq_mask(a_3, b_3);
+  uint64_t r01 = r_0 & r_1;
+  uint64_t r23 = r_2 & r_3;
+  return r01 & r23;
+}
+
 uint64_t
 Hacl_Impl_P256_LowLevel_prime256_buffer[4U] =
   {
@@ -1032,25 +1051,6 @@ copy_point_conditional(
   Hacl_Impl_LowLevel_copy_conditional(z3_out, p_z, mask);
 }
 
-uint64_t compare_felem(uint64_t *a, uint64_t *b)
-{
-  uint64_t a_0 = a[0U];
-  uint64_t a_1 = a[1U];
-  uint64_t a_2 = a[2U];
-  uint64_t a_3 = a[3U];
-  uint64_t b_0 = b[0U];
-  uint64_t b_1 = b[1U];
-  uint64_t b_2 = b[2U];
-  uint64_t b_3 = b[3U];
-  uint64_t r_0 = FStar_UInt64_eq_mask(a_0, b_0);
-  uint64_t r_1 = FStar_UInt64_eq_mask(a_1, b_1);
-  uint64_t r_2 = FStar_UInt64_eq_mask(a_2, b_2);
-  uint64_t r_3 = FStar_UInt64_eq_mask(a_3, b_3);
-  uint64_t r01 = r_0 & r_1;
-  uint64_t r23 = r_2 & r_3;
-  return r01 & r23;
-}
-
 void point_add(uint64_t *p, uint64_t *q, uint64_t *result, uint64_t *tempBuffer)
 {
   uint64_t *z1 = p + (uint32_t)8U;
@@ -1095,8 +1095,8 @@ void point_add(uint64_t *p, uint64_t *q, uint64_t *result, uint64_t *tempBuffer)
   Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_buffer(x2, z1Square, u2);
   Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_buffer(y1, z2Cube, s1);
   Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_buffer(y2, z1Cube, s2);
-  one1 = compare_felem(u11, u2);
-  two = compare_felem(s1, s2);
+  one1 = Hacl_Impl_LowLevel_compare_felem(u11, u2);
+  two = Hacl_Impl_LowLevel_compare_felem(s1, s2);
   z1notZero = Hacl_Impl_LowLevel_isZero_uint64(z1);
   z2notZero = Hacl_Impl_LowLevel_isZero_uint64(z2);
   pointsInf = ~z1notZero & ~z2notZero;
@@ -1380,7 +1380,7 @@ bool isPointOnCurve(uint64_t *p)
     p256_constant[2U] = (uint64_t)16546823903870267094U;
     p256_constant[3U] = (uint64_t)15866188208926050356U;
     Hacl_Impl_P256_LowLevel_p256_add(xBuffer, p256_constant, xBuffer);
-    r = compare_felem(y2Buffer, xBuffer);
+    r = Hacl_Impl_LowLevel_compare_felem(y2Buffer, xBuffer);
     z1 = !(r == (uint64_t)0U);
     return z1;
   }

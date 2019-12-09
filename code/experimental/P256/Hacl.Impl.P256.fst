@@ -379,22 +379,26 @@ val copy_point_conditional: x3_out: felem -> y3_out: felem -> z3_out: felem -> p
     as_nat h x3_out < prime /\ as_nat h y3_out < prime /\ as_nat h z3_out < prime /\
     as_nat h (gsub p (size 0) (size 4)) < prime /\ 
     as_nat h (gsub p (size 4) (size 4)) < prime /\ 
-    as_nat h (gsub p (size 8) (size 4)) < prime /\
-    as_nat h (gsub maskPoint (size 0) (size 4)) < prime /\ 
-    as_nat h (gsub maskPoint (size 4) (size 4)) < prime /\ 
-    as_nat h (gsub maskPoint (size 8) (size 4)) < prime 
+    as_nat h (gsub p (size 8) (size 4)) < prime 
   )
   (ensures fun h0 _ h1 -> modifies (loc x3_out |+| loc y3_out |+| loc z3_out) h0 h1 /\ 
     as_nat h1 x3_out < prime /\
     as_nat h1 y3_out < prime /\
     as_nat h1 z3_out < prime /\
-    (let xN, yN, zN = copy_point_conditional_seq (as_seq h0 x3_out) (as_seq h0 y3_out) (as_seq h0 z3_out) (as_seq h0 p) (as_seq h0 maskPoint) in 
-      xN == as_seq h1 x3_out /\ yN == as_seq h1 y3_out /\ zN == as_seq h1 z3_out)
+    (
+      let mask = as_nat h0 (gsub maskPoint (size 8) (size 4)) in 
+      let x = gsub p (size 0) (size 4) in 
+      let y = gsub p (size 4) (size 4) in 
+      let z = gsub p (size 8) (size 4) in 
+
+      if mask = 0 then 
+	as_seq h1 x3_out == as_seq h0 x /\ as_seq h1 y3_out == as_seq h0 y /\ as_seq h1 z3_out == as_seq h0 z 
+      else 
+	as_seq h1 x3_out == as_seq h0 x3_out /\ as_seq h1 y3_out == as_seq h0 y3_out /\ as_seq h1 z3_out == as_seq h0 z3_out
     )
+)
 
 let copy_point_conditional x3_out y3_out z3_out p maskPoint = 
-  let h0 = ST.get() in 
-  
   let z = sub maskPoint (size 8) (size 4) in 
   let mask = isZero_uint64 z in 
 
@@ -406,20 +410,7 @@ let copy_point_conditional x3_out y3_out z3_out p maskPoint =
   copy_conditional y3_out p_y mask;
   copy_conditional z3_out p_z mask
 
-
-let compare_felem a b = 
-  let a_0 = index a (size 0) in 
-  let a_1 = index a (size 1) in 
-  let a_2 = index a (size 2) in 
-  let a_3 = index a (size 3) in 
-
-  let b_0 = index b (size 0) in 
-  let b_1 = index b (size 1) in 
-  let b_2 = index b (size 2) in 
-  let b_3 = index b (size 3) in 
-
-  equalFelem(a_0, a_1, a_2, a_3) (b_0, b_1, b_2, b_3)
-
+    
 inline_for_extraction noextract 
 val move_from_jacobian_coordinates: u1: felem -> u2: felem -> s1: felem -> s2: felem ->  p: point -> q: point -> 
   tempBuffer16: lbuffer uint64 (size 16) -> 

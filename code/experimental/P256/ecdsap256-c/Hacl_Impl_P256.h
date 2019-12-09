@@ -40,8 +40,6 @@ void pointFromDomain(uint64_t *p, uint64_t *result);
 
 void point_double(uint64_t *p, uint64_t *result, uint64_t *tempBuffer);
 
-uint64_t compare_felem(uint64_t *a, uint64_t *b);
-
 void point_add(uint64_t *p, uint64_t *q, uint64_t *result, uint64_t *tempBuffer);
 
 uint64_t isPointAtInfinityPrivate(uint64_t *p);
