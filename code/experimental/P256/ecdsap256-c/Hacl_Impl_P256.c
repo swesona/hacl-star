@@ -337,6 +337,26 @@ static uint64_t Hacl_Impl_LowLevel_isZero_uint64(uint64_t *f)
   return r01 & r23;
 }
 
+static void Hacl_Impl_LowLevel_copy_conditional(uint64_t *out, uint64_t *x, uint64_t mask)
+{
+  uint64_t out_0 = out[0U];
+  uint64_t out_1 = out[1U];
+  uint64_t out_2 = out[2U];
+  uint64_t out_3 = out[3U];
+  uint64_t x_0 = x[0U];
+  uint64_t x_1 = x[1U];
+  uint64_t x_2 = x[2U];
+  uint64_t x_3 = x[3U];
+  uint64_t r_0 = out_0 ^ (mask & (out_0 ^ x_0));
+  uint64_t r_1 = out_1 ^ (mask & (out_1 ^ x_1));
+  uint64_t r_2 = out_2 ^ (mask & (out_2 ^ x_2));
+  uint64_t r_3 = out_3 ^ (mask & (out_3 ^ x_3));
+  out[0U] = r_0;
+  out[1U] = r_1;
+  out[2U] = r_2;
+  out[3U] = r_3;
+}
+
 uint64_t
 Hacl_Impl_P256_LowLevel_prime256_buffer[4U] =
   {
@@ -993,38 +1013,6 @@ void point_double(uint64_t *p, uint64_t *result, uint64_t *tempBuffer)
   memcpy(result + (uint32_t)8U, z3, (uint32_t)4U * sizeof z3[0U]);
 }
 
-static void copy_conditional(uint64_t *out, uint64_t *x, uint64_t mask)
-{
-  uint64_t out_0 = out[0U];
-  uint64_t out_1 = out[1U];
-  uint64_t out_2 = out[2U];
-  uint64_t out_3 = out[3U];
-  uint64_t x_0 = x[0U];
-  uint64_t x_1 = x[1U];
-  uint64_t x_2 = x[2U];
-  uint64_t x_3 = x[3U];
-  uint64_t out_01 = out_0;
-  uint64_t out_11 = out_1;
-  uint64_t out_21 = out_2;
-  uint64_t out_31 = out_3;
-  uint64_t x_01 = x_0;
-  uint64_t x_11 = x_1;
-  uint64_t x_21 = x_2;
-  uint64_t x_31 = x_3;
-  uint64_t r_0 = out_01 ^ (mask & (out_01 ^ x_01));
-  uint64_t r_1 = out_11 ^ (mask & (out_11 ^ x_11));
-  uint64_t r_2 = out_21 ^ (mask & (out_21 ^ x_21));
-  uint64_t r_3 = out_31 ^ (mask & (out_31 ^ x_31));
-  uint64_t temp_0 = r_0;
-  uint64_t temp_1 = r_1;
-  uint64_t temp_2 = r_2;
-  uint64_t temp_3 = r_3;
-  out[0U] = temp_0;
-  out[1U] = temp_1;
-  out[2U] = temp_2;
-  out[3U] = temp_3;
-}
-
 static void
 copy_point_conditional(
   uint64_t *x3_out,
@@ -1039,9 +1027,9 @@ copy_point_conditional(
   uint64_t *p_x = p;
   uint64_t *p_y = p + (uint32_t)4U;
   uint64_t *p_z = p + (uint32_t)8U;
-  copy_conditional(x3_out, p_x, mask);
-  copy_conditional(y3_out, p_y, mask);
-  copy_conditional(z3_out, p_z, mask);
+  Hacl_Impl_LowLevel_copy_conditional(x3_out, p_x, mask);
+  Hacl_Impl_LowLevel_copy_conditional(y3_out, p_y, mask);
+  Hacl_Impl_LowLevel_copy_conditional(z3_out, p_z, mask);
 }
 
 uint64_t compare_felem(uint64_t *a, uint64_t *b)
@@ -1210,7 +1198,7 @@ void norm(uint64_t *p, uint64_t *resultPoint, uint64_t *tempBuffer)
     resultZ[1U] = (uint64_t)0U;
     resultZ[2U] = (uint64_t)0U;
     resultZ[3U] = (uint64_t)0U;
-    copy_conditional(resultZ, zeroBuffer, bit);
+    Hacl_Impl_LowLevel_copy_conditional(resultZ, zeroBuffer, bit);
   }
 }
 

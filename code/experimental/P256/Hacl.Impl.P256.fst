@@ -185,8 +185,7 @@ let multByMinusThree a result  =
 
 val copy_point: p: point -> result: point -> Stack unit 
   (requires fun h -> live h p /\ live h result /\ disjoint p result) 
-  (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 
-    (*as_seq h1 result == copy_point_seq (as_seq h0 p) *) )
+  (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\ as_seq h1 result == as_seq h0 p)
 
 let copy_point p result = copy result p
  
@@ -372,35 +371,6 @@ let point_double p result tempBuffer =
      Hacl.Spec.P256.MontgomeryMultiplication.PointDouble.lemma_xToSpecification pxD pyD pzD (as_nat hEnd s) (as_nat hEnd m) (as_nat hEnd (gsub result (size 0) (size 4)));
      Hacl.Spec.P256.MontgomeryMultiplication.PointDouble.lemma_yToSpecification pxD pyD pzD (as_nat hEnd s) (as_nat hEnd m) (as_nat hEnd x3) (as_nat hEnd (gsub result (size 4) (size 4)));
      Hacl.Spec.P256.MontgomeryMultiplication.PointDouble.lemma_zToSpecification pxD pyD pzD (as_nat hEnd (gsub result (size 8) (size 4)))
-
-
-
-val copy_conditional: out: felem -> x: felem -> mask: uint64{uint_v mask = 0 \/ uint_v mask = pow2 64 - 1} -> Stack unit 
-  (requires fun h -> live h out /\ live h x /\ as_nat h out < prime /\ as_nat h x < prime)
-  (ensures fun h0 _ h1 -> modifies (loc out) h0 h1 /\ as_nat h1 out < prime /\ 
-    as_seq h1 out == copy_conditional_seq (as_seq h0 out) (as_seq h0 x) mask)
-
-let copy_conditional out x mask = 
-    let h0 = ST.get() in 
-  let out_0 = index out (size 0) in 
-  let out_1 = index out (size 1) in 
-  let out_2 = index out (size 2) in 
-  let out_3 = index out (size 3) in 
-
-  let x_0 = index x (size 0) in 
-  let x_1 = index x (size 1) in 
-  let x_2 = index x (size 2) in 
-  let x_3 = index x (size 3) in 
-
-  let (temp_0, temp_1, temp_2, temp_3)  = copy_conditional_tuple (out_0, out_1, out_2, out_3) (x_0, x_1, x_2, x_3) mask in 
-
-  upd out (size 0) temp_0;
-  upd out (size 1) temp_1;
-  upd out (size 2) temp_2;
-  upd out (size 3) temp_3;
-
-    let h1 = ST.get() in 
-    assert(Lib.Sequence.equal (as_seq h1 out) (copy_conditional_seq (as_seq h0 out) (as_seq h0 x) mask))
 
 
 val copy_point_conditional: x3_out: felem -> y3_out: felem -> z3_out: felem -> p: point -> maskPoint: point -> Stack unit
