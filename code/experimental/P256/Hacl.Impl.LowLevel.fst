@@ -622,6 +622,16 @@ let isZero_uint64 f =
       r
 
 
+val uploadOneImpl: f: felem -> Stack unit
+  (requires fun h -> live h f)
+  (ensures fun h0 _ h1 -> as_nat h1 f == 1 /\ modifies (loc f) h0 h1)
+  
+let uploadOneImpl f = 
+  upd f (size 0) (u64 1);
+  upd f (size 1) (u64 0);
+  upd f (size 2) (u64 0);
+  upd f (size 3) (u64 0)
+
 
 val copy_conditional: out: felem -> x: felem -> mask: uint64{uint_v mask = 0 \/ uint_v mask = pow2 64 - 1} -> Stack unit 
   (requires fun h -> live h out /\ live h x)

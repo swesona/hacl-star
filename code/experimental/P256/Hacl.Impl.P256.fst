@@ -423,52 +423,60 @@ val move_from_jacobian_coordinates: u1: felem -> u2: felem -> s1: felem -> s2: f
     as_nat h (gsub q (size 0) (size 4)) < prime /\ 
     as_nat h (gsub q (size 4) (size 4)) < prime
     )
-  (ensures fun h0 _ h1 -> 
+  (ensures fun h0 _ h1 ->  
     modifies (loc u1 |+| loc u2 |+| loc s1 |+| loc s2 |+| loc tempBuffer16) h0 h1 /\
     as_nat h1 u1 < prime /\ as_nat h1 u2 < prime /\ as_nat h1 s1 < prime /\ as_nat h1 s2 < prime  /\
     (
-      let u1_, u2_, s1_, s2_ = move_from_jacobian_coordinates_seq (as_seq h0 p) (as_seq h0 q) in 
-      as_seq h1 u1 == u1_ /\ as_seq h1 u2 == u2_ /\ as_seq h1 s1 == s1_ /\ as_seq h1 s2 == s2_
-    )
-  )  
+      let pX, pY, pZ = as_nat h0 (gsub p (size 0) (size 4)), as_nat h0 (gsub p (size 4) (size 4)), as_nat h0 (gsub p (size 8) (size 4)) in 
+      let qX, qY, qZ = as_nat h0 (gsub q (size 0) (size 4)), as_nat h0 (gsub q (size 4) (size 4)), as_nat h0 (gsub q (size 8) (size 4)) in 
+      
+      let pxD, pyD, pzD = fromDomain_ pX, fromDomain_ pY, fromDomain_ pZ in 
+      let qxD, qyD, qzD = fromDomain_ qX, fromDomain_ qY, fromDomain_ qZ in 
+
+      as_nat h1 u1 == toDomain_ (qzD * qzD * pxD % prime256) /\
+      as_nat h1 u2 == toDomain_ (pzD * pzD * qxD % prime256) /\
+      as_nat h1 s1 == toDomain_ (qzD * qzD * qzD * pyD % prime256) /\
+      as_nat h1 s2 == toDomain_ (pzD * pzD * pzD * qyD % prime256)
+)
+)
 
 let move_from_jacobian_coordinates u1 u2 s1 s2 p q tempBuffer = 
     let h0 = ST.get() in 
-   let x1 = sub p (size 0) (size 4) in 
-   let y1 = sub p (size 4) (size 4) in 
-   let z1 = sub p (size 8) (size 4) in 
+   let pX = sub p (size 0) (size 4) in 
+   let pY = sub p (size 4) (size 4) in 
+   let pZ = sub p (size 8) (size 4) in 
 
-   let x2 = sub q (size 0) (size 4) in 
-   let y2 = sub q (size 4) (size 4) in 
-   let z2 = sub q (size 8) (size 4) in 
+   let qX = sub q (size 0) (size 4) in 
+   let qY = sub q (size 4) (size 4) in 
+   let qZ = sub q (size 8) (size 4) in 
 
    let z2Square = sub tempBuffer (size 0) (size 4) in 
    let z1Square = sub tempBuffer (size 4) (size 4) in 
    let z2Cube = sub tempBuffer (size 8) (size 4) in 
    let z1Cube = sub tempBuffer (size 12) (size 4) in  
 
-   montgomery_multiplication_buffer z2 z2 z2Square;
-   montgomery_multiplication_buffer z1 z1 z1Square;
-   montgomery_multiplication_buffer z2Square z2 z2Cube;
-   montgomery_multiplication_buffer z1Square z1 z1Cube;
+   montgomery_multiplication_buffer qZ qZ z2Square;
+   montgomery_multiplication_buffer pZ pZ z1Square;
+   montgomery_multiplication_buffer z2Square qZ z2Cube;
+   
+   montgomery_multiplication_buffer z1Square pZ z1Cube;
+   montgomery_multiplication_buffer z2Square pX u1;
+   montgomery_multiplication_buffer z1Square qX u2;
+   
+   montgomery_multiplication_buffer z2Cube pY s1;
+   montgomery_multiplication_buffer z1Cube qY s2;
+   
 
-     let h1 = ST.get() in 
-     assert(modifies1 tempBuffer h0 h1);
+     lemma_mod_mul_distr_l (fromDomain_ (as_nat h0 qZ) * fromDomain_ (as_nat h0 qZ)) (fromDomain_ (as_nat h0 qZ)) prime256;
+     lemma_mod_mul_distr_l (fromDomain_ (as_nat h0 pZ) * fromDomain_ (as_nat h0 pZ)) (fromDomain_ (as_nat h0 pZ)) prime256;
+     lemma_mod_mul_distr_l (fromDomain_ (as_nat h0 qZ) * fromDomain_ (as_nat h0 qZ)) (fromDomain_ (as_nat h0 pX)) prime256;   
+     
+     lemma_mod_mul_distr_l (fromDomain_ (as_nat h0 pZ) * fromDomain_ (as_nat h0 pZ)) (fromDomain_ (as_nat h0 qX)) prime256;
+     lemma_mod_mul_distr_l (fromDomain_ (as_nat h0 qZ) * fromDomain_ (as_nat h0 qZ) * fromDomain_ (as_nat h0 qZ)) (fromDomain_ (as_nat h0 pY)) prime256;
+     lemma_mod_mul_distr_l (fromDomain_ (as_nat h0 pZ) * fromDomain_ (as_nat h0 pZ) * fromDomain_ (as_nat h0 pZ)) (fromDomain_ (as_nat h0 qY)) prime256
 
-   montgomery_multiplication_buffer x1 z2Square u1;
-   montgomery_multiplication_buffer x2 z1Square u2;
 
-     let h2 = ST.get() in 
-     assert(modifies2 u1 u2 h1 h2);
 
-   montgomery_multiplication_buffer y1 z2Cube s1;
-   montgomery_multiplication_buffer y2 z1Cube s2;
-
-     let h3 = ST.get() in 
-      assert(modifies2 s1 s2 h2 h3);
-     assert(let u1_, u2_, s1_, s2_ = move_from_jacobian_coordinates_seq (as_seq h0 p) (as_seq h0 q) in 
-      as_seq h3 u1 == u1_ /\ as_seq h3 u2 == u2_ /\ as_seq h3 s1 == s1_ /\ as_seq h3 s2 == s2_)
-      
 inline_for_extraction noextract 
 val compute_common_params_point_add: h: felem -> r: felem -> uh: felem -> hCube: felem -> 
   u1: felem -> u2: felem -> s1: felem -> s2: felem -> tempBuffer: lbuffer uint64 (size 16) -> 
@@ -671,17 +679,6 @@ let point_add p q result tempBuffer =
    assert(modifies2 tempBuffer result h0 hend) (*;
    assert(Lib.Sequence.equal (as_seq hend result) (point_add_seq (as_seq h0 p) (as_seq h0 q))) *)
 
-
-inline_for_extraction noextract 
-val uploadOneImpl: f: felem -> Stack unit
-  (requires fun h -> live h f)
-  (ensures fun h0 _ h1 -> as_nat h1 f == 1 /\ modifies (loc f) h0 h1)
-  
-let uploadOneImpl f = 
-  upd f (size 0) (u64 1);
-  upd f (size 1) (u64 0);
-  upd f (size 2) (u64 0);
-  upd f (size 3) (u64 0)
 
 val lemma_pointAtInfInDomain: x: nat -> y: nat -> z: nat {z < prime256} -> 
   Lemma (isPointAtInfinity (x, y, z) == isPointAtInfinity ((fromDomain_ x), (fromDomain_ y), (fromDomain_ z)))

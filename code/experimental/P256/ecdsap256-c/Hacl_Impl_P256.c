@@ -337,6 +337,14 @@ static uint64_t Hacl_Impl_LowLevel_isZero_uint64(uint64_t *f)
   return r01 & r23;
 }
 
+static void Hacl_Impl_LowLevel_uploadOneImpl(uint64_t *f)
+{
+  f[0U] = (uint64_t)1U;
+  f[1U] = (uint64_t)0U;
+  f[2U] = (uint64_t)0U;
+  f[3U] = (uint64_t)0U;
+}
+
 static void Hacl_Impl_LowLevel_copy_conditional(uint64_t *out, uint64_t *x, uint64_t mask)
 {
   uint64_t out_0 = out[0U];
@@ -1065,12 +1073,12 @@ void point_add(uint64_t *p, uint64_t *q, uint64_t *result, uint64_t *tempBuffer)
   uint64_t *uh = tempBuffer + (uint32_t)40U;
   uint64_t *hCube = tempBuffer + (uint32_t)44U;
   uint64_t *tempBuffer28 = tempBuffer + (uint32_t)60U;
-  uint64_t *x1 = p;
-  uint64_t *y1 = p + (uint32_t)4U;
-  uint64_t *z110 = p + (uint32_t)8U;
-  uint64_t *x2 = q;
-  uint64_t *y2 = q + (uint32_t)4U;
-  uint64_t *z210 = q + (uint32_t)8U;
+  uint64_t *pX = p;
+  uint64_t *pY = p + (uint32_t)4U;
+  uint64_t *pZ = p + (uint32_t)8U;
+  uint64_t *qX = q;
+  uint64_t *qY = q + (uint32_t)4U;
+  uint64_t *qZ = q + (uint32_t)8U;
   uint64_t *z2Square = tempBuffer16;
   uint64_t *z1Square = tempBuffer16 + (uint32_t)4U;
   uint64_t *z2Cube = tempBuffer16 + (uint32_t)8U;
@@ -1083,18 +1091,14 @@ void point_add(uint64_t *p, uint64_t *q, uint64_t *result, uint64_t *tempBuffer)
   uint64_t onetwo;
   uint64_t result1;
   bool flag;
-  Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_buffer(z210, z210, z2Square);
-  Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_buffer(z110, z110, z1Square);
-  Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_buffer(z2Square,
-    z210,
-    z2Cube);
-  Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_buffer(z1Square,
-    z110,
-    z1Cube);
-  Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_buffer(x1, z2Square, u11);
-  Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_buffer(x2, z1Square, u2);
-  Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_buffer(y1, z2Cube, s1);
-  Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_buffer(y2, z1Cube, s2);
+  Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_buffer(qZ, qZ, z2Square);
+  Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_buffer(pZ, pZ, z1Square);
+  Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_buffer(z2Square, qZ, z2Cube);
+  Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_buffer(z1Square, pZ, z1Cube);
+  Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_buffer(z2Square, pX, u11);
+  Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_buffer(z1Square, qX, u2);
+  Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_buffer(z2Cube, pY, s1);
+  Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_buffer(z1Cube, qY, s2);
   one1 = Hacl_Impl_LowLevel_compare_felem(u11, u2);
   two = Hacl_Impl_LowLevel_compare_felem(s1, s2);
   z1notZero = Hacl_Impl_LowLevel_isZero_uint64(z1);
@@ -1194,10 +1198,7 @@ void norm(uint64_t *p, uint64_t *resultPoint, uint64_t *tempBuffer)
     uint64_t bit = isPointAtInfinityPrivate(p);
     fromDomain(z2f, resultX);
     fromDomain(z3f, resultY);
-    resultZ[0U] = (uint64_t)1U;
-    resultZ[1U] = (uint64_t)0U;
-    resultZ[2U] = (uint64_t)0U;
-    resultZ[3U] = (uint64_t)0U;
+    Hacl_Impl_LowLevel_uploadOneImpl(resultZ);
     Hacl_Impl_LowLevel_copy_conditional(resultZ, zeroBuffer, bit);
   }
 }
