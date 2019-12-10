@@ -230,28 +230,29 @@ let point_double_compute_s_m p s m tempBuffer =
       let h0 = ST.get() in 
     montgomery_multiplication_buffer py py yy; 
     montgomery_multiplication_buffer px yy xyy;
+
+    quatre pz zzzz; 
+    multByMinusThree zzzz minThreeZzzz;
+      let h1 = ST.get() in 
+    montgomery_multiplication_buffer px px xx;
+    multByThree xx threeXx;
+    p256_add minThreeZzzz threeXx m;
+    multByFour xyy s;
+
       lemmaToDomainAndBackIsTheSame (fromDomain_ (as_nat h0 py) * fromDomain_ (as_nat h0 py) % prime256);
       lemma_mod_mul_distr_r (fromDomain_ (as_nat h0 px)) (fromDomain_ (as_nat h0 py) * fromDomain_ (as_nat h0 py)) prime256; 
       lemma_brackets (fromDomain_ (as_nat h0 px)) (fromDomain_ (as_nat h0 py)) (fromDomain_ (as_nat h0 py));
-    multByFour xyy s;
+    
       lemma_mod_mul_distr_r 4 (fromDomain_ (as_nat h0 px) * fromDomain_ (as_nat h0 py) * fromDomain_ (as_nat h0 py)) prime256;
       lemma_brackets4 4 (fromDomain_ (as_nat h0 px)) (fromDomain_ (as_nat h0 py)) (fromDomain_ (as_nat h0 py));
-      
-    quatre pz zzzz; 
-    multByMinusThree zzzz minThreeZzzz;
-      let h5 = ST.get() in 
       lemma_mod_mul_distr_r (-3) (fromDomain_ (as_nat h0 pz) * fromDomain_ (as_nat h0 pz) * fromDomain_ (as_nat h0 pz) * fromDomain_ (as_nat h0 pz)) prime256;
+      
       lemma_brackets5_0 (-3) (fromDomain_ (as_nat h0 pz)) (fromDomain_ (as_nat h0 pz))  (fromDomain_ (as_nat h0 pz))  (fromDomain_ (as_nat h0 pz));
-    montgomery_multiplication_buffer px px xx;
-    multByThree xx threeXx;
-      let h7 = ST.get() in 
-      lemma_mod_mul_distr_r 3 (fromDomain_ (as_nat h5 px) * fromDomain_ (as_nat h5 px)) prime256;
-      lemma_brackets 3 (fromDomain_ (as_nat h5 px)) (fromDomain_ (as_nat h5 px));
-    p256_add minThreeZzzz threeXx m;
-      additionInDomain2Nat (as_nat h7 minThreeZzzz) (as_nat h7 threeXx);
-      inDomain_mod_is_not_mod ((3 * fromDomain_ (as_nat h5 px) * fromDomain_ (as_nat h5 px) % prime256) + ((-3) * fromDomain_ (as_nat h0 pz) * fromDomain_ (as_nat h0 pz) * fromDomain_ (as_nat h0 pz) * fromDomain_ (as_nat h0 pz) % prime256));
-      lemma_mod_add_distr ((-3) * fromDomain_ (as_nat h0 pz) * fromDomain_ (as_nat h0 pz) * fromDomain_ (as_nat h0 pz) * fromDomain_ (as_nat h0 pz) % prime256)  (3 * fromDomain_ (as_nat h5 px) * fromDomain_ (as_nat h5 px)) prime256;
-      lemma_mod_add_distr (3 * fromDomain_ (as_nat h5 px) * fromDomain_ (as_nat h5 px)) ((-3) * fromDomain_ (as_nat h0 pz) * fromDomain_ (as_nat h0 pz) * fromDomain_ (as_nat h0 pz) * fromDomain_ (as_nat h0 pz)) prime256
+      lemma_mod_mul_distr_r 3 (fromDomain_ (as_nat h1 px) * fromDomain_ (as_nat h1 px)) prime256;
+      lemma_brackets 3 (fromDomain_ (as_nat h1 px)) (fromDomain_ (as_nat h1 px));
+
+      lemma_mod_add_distr ((-3) * fromDomain_ (as_nat h0 pz) * fromDomain_ (as_nat h0 pz) * fromDomain_ (as_nat h0 pz) * fromDomain_ (as_nat h0 pz) % prime256)  (3 * fromDomain_ (as_nat h1 px) * fromDomain_ (as_nat h1 px)) prime256;
+      lemma_mod_add_distr (3 * fromDomain_ (as_nat h1 px) * fromDomain_ (as_nat h1 px)) ((-3) * fromDomain_ (as_nat h0 pz) * fromDomain_ (as_nat h0 pz) * fromDomain_ (as_nat h0 pz) * fromDomain_ (as_nat h0 pz)) prime256
 
 
 inline_for_extraction noextract 
@@ -276,11 +277,7 @@ let point_double_compute_x3 x3 s m tempBuffer =
      let h0 = ST.get() in 
    multByTwo s twoS;
    montgomery_multiplication_buffer m m mm;
-     let h2 = ST.get() in 
-     assert(as_nat h2 mm == toDomain_ (fromDomain_ (as_nat h0 m) * fromDomain_ (as_nat h0 m) % prime256));
    p256_sub mm twoS x3; 
-     substractionInDomain2Nat (as_nat h2 mm) (as_nat h2 twoS);
-     inDomain_mod_is_not_mod (fromDomain_ (as_nat h2 mm) - fromDomain_ (as_nat h2 twoS));
      lemma_mod_add_distr (-((2 * fromDomain_ (as_nat h0 s) % prime256))) (fromDomain_ (as_nat h0 m) * fromDomain_ (as_nat h0 m))
      prime256;
      lemma_mod_sub_distr (fromDomain_ (as_nat h0 m) * fromDomain_ (as_nat h0 m)) (2 * fromDomain_ (as_nat h0 s)) prime256
@@ -310,25 +307,19 @@ let point_double_compute_y3 pY y3 x3 s m tempBuffer =
       let h0 = ST.get() in 
     quatre pY yyyy;
     multByEight yyyy eightYyyy;
-      let h2 = ST.get() in 
+    p256_sub s x3 sx3;
+      let h1 = ST.get() in 
+    montgomery_multiplication_buffer m sx3 msx3; 
+      let h2 = ST.get() in   
+    p256_sub msx3 eightYyyy y3;  
+
 	lemma_mod_mul_distr_r 8 (fromDomain_ (as_nat h0 pY) * fromDomain_ (as_nat h0 pY) * 
 	fromDomain_ (as_nat h0 pY) * fromDomain_ (as_nat h0 pY)) prime256;
-	assert_by_tactic (8 * (fromDomain_ (as_nat h0 pY) * fromDomain_ (as_nat h0 pY) * 
-	fromDomain_ (as_nat h0 pY) * fromDomain_ (as_nat h0 pY)) ==  8 * fromDomain_ (as_nat h0 pY) * fromDomain_ (as_nat h0 pY) * fromDomain_ (as_nat h0 pY) * fromDomain_ (as_nat h0 pY)) canon; 
-    p256_sub s x3 sx3;
-      let h3 = ST.get() in 
-	substractionInDomain2Nat (as_nat h2 s) (as_nat h2 x3);
-	inDomain_mod_is_not_mod (fromDomain_ (as_nat h0 s) - fromDomain_ (as_nat h0 x3));
-    montgomery_multiplication_buffer m sx3 msx3; 
-      let h4 = ST.get() in 
-	lemma_mod_mul_distr_r (fromDomain_ (as_nat h3 m)) (fromDomain_ (as_nat h0 s) - fromDomain_ (as_nat h0 x3)) prime256;
-    p256_sub msx3 eightYyyy y3;
-	substractionInDomain2Nat (as_nat h4 msx3) (as_nat h4 eightYyyy);
-	inDomain_mod_is_not_mod (fromDomain_ (as_nat h4 msx3) - fromDomain_ (as_nat h4 eightYyyy));
-	
-	lemma_mod_add_distr (-fromDomain_ (as_nat h4 eightYyyy)) (fromDomain_ (as_nat h3 m) * ((fromDomain_ (as_nat h0 s) - fromDomain_ (as_nat h0 x3)))) prime256;
-	lemma_mod_sub_distr (fromDomain_ (as_nat h3 m) * (fromDomain_ (as_nat h0 s) - fromDomain_ (as_nat h0 x3))) (8 * fromDomain_ (as_nat h0 pY) * fromDomain_ (as_nat h0 pY) * 
-	fromDomain_ (as_nat h0 pY) * fromDomain_ (as_nat h0 pY)) prime256
+	assert_by_tactic (8 * (fromDomain_ (as_nat h0 pY) * fromDomain_ (as_nat h0 pY) * fromDomain_ (as_nat h0 pY) * fromDomain_ (as_nat h0 pY)) ==  8 * fromDomain_ (as_nat h0 pY) * fromDomain_ (as_nat h0 pY) * fromDomain_ (as_nat h0 pY) * fromDomain_ (as_nat h0 pY)) canon; 
+
+	lemma_mod_mul_distr_r (fromDomain_ (as_nat h1 m)) (fromDomain_ (as_nat h0 s) - fromDomain_ (as_nat h0 x3)) prime256;
+	lemma_mod_add_distr (-fromDomain_ (as_nat h2 eightYyyy)) (fromDomain_ (as_nat h1 m) * ((fromDomain_ (as_nat h0 s) - fromDomain_ (as_nat h0 x3)))) prime256;
+	lemma_mod_sub_distr (fromDomain_ (as_nat h1 m) * (fromDomain_ (as_nat h0 s) - fromDomain_ (as_nat h0 x3))) (8 * fromDomain_ (as_nat h0 pY) * fromDomain_ (as_nat h0 pY) * fromDomain_ (as_nat h0 pY) * fromDomain_ (as_nat h0 pY)) prime256
 
 
 let point_double p result tempBuffer = 
@@ -392,9 +383,11 @@ val copy_point_conditional: x3_out: felem -> y3_out: felem -> z3_out: felem -> p
       let z = gsub p (size 8) (size 4) in 
 
       if mask = 0 then 
-	as_seq h1 x3_out == as_seq h0 x /\ as_seq h1 y3_out == as_seq h0 y /\ as_seq h1 z3_out == as_seq h0 z 
+	(*as_seq h1 x3_out == as_seq h0 x /\ as_seq h1 y3_out == as_seq h0 y /\ as_seq h1 z3_out == as_seq h0 z /\ *)
+	as_nat h1 x3_out == as_nat h0 x /\ as_nat h1 y3_out == as_nat h0 y /\ as_nat h1 z3_out == as_nat h0 z
       else 
-	as_seq h1 x3_out == as_seq h0 x3_out /\ as_seq h1 y3_out == as_seq h0 y3_out /\ as_seq h1 z3_out == as_seq h0 z3_out
+	(*as_seq h1 x3_out == as_seq h0 x3_out /\ as_seq h1 y3_out == as_seq h0 y3_out /\ as_seq h1 z3_out == as_seq h0 z3_out *) 
+	as_nat h1 x3_out == as_nat h0 x3_out /\ as_nat h1 y3_out == as_nat h0 y3_out /\ as_nat h1 z3_out == as_nat h0 z3_out
     )
 )
 
@@ -514,11 +507,6 @@ let compute_common_params_point_add h r uh hCube u1 u2 s1 s2 tempBuffer =
   montgomery_multiplication_buffer temp u1 uh;
   montgomery_multiplication_buffer temp h hCube;
 
-    substractionInDomain2Nat (as_nat h0 u2) (as_nat h0 u1);
-    inDomain_mod_is_not_mod (fromDomain_ (as_nat h0 u2) - fromDomain_ (as_nat h0 u1));
-    substractionInDomain2Nat (as_nat h1 s2) (as_nat h1 s1);
-    
-    inDomain_mod_is_not_mod (fromDomain_ (as_nat h1 s2) - fromDomain_ (as_nat h1 s1));
     lemma_mod_mul_distr_l (fromDomain_ (as_nat h2 h) * fromDomain_ (as_nat h2 h)) (fromDomain_ (as_nat h3 u1)) prime256;
     lemma_mod_mul_distr_l (fromDomain_ (as_nat h2 h) * fromDomain_ (as_nat h2 h)) (fromDomain_ (as_nat h1 h)) prime256
 
@@ -551,35 +539,55 @@ let computeX3_point_add x3 hCube uh r tempBuffer =
     let h3 = ST.get() in 
   p256_sub rH twoUh x3;  
   
-    substractionInDomain2Nat (as_nat h1 rSquare) (as_nat h1 hCube);
-    inDomain_mod_is_not_mod (fromDomain_ (as_nat h1 rSquare) - fromDomain_ (as_nat h1 hCube));
     lemma_mod_add_distr (-fromDomain_ (as_nat h1 hCube)) (fromDomain_ (as_nat h0 r) * fromDomain_ (as_nat h0 r)) prime256;
-    
-    substractionInDomain2Nat (as_nat h3 rH) (as_nat h3 twoUh);
-    inDomain_mod_is_not_mod (fromDomain_ (as_nat h3 rH) - fromDomain_ (as_nat h3 twoUh));
     lemma_mod_add_distr (-fromDomain_ (as_nat h3 twoUh)) (fromDomain_ (as_nat h0 r) * fromDomain_ (as_nat h0 r) - fromDomain_ (as_nat h1 hCube)) prime256;
-    
     lemma_mod_sub_distr (fromDomain_ (as_nat h0 r) * fromDomain_ (as_nat h0 r) - fromDomain_ (as_nat h1 hCube)) (2 * fromDomain_ (as_nat h2 uh)) prime256
-
 
 
 inline_for_extraction noextract 
 val computeY3_point_add:y3: felem -> s1: felem -> hCube: felem -> uh: felem -> x3_out: felem -> r: felem -> tempBuffer: lbuffer uint64 (size 16) -> 
-  Stack unit (requires fun h -> live h y3 /\ live h s1 /\ live h hCube /\ live h uh /\ live h x3_out /\ live h r /\ live h tempBuffer /\
-    LowStar.Monotonic.Buffer.all_disjoint [loc y3; loc s1; loc hCube; loc uh; loc x3_out; loc r; loc tempBuffer] /\
-    as_nat h s1 < prime /\ as_nat h hCube < prime /\ as_nat h uh < prime /\ as_nat h x3_out <prime /\ as_nat h r < prime)
-    (ensures fun h0 _ h1 -> modifies (loc y3 |+| loc tempBuffer) h0 h1 /\ as_nat h1 y3 < prime /\ 
-    as_seq h1 y3 ==  computeY3_point_add_seq (as_seq h0 s1) (as_seq h0 hCube) (as_seq h0 uh) (as_seq h0 x3_out) (as_seq h0 r))
-    
-let computeY3_point_add y3 s1 hCube uh x3_out r tempBuffer = 
-    let s1hCube = sub tempBuffer (size 0) (size 4) in 
-    let u1hx3 = sub tempBuffer (size 4) (size 4) in 
-    let ru1hx3 = sub tempBuffer (size 8) (size 4) in 
+  Stack unit 
+    (requires fun h -> live h y3 /\ live h s1 /\ live h hCube /\ live h uh /\ live h x3_out /\ live h r /\ live h tempBuffer /\
+      LowStar.Monotonic.Buffer.all_disjoint [loc y3; loc s1; loc hCube; loc uh; loc x3_out; loc r; loc tempBuffer] /\
+      as_nat h s1 < prime /\ as_nat h hCube < prime /\ as_nat h uh < prime /\ as_nat h x3_out <prime /\ as_nat h r < prime)
+    (ensures fun h0 _ h1 -> 
+      modifies (loc y3 |+| loc tempBuffer) h0 h1 /\ as_nat h1 y3 < prime /\ 
+      (
+	let s1D = fromDomain_ (as_nat h0 s1) in 
+	let hCubeD = fromDomain_ (as_nat h0 hCube) in 
+	let uhD = fromDomain_ (as_nat h0 uh) in 
+	let x3D = fromDomain_ (as_nat h0 x3_out) in 
+	let rD = fromDomain_ (as_nat h0 r) in 
+	as_nat h0 y3 = toDomain_ ((rD * (uhD - x3D) - s1D * hCubeD) % prime256)
+    )
+)
 
-    montgomery_multiplication_buffer s1 hCube s1hCube;
-    p256_sub uh x3_out u1hx3;
-    montgomery_multiplication_buffer r u1hx3 ru1hx3;
-    p256_sub ru1hx3 s1hCube y3
+    
+let computeY3_point_add y3 s1 hCube uh x3 r tempBuffer = 
+    let h0 = ST.get() in
+  let s1hCube = sub tempBuffer (size 0) (size 4) in 
+  let u1hx3 = sub tempBuffer (size 4) (size 4) in 
+  let ru1hx3 = sub tempBuffer (size 8) (size 4) in 
+
+  montgomery_multiplication_buffer s1 hCube s1hCube;
+    let h1 = ST.get() in 
+    assert(as_nat h1 s1hCube = toDomain_ (fromDomain_ (as_nat h0 s1) * fromDomain_ (as_nat h0 hCube) % prime256));
+  p256_sub uh x3 u1hx3;
+    let h2 = ST.get() in 
+    substractionInDomain2Nat (as_nat h1 uh) (as_nat h1 x3);
+    inDomain_mod_is_not_mod (fromDomain_ (as_nat h1 uh) - fromDomain_ (as_nat h1 x3));
+    assert(as_nat h2 u1hx3 = toDomain_ ((fromDomain_ (as_nat h0 uh) - fromDomain_ (as_nat h0 x3)) % prime256));
+
+  montgomery_multiplication_buffer u1hx3 r ru1hx3;
+    let h3 = ST.get() in 
+    lemma_mod_mul_distr_l (fromDomain_ (as_nat h0 uh) - fromDomain_ (as_nat h0 x3)) (fromDomain_ (as_nat h0 r)) prime256;
+    assert(as_nat h3 ru1hx3 = toDomain_ ((fromDomain_ (as_nat h0 uh) - fromDomain_ (as_nat h0 x3)) * fromDomain_ (as_nat h0 r) % prime256)); 
+
+  p256_sub ru1hx3 s1hCube y3;
+    let h4 = ST.get() in 
+    substractionInDomain2Nat (as_nat h3 ru1hx3) (as_nat h3 s1hCube);
+
+  admit()
 
 
 inline_for_extraction noextract 

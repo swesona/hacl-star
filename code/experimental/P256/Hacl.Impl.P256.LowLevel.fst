@@ -161,8 +161,9 @@ val p256_add: arg1: felem -> arg2: felem ->  out: felem -> Stack unit
   )
   (ensures (fun h0 _ h1 -> modifies1 out h0 h1 /\ 
       as_nat h1 out == (as_nat h0 arg1 + as_nat h0 arg2) % prime256 /\
-      as_seq h1 out == felem_add_seq (as_seq h0 arg1) (as_seq h0 arg2)
-  ))
+      as_nat h1 out == toDomain_ ((fromDomain_ (as_nat h0 arg1) + fromDomain_ (as_nat h0 arg2)) % prime256)
+    )
+  )
 
 
 let p256_add arg1 arg2 out = 
@@ -178,12 +179,20 @@ let p256_add arg1 arg2 out =
 
 val p256_double: arg1: felem ->  out: felem -> Stack unit 
   (requires (fun h0 ->  live h0 arg1 /\ live h0 out /\ eq_or_disjoint arg1 out /\ as_nat h0 arg1 < prime256))
-  (ensures (fun h0 _ h1 -> modifies1 out h0 h1 /\ as_nat h1 out == (2 * as_nat h0 arg1) % prime256 /\ as_nat h1 out < prime256))
+  (ensures (fun h0 _ h1 -> modifies1 out h0 h1 /\ 
+    as_nat h1 out == (2 * as_nat h0 arg1) % prime256 /\ as_nat h1 out < prime256 /\
+    as_nat h1 out == toDomain_ (2 * fromDomain_ (as_nat h0 arg1) % prime256)
+  )
+)
 
 let p256_double arg1 out = 
+    let h0 = ST.get() in 
   let t = add4 arg1 arg1 out in 
   lemma_t_computation t;
-  reduction_prime256_2prime256_with_carry_impl t out out
+  reduction_prime256_2prime256_with_carry_impl t out out;
+
+  additionInDomain2Nat (as_nat h0 arg1) (as_nat h0 arg1);
+  inDomain_mod_is_not_mod (fromDomain_ (as_nat h0 arg1) + fromDomain_ (as_nat h0 arg1))
 
 
 val p256_sub: arg1: felem -> arg2: felem -> out: felem -> Stack unit 
@@ -193,8 +202,10 @@ val p256_sub: arg1: felem -> arg2: felem -> out: felem -> Stack unit
       as_nat h0 arg1 < prime256 /\ as_nat h0 arg2 < prime256))
     (ensures (fun h0 _ h1 -> modifies1 out h0 h1 /\ 
 	as_nat h1 out == (as_nat h0 arg1 - as_nat h0 arg2) % prime256 /\
-	as_seq h1 out == felem_sub_seq (as_seq h0 arg1) (as_seq h0 arg2)
-  ))
+	(*as_seq h1 out == felem_sub_seq (as_seq h0 arg1) (as_seq h0 arg2) /\ *)
+	as_nat h1 out == toDomain_ ((fromDomain_ (as_nat h0 arg1) - fromDomain_ (as_nat h0 arg2)) % prime256)
+    )
+)    
 
 let p256_sub arg1 arg2 out = 
     let h0 = ST.get() in 

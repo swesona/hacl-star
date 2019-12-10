@@ -982,12 +982,12 @@ point_double_compute_s_m(uint64_t *p, uint64_t *s1, uint64_t *m, uint64_t *tempB
   uint64_t *threeXx = tempBuffer + (uint32_t)20U;
   Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_buffer(py, py, yy);
   Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_buffer(px, yy, xyy);
-  multByFour(xyy, s1);
   quatre(pz, zzzz);
   multByMinusThree(zzzz, minThreeZzzz);
   Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_buffer(px, px, xx);
   multByThree(xx, threeXx);
   Hacl_Impl_P256_LowLevel_p256_add(minThreeZzzz, threeXx, m);
+  multByFour(xyy, s1);
 }
 
 static void
@@ -1150,7 +1150,7 @@ void point_add(uint64_t *p, uint64_t *q, uint64_t *result, uint64_t *tempBuffer)
     ru1hx3 = tempBuffer161 + (uint32_t)8U;
     Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_buffer(s1, hCube, s1hCube);
     Hacl_Impl_P256_LowLevel_p256_sub(uh, x3_out1, u1hx3);
-    Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_buffer(r, u1hx3, ru1hx3);
+    Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_buffer(u1hx3, r, ru1hx3);
     Hacl_Impl_P256_LowLevel_p256_sub(ru1hx3, s1hCube, y3_out1);
     z1z2 = tempBuffer161;
     Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_buffer(z11, z21, z1z2);
