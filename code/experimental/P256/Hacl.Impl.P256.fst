@@ -609,35 +609,82 @@ val point_double_condition: u1: felem -> u2: felem -> s1: felem -> s2: felem ->z
     as_nat h u1 < prime /\ as_nat h u2 < prime /\ as_nat h s1 < prime /\ as_nat h s2 < prime /\
     as_nat h z1 < prime /\ as_nat h z2 < prime /\ 
     LowStar.Monotonic.Buffer.all_disjoint [loc u1; loc u2; loc s1; loc s2; loc z1; loc z2])
-  (ensures fun h0 r h1 -> modifies0 h0 h1 /\ r == point_double_condition_seq (as_seq h0 u1) (as_seq h0 u2) (as_seq h0 s1) (as_seq h0 s2) (as_seq h0 z1) (as_seq h0 z2))   
+  (ensures fun h0 r h1 -> modifies0 h0 h1 /\ 
+    (
+      let u1D = fromDomain_ (as_nat h0 u1) in 
+      let u2D = fromDomain_ (as_nat h0 u2) in 
+      let s1D = fromDomain_ (as_nat h0 s1) in 
+      let s2D = fromDomain_ (as_nat h0 s2) in 
+      let z1D = fromDomain_ (as_nat h0 z1) in 
+      let z2D = fromDomain_ (as_nat h0 z2) in 
+
+      if u1D = u2D && s1D = s2D && z1D <> 0 && z2D <> 0 then 
+	r == true else r == false
+    )
+  )
 
 let point_double_condition u1 u2 s1 s2 z1 z2 = 
+    let h0 = ST.get() in 
   let one = compare_felem u1 u2 in 
   let two = compare_felem s1 s2 in 
-  let z1notZero = isZero_uint64 z1 in 
-  let z2notZero = isZero_uint64 z2 in 
-  let pointsInf = logand (lognot z1notZero) (lognot z2notZero) in 
+  let z1NotZero = isZero_uint64 z1 in 
+  let z2NotZero = isZero_uint64 z2 in 
+  let pointsInf = logand (lognot z1NotZero) (lognot z2NotZero) in 
   let onetwo = logand one two in 
   let result = logand onetwo pointsInf in 
+
+    lognot_lemma z1NotZero;
+    lognot_lemma z2NotZero;
+    logand_lemma (lognot z1NotZero) (lognot z2NotZero);
+    logand_lemma (lognot z1NotZero) (lognot z2NotZero);  
+    
+    logand_lemma one two;
+    logand_lemma onetwo pointsInf;
+    lemmaFromDomain (as_nat h0 u1);
+    lemmaFromDomain (as_nat h0 u2);
+    lemmaFromDomain (as_nat h0 s1);
+    lemmaFromDomain (as_nat h0 s2);
+    
+    lemma_modular_multiplication_p256 (as_nat h0 u1) (as_nat h0 u2); 
+    lemma_modular_multiplication_p256 (as_nat h0 s1) (as_nat h0 s2); 
+
+    assert_norm (modp_inv2 (pow2 256) > 0);
+    assert_norm (modp_inv2 (pow2 256) % prime <> 0); 
+
+    lemma_multiplication_not_mod_prime (as_nat h0 z1) (modp_inv2 (pow2 256));
+    lemma_multiplication_not_mod_prime (as_nat h0 z2) (modp_inv2 (pow2 256));
+    lemmaFromDomain (as_nat h0 z1);
+    lemmaFromDomain (as_nat h0 z2);
+
   eq_u64 result (u64 0xffffffffffffffff)
 
 
 inline_for_extraction noextract 
-val point_add_if_second_branch_impl: result: point -> p: point -> q: point -> u1: felem -> u2: felem -> s1: felem -> s2: felem -> r: felem -> h: felem -> uh: felem -> hCube: felem -> tempBuffer28 : lbuffer uint64 (size 28) -> 
-  Stack unit (requires fun h0 -> live h0 result /\ live h0 p /\ live h0 q /\ live h0 u1 /\ live h0 u2 /\ live h0 s1 /\ live h0 s2 /\ live h0 r /\ live h0 h /\ live h0 uh /\ live h0 hCube /\ live h0 tempBuffer28 /\
-  as_nat h0 u1 < prime  /\ as_nat h0 u2 < prime  /\ as_nat h0 s1 < prime /\ as_nat h0 s2 < prime /\ as_nat h0 r < prime /\
-  as_nat h0 h < prime /\ as_nat h0 uh < prime /\ as_nat h0 hCube < prime /\
-  eq_or_disjoint p result /\
-  LowStar.Monotonic.Buffer.all_disjoint [loc p; loc q; loc u1; loc u2; loc s1; loc s2; loc r; loc h; loc uh; loc hCube; loc tempBuffer28] /\ disjoint result tempBuffer28 /\
+val point_add_if_second_branch_impl: result: point -> p: point -> q: point -> u1: felem -> u2: felem -> s1: felem -> 
+  s2: felem -> r: felem -> h: felem -> uh: felem -> hCube: felem -> tempBuffer28 : lbuffer uint64 (size 28) -> 
+  Stack unit 
+    (requires fun h0 -> live h0 result /\ live h0 p /\ live h0 q /\ live h0 u1 /\ live h0 u2 /\ live h0 s1 /\ live h0 s2 /\ live h0 r /\ live h0 h /\ live h0 uh /\ live h0 hCube /\ live h0 tempBuffer28 /\
+    
+    as_nat h0 u1 < prime  /\ as_nat h0 u2 < prime  /\ as_nat h0 s1 < prime /\ as_nat h0 s2 < prime /\ as_nat h0 r < prime /\
+    as_nat h0 h < prime /\ as_nat h0 uh < prime /\ as_nat h0 hCube < prime /\
+    
+    eq_or_disjoint p result /\
+    LowStar.Monotonic.Buffer.all_disjoint [loc p; loc q; loc u1; loc u2; loc s1; loc s2; loc r; loc h; loc uh; loc hCube; loc tempBuffer28] /\ 
+    disjoint result tempBuffer28 /\
+    
     as_nat h0 (gsub p (size 8) (size 4)) < prime /\ 
     as_nat h0 (gsub p (size 0) (size 4)) < prime /\ 
     as_nat h0 (gsub p (size 4) (size 4)) < prime /\
     as_nat h0 (gsub q (size 8) (size 4)) < prime /\ 
     as_nat h0 (gsub q (size 0) (size 4)) < prime /\  
     as_nat h0 (gsub q (size 4) (size 4)) < prime /\
-    (let u1_, u2_, s1_, s2_ = move_from_jacobian_coordinates_seq (as_seq h0 p) (as_seq h0 q) in 
-    u1_ == (as_seq h0 u1) /\ u2_ == (as_seq h0 u2) /\ s1_ == (as_seq h0 s1) /\ s2_ == (as_seq h0 s2)) /\
-    (let h_, r_, uh_, hCube_ = compute_common_params_point_add_seq (as_seq h0 u1) (as_seq h0 u2) (as_seq h0 s1) (as_seq h0 s2) in h_ == (as_seq h0 h) /\ r_ == (as_seq h0 r) /\ uh_ == (as_seq h0 uh) /\ hCube_ == (as_seq h0 hCube)))
+    
+    (
+      let u1_, u2_, s1_, s2_ = move_from_jacobian_coordinates_seq (as_seq h0 p) (as_seq h0 q) in 
+      let h_, r_, uh_, hCube_ = compute_common_params_point_add_seq (as_seq h0 u1) (as_seq h0 u2) (as_seq h0 s1) (as_seq h0 s2) in
+      u1_ == (as_seq h0 u1) /\ u2_ == (as_seq h0 u2) /\ s1_ == (as_seq h0 s1) /\ s2_ == (as_seq h0 s2) /\
+      h_ == (as_seq h0 h) /\ r_ == (as_seq h0 r) /\ uh_ == (as_seq h0 uh) /\ hCube_ == (as_seq h0 hCube)))
+      
   (ensures fun h0 _ h1 -> modifies (loc tempBuffer28 |+| loc result) h0 h1 /\ 
     as_seq h1 result == point_add_if_second_branch_seq (as_seq h0 p) (as_seq h0 q) (as_seq h0 u1) (as_seq h0 u2) (as_seq h0 s1) (as_seq h0 s2) (as_seq h0 r) (as_seq h0 h) (as_seq h0 uh) (as_seq h0 hCube))
 
