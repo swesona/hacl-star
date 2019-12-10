@@ -1085,8 +1085,8 @@ void point_add(uint64_t *p, uint64_t *q, uint64_t *result, uint64_t *tempBuffer)
   uint64_t *z1Cube = tempBuffer16 + (uint32_t)12U;
   uint64_t one1;
   uint64_t two;
-  uint64_t z1notZero;
-  uint64_t z2notZero;
+  uint64_t z1NotZero;
+  uint64_t z2NotZero;
   uint64_t pointsInf;
   uint64_t onetwo;
   uint64_t result1;
@@ -1101,9 +1101,9 @@ void point_add(uint64_t *p, uint64_t *q, uint64_t *result, uint64_t *tempBuffer)
   Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_buffer(z1Cube, qY, s2);
   one1 = Hacl_Impl_LowLevel_compare_felem(u11, u2);
   two = Hacl_Impl_LowLevel_compare_felem(s1, s2);
-  z1notZero = Hacl_Impl_LowLevel_isZero_uint64(z1);
-  z2notZero = Hacl_Impl_LowLevel_isZero_uint64(z2);
-  pointsInf = ~z1notZero & ~z2notZero;
+  z1NotZero = Hacl_Impl_LowLevel_isZero_uint64(z1);
+  z2NotZero = Hacl_Impl_LowLevel_isZero_uint64(z2);
+  pointsInf = ~z1NotZero & ~z2NotZero;
   onetwo = one1 & two;
   result1 = onetwo & pointsInf;
   flag = result1 == (uint64_t)0xffffffffffffffffU;
