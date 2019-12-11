@@ -1075,10 +1075,10 @@ void point_add(uint64_t *p, uint64_t *q, uint64_t *result, uint64_t *tempBuffer)
   uint64_t *tempBuffer28 = tempBuffer + (uint32_t)60U;
   uint64_t *pX = p;
   uint64_t *pY = p + (uint32_t)4U;
-  uint64_t *pZ = p + (uint32_t)8U;
+  uint64_t *pZ0 = p + (uint32_t)8U;
   uint64_t *qX = q;
   uint64_t *qY = q + (uint32_t)4U;
-  uint64_t *qZ = q + (uint32_t)8U;
+  uint64_t *qZ0 = q + (uint32_t)8U;
   uint64_t *z2Square = tempBuffer16;
   uint64_t *z1Square = tempBuffer16 + (uint32_t)4U;
   uint64_t *z2Cube = tempBuffer16 + (uint32_t)8U;
@@ -1091,10 +1091,14 @@ void point_add(uint64_t *p, uint64_t *q, uint64_t *result, uint64_t *tempBuffer)
   uint64_t onetwo;
   uint64_t result1;
   bool flag;
-  Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_buffer(qZ, qZ, z2Square);
-  Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_buffer(pZ, pZ, z1Square);
-  Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_buffer(z2Square, qZ, z2Cube);
-  Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_buffer(z1Square, pZ, z1Cube);
+  Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_buffer(qZ0, qZ0, z2Square);
+  Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_buffer(pZ0, pZ0, z1Square);
+  Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_buffer(z2Square,
+    qZ0,
+    z2Cube);
+  Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_buffer(z1Square,
+    pZ0,
+    z1Cube);
   Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_buffer(z2Square, pX, u11);
   Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_buffer(z1Square, qX, u2);
   Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_buffer(z2Cube, pY, s1);
@@ -1114,8 +1118,8 @@ void point_add(uint64_t *p, uint64_t *q, uint64_t *result, uint64_t *tempBuffer)
   else
   {
     uint64_t *temp = tempBuffer16;
-    uint64_t *z11;
-    uint64_t *z21;
+    uint64_t *pZ;
+    uint64_t *qZ;
     uint64_t *tempBuffer161;
     uint64_t *x3_out1;
     uint64_t *y3_out1;
@@ -1132,8 +1136,8 @@ void point_add(uint64_t *p, uint64_t *q, uint64_t *result, uint64_t *tempBuffer)
     Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_buffer(h, h, temp);
     Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_buffer(temp, u11, uh);
     Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_buffer(temp, h, hCube);
-    z11 = p + (uint32_t)8U;
-    z21 = q + (uint32_t)8U;
+    pZ = p + (uint32_t)8U;
+    qZ = q + (uint32_t)8U;
     tempBuffer161 = tempBuffer28;
     x3_out1 = tempBuffer28 + (uint32_t)16U;
     y3_out1 = tempBuffer28 + (uint32_t)20U;
@@ -1153,7 +1157,7 @@ void point_add(uint64_t *p, uint64_t *q, uint64_t *result, uint64_t *tempBuffer)
     Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_buffer(u1hx3, r, ru1hx3);
     Hacl_Impl_P256_LowLevel_p256_sub(ru1hx3, s1hCube, y3_out1);
     z1z2 = tempBuffer161;
-    Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_buffer(z11, z21, z1z2);
+    Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_buffer(pZ, qZ, z1z2);
     Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_buffer(z1z2, h, z3_out1);
     copy_point_conditional(x3_out1, y3_out1, z3_out1, q, p);
     copy_point_conditional(x3_out1, y3_out1, z3_out1, p, q);

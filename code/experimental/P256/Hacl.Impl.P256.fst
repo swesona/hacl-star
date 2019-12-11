@@ -658,7 +658,6 @@ let point_double_condition u1 u2 s1 s2 z1 z2 =
 
   eq_u64 result (u64 0xffffffffffffffff)
 
-
 inline_for_extraction noextract 
 val point_add_if_second_branch_impl: result: point -> p: point -> q: point -> u1: felem -> u2: felem -> s1: felem -> 
   s2: felem -> r: felem -> h: felem -> uh: felem -> hCube: felem -> tempBuffer28 : lbuffer uint64 (size 28) -> 
@@ -680,48 +679,103 @@ val point_add_if_second_branch_impl: result: point -> p: point -> q: point -> u1
     as_nat h0 (gsub q (size 4) (size 4)) < prime /\
     
     (
-      let u1_, u2_, s1_, s2_ = move_from_jacobian_coordinates_seq (as_seq h0 p) (as_seq h0 q) in 
-      let h_, r_, uh_, hCube_ = compute_common_params_point_add_seq (as_seq h0 u1) (as_seq h0 u2) (as_seq h0 s1) (as_seq h0 s2) in
-      u1_ == (as_seq h0 u1) /\ u2_ == (as_seq h0 u2) /\ s1_ == (as_seq h0 s1) /\ s2_ == (as_seq h0 s2) /\
-      h_ == (as_seq h0 h) /\ r_ == (as_seq h0 r) /\ uh_ == (as_seq h0 uh) /\ hCube_ == (as_seq h0 hCube)))
+      let pX, pY, pZ = as_nat h0 (gsub p (size 0) (size 4)), as_nat h0 (gsub p (size 4) (size 4)), as_nat h0 (gsub p (size 8) (size 4)) in 
+      let qX, qY, qZ = as_nat h0 (gsub q (size 0) (size 4)), as_nat h0 (gsub q (size 4) (size 4)), as_nat h0 (gsub q (size 8) (size 4)) in 
+      let pxD, pyD, pzD = fromDomain_ pX, fromDomain_ pY, fromDomain_ pZ in 
+      let qxD, qyD, qzD = fromDomain_ qX, fromDomain_ qY, fromDomain_ qZ in 
+
+      let u1D = fromDomain_ (as_nat h0 u1) in 
+      let u2D = fromDomain_ (as_nat h0 u2) in 
+      let s1D = fromDomain_ (as_nat h0 s1) in 
+      let s2D = fromDomain_ (as_nat h0 s2) in 
+
+      let hD = fromDomain_ (as_nat h0 h) in 
       
-  (ensures fun h0 _ h1 -> modifies (loc tempBuffer28 |+| loc result) h0 h1 /\ 
-    as_seq h1 result == point_add_if_second_branch_seq (as_seq h0 p) (as_seq h0 q) (as_seq h0 u1) (as_seq h0 u2) (as_seq h0 s1) (as_seq h0 s2) (as_seq h0 r) (as_seq h0 h) (as_seq h0 uh) (as_seq h0 hCube))
+      as_nat h0 u1 == toDomain_ (qzD * qzD * pxD % prime256) /\
+      as_nat h0 u2 == toDomain_ (pzD * pzD * qxD % prime256) /\
+      as_nat h0 s1 == toDomain_ (qzD * qzD * qzD * pyD % prime256) /\
+      as_nat h0 s2 == toDomain_ (pzD * pzD * pzD * qyD % prime256) /\
+      
+      as_nat h0 h == toDomain_ ((u2D - u1D) % prime256) /\
+      as_nat h0 r == toDomain_ ((s2D - s1D) % prime256) /\
+      as_nat h0 uh == toDomain_ (hD * hD * u1D % prime256) /\
+      as_nat h0 hCube == toDomain_ (hD * hD * hD % prime256) 
+  )
+)
+  (ensures fun h0 _ h1 -> modifies (loc tempBuffer28 |+| loc result) h0 h1 /\
+    as_nat h1 (gsub result (size 8) (size 4)) < prime /\ 
+    as_nat h1 (gsub result (size 0) (size 4)) < prime /\  
+    as_nat h1 (gsub result (size 4) (size 4)) < prime /\
+    (
+      let pX, pY, pZ = as_nat h0 (gsub p (size 0) (size 4)), as_nat h0 (gsub p (size 4) (size 4)), as_nat h0 (gsub p (size 8) (size 4)) in 
+      let qX, qY, qZ = as_nat h0 (gsub q (size 0) (size 4)), as_nat h0 (gsub q (size 4) (size 4)), as_nat h0 (gsub q (size 8) (size 4)) in 
+      let x3, y3, z3 = as_nat h1 (gsub result (size 0) (size 4)), as_nat h1 (gsub result (size 4) (size 4)), as_nat h1 (gsub result (size 8) (size 4)) in  
+
+      let pxD, pyD, pzD = fromDomain_ pX, fromDomain_ pY, fromDomain_ pZ in 
+      let qxD, qyD, qzD = fromDomain_ qX, fromDomain_ qY, fromDomain_ qZ in 
+      let x3D, y3D, z3D = fromDomain_ x3, fromDomain_ y3, fromDomain_ z3 in 
+
+      let rD = fromDomain_ (as_nat h0 r) in 
+      let hD = fromDomain_ (as_nat h0 h) in 
+      let s1D = fromDomain_ (as_nat h0 s1) in 
+      let u1D = fromDomain_ (as_nat h0 u1) in 
+
+  if qzD = 0 then 
+    x3D == pxD /\ y3D == pyD /\ z3D == pzD
+   else if pzD = 0 then 
+    x3D == qxD /\  y3D == qyD /\ z3D == qzD
+   else 
+    x3 == toDomain_ ((rD * rD - hD * hD * hD - 2 * hD * hD * u1D) % prime256) /\ 
+    y3 == toDomain_(((hD * hD * u1D - fromDomain_ (x3)) * rD - s1D * hD * hD * hD) % prime256) /\
+    z3 == toDomain_ (pzD * qzD * hD % prime256) 
+  )
+)
+
 
 let point_add_if_second_branch_impl result p q u1 u2 s1 s2 r h uh hCube tempBuffer28 = 
     let h0 = ST.get() in 
-
-  let z1 = sub p (size 8) (size 4) in 
-  let z2 = sub q (size 8) (size 4) in 
+  let pZ = sub p (size 8) (size 4) in 
+  let qZ = sub q (size 8) (size 4) in 
 
   let tempBuffer16 = sub tempBuffer28 (size 0) (size 16) in 
+  
   let x3_out = Lib.Buffer.sub tempBuffer28 (size 16) (size 4) in 
   let y3_out = Lib.Buffer.sub tempBuffer28 (size 20) (size 4) in 
   let z3_out = Lib.Buffer.sub tempBuffer28 (size 24) (size 4) in 
 
   computeX3_point_add x3_out hCube uh r tempBuffer16; 
     let h1 = ST.get() in 
-    assert(modifies1 tempBuffer28 h0 h1);
   computeY3_point_add y3_out s1 hCube uh x3_out r tempBuffer16; 
-    let h2 = ST.get() in 
-    assert(modifies1 tempBuffer28 h1 h2);
-  computeZ3_point_add z3_out z1 z2 h tempBuffer16;
-    let h3 = ST.get() in 
-    assert(modifies1 tempBuffer28 h2 h3);
-
+  computeZ3_point_add z3_out pZ qZ h tempBuffer16;
   copy_point_conditional x3_out y3_out z3_out q p;
-    let h4 = ST.get() in 
-    assert(modifies1 tempBuffer28 h3 h4);
-  copy_point_conditional x3_out y3_out z3_out p q;
-    let h5 = ST.get() in 
-    assert(modifies1 tempBuffer28 h4 h5);
-    assert(modifies1 tempBuffer28 h0 h5);
 
+  copy_point_conditional x3_out y3_out z3_out p q;
   concat3 (size 4) x3_out (size 4) y3_out (size 4) z3_out result; 
-    let h6 = ST.get() in 
-    assert(modifies1 result h5 h6);
-    assert(modifies2 tempBuffer28 result h0 h6);
-    assert(Lib.Sequence.equal (as_seq h6 result) (point_add_if_second_branch_seq (as_seq h0 p) (as_seq h0 q) (as_seq h0 u1) (as_seq h0 u2) (as_seq h0 s1) (as_seq h0 s2) (as_seq h0 r) (as_seq h0 h) (as_seq h0 uh) (as_seq h0 hCube)))
+
+    let hEnd = ST.get() in 
+
+  let rD = fromDomain_ (as_nat h0 r) in 
+  let hD = fromDomain_ (as_nat h0 h) in
+  let u1D = fromDomain_ (as_nat h0 u1) in 
+  let uhD = fromDomain_ (as_nat h0 uh) in 
+
+  let s1D = fromDomain_ (as_nat h0 s1) in 
+  let x3D = fromDomain_ (as_nat h1 x3_out) in 
+
+  lemma_point_add_0 (rD * rD) (hD * hD * hD) (hD * hD * u1D);
+  lemma_mod_sub_distr (rD * rD - 2 * uhD) (hD * hD * hD) prime256;
+  assert_by_tactic (2 * (hD * hD * u1D) == 2 * hD * hD * u1D) canon;
+
+  lemma_point_add_1 (hD * hD * u1D) x3D rD s1D (hD * hD * hD);
+  assert_by_tactic (s1D * (hD * hD * hD) == s1D * hD * hD * hD) canon;
+
+  assert_norm (modp_inv2 (pow2 256) > 0);
+  assert_norm (modp_inv2 (pow2 256) % prime <> 0); 
+
+  lemma_multiplication_not_mod_prime (as_nat h0 pZ) (modp_inv2 (pow2 256));
+  lemma_multiplication_not_mod_prime (as_nat h0 qZ) (modp_inv2 (pow2 256));
+  lemmaFromDomain (as_nat h0 pZ);
+  lemmaFromDomain (as_nat h0 qZ)
     
  
 #reset-options "--z3rlimit 200"

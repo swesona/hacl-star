@@ -336,7 +336,7 @@ let point_double_condition_seq u1 u2 s1 s2 z1 z2 =
     lemma_multiplication_not_mod_prime (felem_seq_as_nat z2) (modp_inv2 (pow2 256));
     lemmaFromDomain (felem_seq_as_nat z1);
     lemmaFromDomain (felem_seq_as_nat z2);
-  eq_u64 result (u64 0xffffffffffffffff)     
+    eq_u64 result (u64 0xffffffffffffffff)     
 
 
 inline_for_extraction noextract
@@ -811,3 +811,10 @@ let point_add_seq p q =
       result
   end
 *)
+
+
+assume val lemma_point_add_0: a: int -> b: int -> c: int -> Lemma 
+  ((a - b - 2 * (c % prime256)) % prime256 == (a - b - 2 * c) % prime256)
+
+assume val lemma_point_add_1: a: int -> b: int -> c: int -> d: int -> e: int -> Lemma
+  ((((a % prime256) - b) * c - d * (e % prime256)) % prime256 ==((a - b) * c - d * e) % prime256)
