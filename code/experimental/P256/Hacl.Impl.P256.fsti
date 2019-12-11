@@ -85,6 +85,9 @@ val point_double: p: point -> result: point -> tempBuffer: lbuffer uint64 (size 
     as_nat h (gsub p (size 0) (size 4)) < prime /\ 
     as_nat h (gsub p (size 4) (size 4)) < prime)
   (ensures fun h0 _ h1 -> modifies (loc tempBuffer |+| loc result)  h0 h1 /\  
+    as_nat h1 (gsub result (size 8) (size 4)) < prime /\ 
+    as_nat h1 (gsub result (size 0) (size 4)) < prime /\ 
+    as_nat h1 (gsub result (size 4) (size 4)) < prime /\
     (
       let x, y, z = gsub p (size 0) (size 4),  gsub p (size 4) (size 4), gsub p (size 8) (size 4) in 
       let x3, y3, z3 = gsub result (size 0) (size 4), gsub result (size 4) (size 4), gsub result (size 8) (size 4) in 
@@ -97,25 +100,6 @@ val point_double: p: point -> result: point -> tempBuffer: lbuffer uint64 (size 
   )
 ) 
 
-
-val point_add: p: point -> q: point -> result: point -> tempBuffer: lbuffer uint64 (size 88) -> 
-   Stack unit (requires fun h -> live h p /\ live h q /\ live h result /\ live h tempBuffer /\ 
-   eq_or_disjoint q result /\
-   disjoint p q /\ disjoint p tempBuffer /\ disjoint q tempBuffer /\ disjoint p result /\ disjoint result tempBuffer /\  
-    as_nat h (gsub p (size 8) (size 4)) < prime /\ 
-    as_nat h (gsub p (size 0) (size 4)) < prime /\ 
-    as_nat h (gsub p (size 4) (size 4)) < prime /\
-    as_nat h (gsub q (size 8) (size 4)) < prime /\ 
-    as_nat h (gsub q (size 0) (size 4)) < prime /\  
-    as_nat h (gsub q (size 4) (size 4)) < prime 
-    ) 
-   (ensures fun h0 _ h1 -> 
-     modifies (loc tempBuffer |+| loc result) h0 h1 /\ 
-     (*as_seq h1 result == point_add_seq (as_seq h0 p) (as_seq h0 q) /\ *)
-     as_nat h1 (gsub result (size 8) (size 4)) < prime /\ 
-     as_nat h1 (gsub result (size 0) (size 4)) < prime /\ 
-     as_nat h1 (gsub result (size 4) (size 4)) < prime 
-  )
 
 
 val isPointAtInfinityPrivate: p: point -> Stack uint64
