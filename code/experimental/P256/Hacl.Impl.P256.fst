@@ -778,36 +778,6 @@ let point_add_if_second_branch_impl result p q u1 u2 s1 s2 r h uh hCube tempBuff
   lemmaFromDomain (as_nat h0 qZ)
 
 
-val point_add: p: point -> q: point -> result: point -> tempBuffer: lbuffer uint64 (size 88) -> 
-   Stack unit (requires fun h -> live h p /\ live h q /\ live h result /\ live h tempBuffer /\ 
-   eq_or_disjoint q result /\
-   disjoint p q /\ disjoint p tempBuffer /\ disjoint q tempBuffer /\ disjoint p result /\ disjoint result tempBuffer /\  
-    as_nat h (gsub p (size 8) (size 4)) < prime /\ 
-    as_nat h (gsub p (size 0) (size 4)) < prime /\ 
-    as_nat h (gsub p (size 4) (size 4)) < prime /\
-    as_nat h (gsub q (size 8) (size 4)) < prime /\ 
-    as_nat h (gsub q (size 0) (size 4)) < prime /\  
-    as_nat h (gsub q (size 4) (size 4)) < prime 
-    ) 
-   (ensures fun h0 _ h1 -> 
-     modifies (loc tempBuffer |+| loc result) h0 h1 /\ 
-     as_nat h1 (gsub result (size 8) (size 4)) < prime /\ 
-     as_nat h1 (gsub result (size 0) (size 4)) < prime /\ 
-     as_nat h1 (gsub result (size 4) (size 4)) < prime /\
-     (
-       let pX, pY, pZ = gsub p (size 0) (size 4), gsub p (size 4) (size 4), gsub p (size 8) (size 4) in 
-       let qX, qY, qZ = gsub q (size 0) (size 4), gsub q (size 4) (size 4), gsub q (size 8) (size 4) in 
-       let x3, y3, z3 = gsub result (size 0) (size 4), gsub result (size 4) (size 4), gsub result (size 8) (size 4) in 
-       
-       let pxD, pyD, pzD = fromDomain_ (as_nat h0 pX), fromDomain_ (as_nat h0 pY), fromDomain_ (as_nat h0 pZ) in 
-       let qxD, qyD, qzD = fromDomain_ (as_nat h0 qX), fromDomain_ (as_nat h0 qY), fromDomain_ (as_nat h0 qZ) in 
-       let x3D, y3D, z3D = fromDomain_ (as_nat h1 x3), fromDomain_ (as_nat h1 y3), fromDomain_ (as_nat h1 z3) in
-      
-       let xN, yN, zN = _point_add (pxD, pyD, pzD) (qxD, qyD, qzD) in 
-       x3D == xN /\ y3D == yN /\ z3D == zN
-  )
-)
-
 let point_add p q result tempBuffer = 
     let h0 = ST.get() in 
   
@@ -834,19 +804,7 @@ let point_add p q result tempBuffer =
   let tempBuffer28 = sub tempBuffer (size 60) (size 28) in 
 
   move_from_jacobian_coordinates u1 u2 s1 s2 p q tempBuffer16;
-    let h1 = ST.get() in 
-    assert(      
-      let pX, pY, pZ = as_nat h0 (gsub p (size 0) (size 4)), as_nat h0 (gsub p (size 4) (size 4)), as_nat h0 (gsub p (size 8) (size 4)) in 
-      let qX, qY, qZ = as_nat h0 (gsub q (size 0) (size 4)), as_nat h0 (gsub q (size 4) (size 4)), as_nat h0 (gsub q (size 8) (size 4)) in 
-      
-      let pxD, pyD, pzD = fromDomain_ pX, fromDomain_ pY, fromDomain_ pZ in 
-      let qxD, qyD, qzD = fromDomain_ qX, fromDomain_ qY, fromDomain_ qZ in 
-
-      as_nat h1 u1 == toDomain_ (qzD * qzD * pxD % prime256) /\
-      as_nat h1 u2 == toDomain_ (pzD * pzD * qxD % prime256) /\
-      as_nat h1 s1 == toDomain_ (qzD * qzD * qzD * pyD % prime256) /\
-      as_nat h1 s2 == toDomain_ (pzD * pzD * pzD * qyD % prime256));
-
+    let h1 = ST.get() in
   let flag = point_double_condition u1 u2 s1 s2 z1 z2 in 
     let h2 = ST.get() in 
   if flag then
@@ -856,59 +814,40 @@ let point_add p q result tempBuffer =
   else
     begin
       compute_common_params_point_add h r uh hCube u1 u2 s1 s2 tempBuffer16;
-      point_add_if_second_branch_impl result p q u1 u2 s1 s2 r h uh hCube tempBuffer28
+	let h3 = ST.get() in
+      point_add_if_second_branch_impl result p q u1 u2 s1 s2 r h uh hCube tempBuffer28;
+	let h4 = ST.get() in 
       
+      let pxD = fromDomain_ (as_nat h0 (gsub p (size 0) (size 4))) in 
+      let pyD = fromDomain_ (as_nat h0 (gsub p (size 4) (size 4))) in 
+      let pzD = fromDomain_ (as_nat h0 (gsub p (size 8) (size 4))) in 
+
+      let qxD = fromDomain_ (as_nat h0 (gsub q (size 0) (size 4))) in 
+      let qyD = fromDomain_ (as_nat h0 (gsub q (size 4) (size 4))) in 
+      let qzD = fromDomain_ (as_nat h0 (gsub q (size 8) (size 4))) in 
+
+      let x3 = as_nat h4 (gsub result (size 0) (size 4)) in 
+      let y3 = as_nat h4 (gsub result (size 4) (size 4)) in 
+      let z3 = as_nat h4 (gsub result (size 8) (size 4)) in 
+
+      lemma_xToSpecification_after_double_ pxD pyD pzD qxD qyD qzD x3 y3 z3 (as_nat h2 u1) (as_nat h2 u2) (as_nat h2 s1) (as_nat h2 s2) (as_nat h3 h) (as_nat h3 r)
     end; 
 
   let h3 = ST.get() in 
+      
+      let pxD = fromDomain_ (as_nat h0 (gsub p (size 0) (size 4))) in 
+      let pyD = fromDomain_ (as_nat h0 (gsub p (size 4) (size 4))) in 
+      let pzD = fromDomain_ (as_nat h0 (gsub p (size 8) (size 4))) in 
 
-
-      let x1 = as_nat h0 (gsub p (size 0) (size 4)) in 
-      let y1 = as_nat h0 (gsub p (size 4) (size 4)) in 
-      let z1 = as_nat h0 (gsub p (size 8) (size 4)) in 
-
-      let x2 = as_nat h0 (gsub q (size 0) (size 4)) in 
-      let y2 = as_nat h0 (gsub q (size 4) (size 4)) in 
-      let z2 = as_nat h0 (gsub q (size 8) (size 4)) in 
+      let qxD = fromDomain_ (as_nat h0 (gsub q (size 0) (size 4))) in 
+      let qyD = fromDomain_ (as_nat h0 (gsub q (size 4) (size 4))) in 
+      let qzD = fromDomain_ (as_nat h0 (gsub q (size 8) (size 4))) in 
 
       let x3 = as_nat h3 (gsub result (size 0) (size 4)) in 
       let y3 = as_nat h3 (gsub result (size 4) (size 4)) in 
       let z3 = as_nat h3 (gsub result (size 8) (size 4)) in 
-
-      lemma_xToSpecification_ 
-	(fromDomain_ x1) (fromDomain_ y1) (fromDomain_ z1) (fromDomain_ x2) (fromDomain_ y2) (fromDomain_ z2) 
-	(as_nat h2 u1) (as_nat h2 u2) (as_nat h2 s1) (as_nat h2 s2) x3 y3 z3;
-
-    assert(    
-    
-    let (xN, yN, zN) = _point_add (fromDomain_ x1, fromDomain_ y1, fromDomain_ z1) 
-      (fromDomain_ x2, fromDomain_ y2, fromDomain_ z2) in
-    
-    let x3D, y3D, z3D = fromDomainPoint (x3, y3, z3) in 
-    let u1D = fromDomain_ (as_nat h2 u1) in let u2D = fromDomain_ (as_nat h2 u2) in 
-    let s1D = fromDomain_ (as_nat h2 s1) in let s2D = fromDomain_ (as_nat h2 s2) in 
-    (u1D = u2D && s1D = s2D && fromDomain_ z1 <> 0 && fromDomain_ z2 <> 0)  ==> (xN == x3D /\ yN == y3D /\ zN == z3D));
-
-     
-     assume(    
-    
-    let (xN, yN, zN) = _point_add (fromDomain_ x1, fromDomain_ y1, fromDomain_ z1) 
-      (fromDomain_ x2, fromDomain_ y2, fromDomain_ z2) in
-    
-    let x3D, y3D, z3D = fromDomainPoint (x3, y3, z3) in 
-    let u1D = fromDomain_ (as_nat h2 u1) in let u2D = fromDomain_ (as_nat h2 u2) in 
-    let s1D = fromDomain_ (as_nat h2 s1) in let s2D = fromDomain_ (as_nat h2 s2) in 
-    not(u1D = u2D && s1D = s2D && fromDomain_ z1 <> 0 && fromDomain_ z2 <> 0)  ==> (xN == x3D /\ yN == y3D /\ zN == z3D));
-
-
-    assert(    
-    
-    let (xN, yN, zN) = _point_add (fromDomain_ x1, fromDomain_ y1, fromDomain_ z1)  (fromDomain_ x2, fromDomain_ y2, fromDomain_ z2) in
-    
-    let x3D, y3D, z3D = fromDomainPoint (x3, y3, z3) in 
-    (xN == x3D /\ yN == y3D /\ zN == z3D))
-
-
+      
+      lemma_xToSpecification_  pxD pyD pzD qxD qyD qzD (as_nat h2 u1) (as_nat h2 u2) (as_nat h2 s1) (as_nat h2 s2) x3 y3 z3
 
 
 val lemma_pointAtInfInDomain: x: nat -> y: nat -> z: nat {z < prime256} -> 

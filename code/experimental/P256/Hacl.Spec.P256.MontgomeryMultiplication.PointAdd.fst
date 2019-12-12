@@ -741,18 +741,16 @@ let lemma_xToSpecification x1D y1D z1D x2D y2D z2D u1 u2 s1 s2  x3 y3 z3 =
 
 noextract       
 assume val lemma_xToSpecification_after_double_: 
-  pX: nat -> pY: nat -> pZ: nat -> 
+  pxD: nat -> pyD: nat -> pzD: nat -> 
 
-  qX: nat -> qY: nat -> qZ: nat -> 
+  qxD: nat -> qyD: nat -> qzD: nat -> 
 
   x3: nat -> y3: nat -> z3: nat -> 
   
   u1: nat -> u2: nat -> s1: nat -> s2: nat -> h: nat -> r: nat -> 
   Lemma
     (requires (    
-
-      let pxD, pyD, pzD = fromDomain_ pX, fromDomain_ pY, fromDomain_ pZ in 
-      let qxD, qyD, qzD = fromDomain_ qX, fromDomain_ qY, fromDomain_ qZ in 
+    
       let x3D, y3D, z3D = fromDomain_ x3, fromDomain_ y3, fromDomain_ z3 in 
 
       let u1D = fromDomain_ u1 in 
@@ -784,9 +782,9 @@ assume val lemma_xToSpecification_after_double_:
 	    fromDomain_ z3 == qzD 
 	  else
 	    begin
-	      fromDomain_ x3 == (rD * rD - hD * hD * hD - 2 * u1D * hD * hD) % prime /\
-	      fromDomain_ y3 == (rD * (u1D * hD * hD - x3D) - s1D * hD*hD*hD) % prime /\
-	      fromDomain_ z3 == (hD * pzD * qzD) % prime
+	      x3 == toDomain_ ((rD * rD - hD * hD * hD - 2 * hD * hD * u1D) % prime) /\
+	       y3 == toDomain_(((hD * hD * u1D - x3D) * rD - s1D * hD*hD*hD) % prime) /\
+	       z3 == toDomain_((pzD * qzD * hD) % prime)
 	    end
 	)
 	else True)
@@ -794,9 +792,8 @@ assume val lemma_xToSpecification_after_double_:
 )
   (ensures 
   (    
-      let pxD, pyD, pzD = fromDomain_ pX, fromDomain_ pY, fromDomain_ pZ in 
-      let qxD, qyD, qzD = fromDomain_ qX, fromDomain_ qY, fromDomain_ qZ in 
-      let x3D, y3D, z3D = fromDomain_ x3, fromDomain_ y3, fromDomain_ z3 in 
+  
+    let x3D, y3D, z3D = fromDomain_ x3, fromDomain_ y3, fromDomain_ z3 in 
 
      let (xN, yN, zN) = _point_add (pxD, pyD, pzD) (qxD, qyD, qzD) in
      
