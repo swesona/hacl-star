@@ -20,7 +20,7 @@ let prime = prime256
 #reset-options "--z3rlimit 300"  
 
 
-val lemma_xToSpecification_ : 
+val lemma_xToSpecification: 
   x1D: nat -> y1D: nat -> z1D: nat -> x2D: nat -> y2D: nat -> z2D: nat -> 
   
   u1: nat{u1 = toDomain_ (z2D * z2D * x1D % prime)} -> 
@@ -55,7 +55,7 @@ val lemma_xToSpecification_ :
   )
 
 
-let lemma_xToSpecification_ x1D y1D z1D x2D y2D z2D u1 u2 s1 s2  x3 y3 z3 = 
+let lemma_xToSpecification x1D y1D z1D x2D y2D z2D u1 u2 s1 s2  x3 y3 z3 = 
     let open FStar.Tactics in 
     let open FStar.Tactics.Canon in 
     let u1D = fromDomain_ u1 in let u2D = fromDomain_ u2 in 

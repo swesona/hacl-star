@@ -240,6 +240,7 @@ let sub4 (f10, f11, f12, f13) (f20, f21, f22, f23) =
   assert_norm (pow2 64 * pow2 64 * pow2 64 * pow2 64 = pow2 256);
   c3, (o0, o1, o2, o3)
 
+
 noextract inline_for_extraction
 val mul4:
     f:felem4

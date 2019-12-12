@@ -595,36 +595,3 @@ let multByMinusThree_tuple (a0, a1, a2, a3) =
   lemma_minus_three (as_nat4 (a0, a1, a2, a3));
   (c0, c1, c2, c3)
 
-
-let equalFelem (a_0, a_1, a_2, a_3) (b_0, b_1, b_2, b_3) = 
-    let r_0 = eq_mask a_0 b_0 in 
-      eq_mask_lemma a_0 b_0;
-    let r_1 = eq_mask a_1 b_1 in 
-      eq_mask_lemma a_1 b_1;
-    let r_2 = eq_mask a_2 b_2 in 
-      eq_mask_lemma a_2 b_2;
-    let r_3 = eq_mask a_3 b_3 in 
-      eq_mask_lemma a_3 b_3;
-    let r01 = logand r_0 r_1 in 
-      logand_lemma r_0 r_1;
-    let r23 = logand r_2 r_3 in 
-      logand_lemma r_2 r_3;
-    let r = logand r01 r23 in 
-      logand_lemma r01 r23;
-      lemma_equality (a_0, a_1, a_2, a_3) (b_0, b_1, b_2, b_3) ; 
-    r
-
-
-let isZero_tuple_u (a0, a1, a2, a3)  = 
-  let r0 = eq_mask a0 (u64 0) in 
-  let r1 = eq_mask a1 (u64 0) in 
-  let r2 = eq_mask a2 (u64 0) in 
-  let r3 = eq_mask a3 (u64 0) in 
-  let r01 = logand r0 r1 in 
-     logand_lemma r0 r1;
-  let r23 = logand r2 r3 in 
-     logand_lemma r2 r3;
-  let r = logand r01 r23 in 
-  logand_lemma r01 r23;
-      r
- 

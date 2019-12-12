@@ -72,9 +72,3 @@ val multByEight_tuple: a: felem4 {as_nat4 a < prime256} -> Tot (result: felem4 {
 
 inline_for_extraction noextract
 val multByMinusThree_tuple: a: felem4 {as_nat4 a < prime256} -> Tot (result: felem4 {as_nat4 result = (as_nat4 a * (-3)) % prime256})
-
-inline_for_extraction noextract 
-val equalFelem: a: felem4 -> b: felem4 -> Tot (r: uint64 {if as_nat4 a = as_nat4 b then uint_v r == pow2 64 - 1 else uint_v r = 0})
-
-inline_for_extraction noextract 
-val isZero_tuple_u: a: felem4 -> Tot (r: uint64 {if as_nat4 a = 0 then uint_v r == pow2 64 - 1 else uint_v r = 0})

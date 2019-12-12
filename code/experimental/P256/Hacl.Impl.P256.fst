@@ -111,7 +111,7 @@ let multByTwo a out =
   p256_add a a out;
     inDomain_mod_is_not_mod (2 * fromDomain_ (as_nat h0 a))
 
-
+(*to check *)
 val multByThree: a: felem -> result: felem -> Stack unit 
   (requires fun h -> live h a /\ live h result /\ disjoint a result /\ as_nat h a < prime )
   (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\ as_nat h1 result < prime /\ 
@@ -123,7 +123,6 @@ let multByThree a result =
     let h0 = ST.get() in 
   multByTwo a result;
   p256_add a result result;
-    lemma_add_same_value_is_by_three (as_seq h0 a);
     inDomain_mod_is_not_mod (3 * fromDomain_ (as_nat h0 a))
   
 
@@ -168,8 +167,7 @@ val multByMinusThree: a: felem -> result: felem -> Stack unit
   (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\ 
     as_nat h1 result < prime /\ 
     as_nat h1 result == toDomain_ ((-3) * fromDomain_ (as_nat h0 a) % prime256) /\
-    as_nat h1 result == toDomain_ ((-3) * fromDomain_ (as_nat h0 a)) /\
-    as_seq h1 result == mm_byMinusThree_seq (as_seq h0 a))
+    as_nat h1 result == toDomain_ ((-3) * fromDomain_ (as_nat h0 a)))
 
 let multByMinusThree a result  = 
   let h0 = ST.get() in 
@@ -179,7 +177,6 @@ let multByMinusThree a result  =
       let h1 = ST.get() in 
     p256_sub zeros result result;
   pop_frame();
-  lemma_add_same_value_is_by_minus_three (as_seq h0 a) (as_seq h1 zeros);
   admit()
 
 
@@ -847,7 +844,7 @@ let point_add p q result tempBuffer =
       let y3 = as_nat h3 (gsub result (size 4) (size 4)) in 
       let z3 = as_nat h3 (gsub result (size 8) (size 4)) in 
       
-      lemma_xToSpecification_  pxD pyD pzD qxD qyD qzD (as_nat h2 u1) (as_nat h2 u2) (as_nat h2 s1) (as_nat h2 s2) x3 y3 z3
+      lemma_xToSpecification pxD pyD pzD qxD qyD qzD (as_nat h2 u1) (as_nat h2 u2) (as_nat h2 s1) (as_nat h2 s2) x3 y3 z3
 
 
 val lemma_pointAtInfInDomain: x: nat -> y: nat -> z: nat {z < prime256} -> 
