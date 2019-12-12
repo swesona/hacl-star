@@ -15,7 +15,7 @@ open Hacl.Spec.ECDSAP256.Definition
 open Hacl.Spec.ECDSA
 open Hacl.Impl.LowLevel
 open Hacl.Spec.P256.Basic
-open Hacl.Spec.P256.Core
+
 open Hacl.Spec.P256.Ladder
 
 open Hacl.Spec.P256.Lemmas
