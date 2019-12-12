@@ -706,3 +706,23 @@ let compare_felem a b =
       logand_lemma r01 r23;
       lemma_equality (a_0, a_1, a_2, a_3) (b_0, b_1, b_2, b_3); 
     r
+
+
+
+(* This code is not side channel resistant *)
+inline_for_extraction noextract
+val eq_u64:a:uint64 -> b:uint64 -> Tot (r: bool {if uint_v a = uint_v b then r == true else r == false})
+
+(* This code is used only for proving, so the code is NOT side channel resistant *)
+let eq_u64 a b =
+  let open Lib.RawIntTypes in
+  FStar.UInt64.(u64_to_UInt64 a =^ u64_to_UInt64 b)
+
+
+
+(* This code is not side channel resistant *)
+inline_for_extraction noextract
+val eq_0_u64: a: uint64 -> Tot (r: bool {if uint_v a = 0 then r == true else r == false})
+
+let eq_0_u64 a = eq_u64 a (u64 0)
+

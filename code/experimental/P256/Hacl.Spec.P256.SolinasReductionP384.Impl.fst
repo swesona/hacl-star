@@ -8,7 +8,7 @@ module C =  Hacl.Spec.Curve25519.Field64.Core
 open FStar.Mul
 open Lib.Sequence
 
-open Hacl.Spec.P256.Core
+
 open Hacl.Spec.P256.Definitions
 
 open Lib.Sequence

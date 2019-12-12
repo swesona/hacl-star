@@ -6,7 +6,7 @@ open FStar.Mul
 
 open Hacl.Spec.P256.Lemmas
 open Hacl.Spec.P256.Definitions
-open Hacl.Spec.P256.Core
+
 open Hacl.Spec.P256.Basic
 
 open Lib.IntTypes

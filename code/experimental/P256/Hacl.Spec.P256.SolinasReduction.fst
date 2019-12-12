@@ -8,7 +8,7 @@ open Hacl.Spec.P256.Definitions
 open FStar.Mul
 open Lib.Sequence
 
-open Hacl.Spec.P256.Core
+
 
 #reset-options "--z3refresh --z3rlimit 200"
 
