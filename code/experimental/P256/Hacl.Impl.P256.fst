@@ -830,8 +830,8 @@ let point_add p q result tempBuffer =
       let y3 = as_nat h4 (gsub result (size 4) (size 4)) in 
       let z3 = as_nat h4 (gsub result (size 8) (size 4)) in 
 
-      lemma_xToSpecification_after_double_ pxD pyD pzD qxD qyD qzD x3 y3 z3 (as_nat h2 u1) (as_nat h2 u2) (as_nat h2 s1) (as_nat h2 s2) (as_nat h3 h) (as_nat h3 r)
-    end; 
+      lemma_xToSpecification_after_double pxD pyD pzD qxD qyD qzD x3 y3 z3 (as_nat h2 u1) (as_nat h2 u2) (as_nat h2 s1) (as_nat h2 s2) (as_nat h3 h) (as_nat h3 r)
+    end;
 
   let h3 = ST.get() in 
       
