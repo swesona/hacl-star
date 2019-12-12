@@ -26,13 +26,6 @@ Hacl_Impl_ECDSA_MontgomeryMultiplication_add8_without_carry1(
   uint64_t uu____0 = Hacl_Impl_LowLevel_add8(t, t1, result);
 }
 
-typedef struct K___uint64_t_uint64_t_s
-{
-  uint64_t fst;
-  uint64_t snd;
-}
-K___uint64_t_uint64_t;
-
 static void
 Hacl_Impl_ECDSA_MontgomeryMultiplication_montgomery_multiplication_round(
   uint64_t *t,
@@ -40,18 +33,16 @@ Hacl_Impl_ECDSA_MontgomeryMultiplication_montgomery_multiplication_round(
   uint64_t k0
 )
 {
-  uint64_t yBuffer[8U] = { 0U };
+  uint64_t temp = (uint64_t)0U;
+  uint64_t y = (uint64_t)0U;
   uint64_t t2[8U] = { 0U };
   uint64_t t3[8U] = { 0U };
   uint64_t t1 = t[0U];
-  uint128_t res = (uint128_t)t1 * k0;
-  K___uint64_t_uint64_t scrut;
-  uint64_t y;
-  scrut.fst = (uint64_t)res;
-  scrut.snd = (uint64_t)(res >> (uint32_t)64U);
-  y = scrut.fst;
+  uint64_t y1;
+  Hacl_Impl_LowLevel_mul64(t1, k0, &y, &temp);
+  y1 = y;
   Hacl_Impl_LowLevel_shortened_mul(Hacl_Impl_ECDSA_MontgomeryMultiplication_prime256order_buffer,
-    y,
+    y1,
     t2);
   Hacl_Impl_ECDSA_MontgomeryMultiplication_add8_without_carry1(t, t2, t3);
   Hacl_Impl_LowLevel_shift8(t3, round);

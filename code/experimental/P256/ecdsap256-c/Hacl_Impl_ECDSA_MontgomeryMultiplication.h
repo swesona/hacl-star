@@ -10,7 +10,6 @@
 #define __Hacl_Impl_ECDSA_MontgomeryMultiplication_H
 
 #include "Hacl_Impl_P256.h"
-#include "FStar.h"
 #include "kremlib.h"
 #include "FStar_UInt_8_16_32_64.h"
 #include "c/Lib_PrintBuffer.h"

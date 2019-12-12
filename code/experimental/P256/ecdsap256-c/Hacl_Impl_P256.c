@@ -151,7 +151,7 @@ static uint64_t Hacl_Impl_LowLevel_sub4(uint64_t *x, uint64_t *y, uint64_t *resu
   return cc3;
 }
 
-static void Hacl_Impl_LowLevel_mul64(uint64_t x, uint64_t y, uint64_t *result, uint64_t *temp)
+void Hacl_Impl_LowLevel_mul64(uint64_t x, uint64_t y, uint64_t *result, uint64_t *temp)
 {
   uint128_t res = (uint128_t)x * y;
   uint64_t l0 = (uint64_t)res;

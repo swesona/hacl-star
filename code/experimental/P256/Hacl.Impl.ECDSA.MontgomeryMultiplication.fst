@@ -167,17 +167,20 @@ val montgomery_multiplication_round: t: widefelem ->  round: widefelem -> k0: ui
 let montgomery_multiplication_round t round k0 = 
   push_frame(); 
     let h0 = ST.get() in 
-    let yBuffer = create (size 8) (u64 0) in 
+    let temp = create (size 1) (u64 0) in 
+    let y = create (size 1) (u64 0) in 
+
     let t2 = create (size 8) (u64 0) in 
     let t3 = create (size 8) (u64 0) in 
-    let t1 = mod64 t in 
-    
-    let y, _ = mul64_u128 t1 k0 in 
+    let t1 = mod64 t in
+    mul64 t1 k0 y temp;
       recall_contents prime256order_buffer (Lib.Sequence.of_list p256_order_prime_list);
+    let y = index y (size 0) in   
     shortened_mul prime256order_buffer y t2;
     add8_without_carry1 t t2 t3;
       assert_by_tactic ((wide_as_nat h0 t % pow2 64) * uint_v k0 == uint_v k0 * (wide_as_nat h0 t % pow2 64)) canon;
     shift8 t3 round;
+    admit();
   pop_frame()
 
 
