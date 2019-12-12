@@ -173,8 +173,8 @@ let p256_add arg1 arg2 out =
     reduction_prime256_2prime256_with_carry_impl t out out;
   let h2 = ST.get() in 
     additionInDomain2Nat (as_nat h0 arg1) (as_nat h0 arg2);
-    inDomain_mod_is_not_mod (fromDomain_ (as_nat h0 arg1) + fromDomain_ (as_nat h0 arg2));
-    lemma_eq_funct (as_seq h2 out) (felem_add_seq (as_seq h0 arg1) (as_seq h0 arg2))
+    inDomain_mod_is_not_mod (fromDomain_ (as_nat h0 arg1) + fromDomain_ (as_nat h0 arg2))
+    (* lemma_eq_funct (as_seq h2 out) (felem_add_seq (as_seq h0 arg1) (as_seq h0 arg2)) *)
 
 
 val p256_double: arg1: felem ->  out: felem -> Stack unit 
@@ -194,7 +194,7 @@ let p256_double arg1 out =
   additionInDomain2Nat (as_nat h0 arg1) (as_nat h0 arg1);
   inDomain_mod_is_not_mod (fromDomain_ (as_nat h0 arg1) + fromDomain_ (as_nat h0 arg1))
 
-
+(* to check *)
 val p256_sub: arg1: felem -> arg2: felem -> out: felem -> Stack unit 
   (requires 
     (fun h0 -> live h0 out /\ live h0 arg1 /\ live h0 arg2 /\ 
@@ -231,6 +231,6 @@ let p256_sub arg1 arg2 out =
 	  end);
 
     substractionInDomain2Nat (felem_seq_as_nat (as_seq h0 arg1)) (felem_seq_as_nat (as_seq h0 arg2));
-    inDomain_mod_is_not_mod (fromDomain_ (felem_seq_as_nat (as_seq h0 arg1)) - fromDomain_ (felem_seq_as_nat (as_seq h0 arg2)));
-    lemma_eq_funct (as_seq h2 out) (felem_sub_seq (as_seq h0 arg1) (as_seq h0 arg2))
+    inDomain_mod_is_not_mod (fromDomain_ (felem_seq_as_nat (as_seq h0 arg1)) - fromDomain_ (felem_seq_as_nat (as_seq h0 arg2)))
+    (* lemma_eq_funct (as_seq h2 out) (felem_sub_seq (as_seq h0 arg1) (as_seq h0 arg2)) *)
     
