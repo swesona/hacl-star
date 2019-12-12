@@ -13,8 +13,6 @@ open Hacl.Spec.P256.Definitions
 open Hacl.Spec.P256.Lemmas
 open Hacl.Spec.ECDSAP256.Definition
 open Hacl.Impl.LowLevel
-open Hacl.Spec.P256.Basic
-
 
 open Hacl.Impl.ECDSA.MontgomeryMultiplication
 open Hacl.Impl.ECDSA.MM.Exponent

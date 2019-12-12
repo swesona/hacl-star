@@ -12,7 +12,6 @@ open FStar.Math.Lemmas
 open Hacl.Spec.P256.Lemmas
 open Hacl.Spec.ECDSAP256.Definition
 open Hacl.Impl.LowLevel
-open Hacl.Spec.P256.Basic
 
 open FStar.Tactics
 open FStar.Tactics.Canon 
@@ -172,7 +171,8 @@ let montgomery_multiplication_round t round k0 =
     let t2 = create (size 8) (u64 0) in 
     let t3 = create (size 8) (u64 0) in 
     let t1 = mod64 t in 
-    let y, _ = mul64 t1 k0 in 
+    
+    let y, _ = mul64_u128 t1 k0 in 
       recall_contents prime256order_buffer (Lib.Sequence.of_list p256_order_prime_list);
     shortened_mul prime256order_buffer y t2;
     add8_without_carry1 t t2 t3;

@@ -3,7 +3,6 @@ module Hacl.Spec.P256.Lemmas
 open Lib.IntTypes
 open FStar.Math.Lemmas
 open FStar.Math.Lib
-open Hacl.Spec.P256.Basic
 
 open FStar.Mul
 

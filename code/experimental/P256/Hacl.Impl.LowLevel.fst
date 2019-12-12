@@ -9,7 +9,6 @@ open Lib.Buffer
 
 open Hacl.Spec.P256.Definitions
 open Hacl.Spec.P256.Lemmas
-open Hacl.Spec.P256.Basic
 open Hacl.Spec.ECDSA
 
 open FStar.Math.Lemmas
@@ -19,6 +18,39 @@ open FStar.Tactics
 open FStar.Tactics.Canon 
 
 #reset-options "--z3rlimit 100"
+
+
+
+(* This code is not side channel resistant *)
+inline_for_extraction noextract
+val eq_u64:a:uint64 -> b:uint64 -> Tot (r: bool {if uint_v a = uint_v b then r == true else r == false})
+
+(* This code is used only for proving, so the code is NOT side channel resistant *)
+let eq_u64 a b =
+  let open Lib.RawIntTypes in
+  FStar.UInt64.(u64_to_UInt64 a =^ u64_to_UInt64 b)
+
+
+
+(* This code is not side channel resistant *)
+inline_for_extraction noextract
+val eq_0_u64: a: uint64 -> Tot (r: bool {if uint_v a = 0 then r == true else r == false})
+
+let eq_0_u64 a = eq_u64 a (u64 0)
+
+inline_for_extraction noextract
+val lt_u64:a:uint64 -> b:uint64 -> Tot bool
+let lt_u64 a b =
+  let open Lib.RawIntTypes in
+  FStar.UInt64.(u64_to_UInt64 a <^ u64_to_UInt64 b)
+
+inline_for_extraction noextract
+val le_u64:a:uint64 -> b:uint64 -> Tot bool
+let le_u64 a b =
+  let open Lib.RawIntTypes in
+  FStar.UInt64.(u64_to_UInt64 a <=^ u64_to_UInt64 b)
+
+
 
 inline_for_extraction noextract
 val load_buffer8: 
@@ -708,21 +740,16 @@ let compare_felem a b =
     r
 
 
-
-(* This code is not side channel resistant *)
 inline_for_extraction noextract
-val eq_u64:a:uint64 -> b:uint64 -> Tot (r: bool {if uint_v a = uint_v b then r == true else r == false})
-
-(* This code is used only for proving, so the code is NOT side channel resistant *)
-let eq_u64 a b =
-  let open Lib.RawIntTypes in
-  FStar.UInt64.(u64_to_UInt64 a =^ u64_to_UInt64 b)
-
-
-
-(* This code is not side channel resistant *)
-inline_for_extraction noextract
-val eq_0_u64: a: uint64 -> Tot (r: bool {if uint_v a = 0 then r == true else r == false})
-
-let eq_0_u64 a = eq_u64 a (u64 0)
-
+val mul64_u128:
+    x:uint64
+  -> y:uint64
+  -> Pure (uint64 & uint64)
+    (requires True)
+    (ensures fun (l0, l1) ->
+      v l0 + v l1 * pow2 64 = v x * v y)
+      
+[@CInline]
+let mul64_u128 x y =
+  let res = mul64_wide x y in
+  (to_u64 res, to_u64 (res >>. 64ul))

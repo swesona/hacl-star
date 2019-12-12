@@ -9,7 +9,6 @@ open Lib.Buffer
 
 open Hacl.Spec.P256.Definitions
 open Hacl.Spec.P256.Lemmas
-open Hacl.Spec.P256.Basic
 open Hacl.Spec.P256.MontgomeryMultiplication
 
 open Hacl.Impl.LowLevel
