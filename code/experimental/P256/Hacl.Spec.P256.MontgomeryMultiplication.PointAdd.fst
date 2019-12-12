@@ -727,38 +727,20 @@ let lemma_xToSpecification x1D y1D z1D x2D y2D z2D u1 u2 s1 s2  x3 y3 z3 =
      lemmaFromDomainToDomain (felem_seq_as_nat z3)
 
 
-
-
-
-
-
-
-
-
-
-
-
-
 noextract       
-assume val lemma_xToSpecification_after_double_: 
+val lemma_xToSpecification_after_double_: 
   pxD: nat -> pyD: nat -> pzD: nat -> 
-
   qxD: nat -> qyD: nat -> qzD: nat -> 
-
   x3: nat -> y3: nat -> z3: nat -> 
-  
-  u1: nat -> u2: nat -> s1: nat -> s2: nat -> h: nat -> r: nat -> 
+  u1: nat -> u2: nat -> s1: nat -> s2: nat -> 
+  h: nat -> r: nat -> 
   Lemma
     (requires (    
-    
       let x3D, y3D, z3D = fromDomain_ x3, fromDomain_ y3, fromDomain_ z3 in 
 
-      let u1D = fromDomain_ u1 in 
-      let u2D = fromDomain_ u2 in 
-      let s1D = fromDomain_ s1 in 
-      let s2D = fromDomain_ s2 in 
-
-      let rD = fromDomain_ r in 
+      let u1D, u2D = fromDomain_ u1, fromDomain_ u2 in 
+      let s1D, s2D = fromDomain_ s1, fromDomain_ s2 in 
+      let rD = fromDomain_ r in    
       let hD = fromDomain_ h in 
      
       u1 == toDomain_ (qzD * qzD * pxD % prime256) /\
@@ -773,123 +755,45 @@ assume val lemma_xToSpecification_after_double_:
 	if (not (fromDomain_ u1 = fromDomain_ u2 && fromDomain_ s1 = fromDomain_ s2 && pzD <> 0 && qzD <> 0)) then 
 	(
 	  if qzD = 0 then 
-	    fromDomain_ x3 == pxD /\ 
-	    fromDomain_ y3 == pyD /\ 
-	    fromDomain_ z3 == pzD
+	    fromDomain_ x3 == pxD /\ fromDomain_ y3 == pyD /\ fromDomain_ z3 == pzD
 	  else if pzD = 0 then 
-	    fromDomain_ x3 == qxD /\ 
-	    fromDomain_ y3 == qyD /\ 
-	    fromDomain_ z3 == qzD 
+	    fromDomain_ x3 == qxD /\  fromDomain_ y3 == qyD /\  fromDomain_ z3 == qzD 
 	  else
-	    begin
-	      x3 == toDomain_ ((rD * rD - hD * hD * hD - 2 * hD * hD * u1D) % prime) /\
-	       y3 == toDomain_(((hD * hD * u1D - x3D) * rD - s1D * hD*hD*hD) % prime) /\
-	       z3 == toDomain_((pzD * qzD * hD) % prime)
-	    end
+	    x3 == toDomain_ ((rD * rD - hD * hD * hD - 2 * hD * hD * u1D) % prime) /\
+	    y3 == toDomain_ (((hD * hD * u1D - x3D) * rD - s1D * hD*hD*hD) % prime) /\
+	    z3 == toDomain_ ((pzD * qzD * hD) % prime)
 	)
 	else True)
+      )
   )
-)
   (ensures 
   (    
-  
     let x3D, y3D, z3D = fromDomain_ x3, fromDomain_ y3, fromDomain_ z3 in 
-
-     let (xN, yN, zN) = _point_add (pxD, pyD, pzD) (qxD, qyD, qzD) in
-     
-     let u1D = fromDomain_ u1 in let u2D = fromDomain_ u2 in 
-     let s1D = fromDomain_ s1 in let s2D = fromDomain_ s2 in 
-     if (not(u1D = u2D && s1D = s2D && pzD <> 0 && qzD <> 0)) then
-       xN == x3D /\  yN == y3D /\ zN == z3D
-     else True
+    let (xN, yN, zN) = _point_add (pxD, pyD, pzD) (qxD, qyD, qzD) in
+    let u1D = fromDomain_ u1 in let u2D = fromDomain_ u2 in 
+    let s1D = fromDomain_ s1 in let s2D = fromDomain_ s2 in 
+    if (not(u1D = u2D && s1D = s2D && pzD <> 0 && qzD <> 0)) then
+      xN == x3D /\  yN == y3D /\ zN == z3D
+    else True
   )
 )
 
 
-noextract       
-val lemma_xToSpecification_after_double : 
-  p: point_prime -> 
-  q: point_prime -> 
-  result: point_prime -> 
-  u1: felem_seq_prime -> 
-  u2: felem_seq_prime -> 
-  s1: felem_seq_prime-> 
-  s2: felem_seq_prime{let u1N, u2N, s1N, s2N = move_from_jacobian_coordinates_seq p q in u1 == u1N /\ u2 == u2N /\ s1 == s1N /\ s2 == s2N} -> 
-  h: felem_seq_prime -> 
-  r: felem_seq_prime {let hN, rN, uhN, hCubeN = compute_common_params_point_add_seq u1 u2 s1 s2 in h == hN /\ r == rN} -> 
-  Lemma
-    (requires (    
-      let x1, y1, z1 = sub p 0 4, sub p 4 4, sub p 8 4 in 
-      let x2, y2, z2 = sub q 0 4, sub q 4 4, sub q 8 4 in 
-      let x3, y3, z3 = sub result 0 4, sub result 4 4, sub result 8 4 in 
-      
-      let x1D, y1D, z1D = fromDomainPoint (felem_seq_as_nat x1, felem_seq_as_nat y1, felem_seq_as_nat z1) in 
-      let x2D, y2D, z2D = fromDomainPoint (felem_seq_as_nat x2, felem_seq_as_nat y2, felem_seq_as_nat z2) in 
-      let x3D, y3D, z3D = fromDomainPoint (felem_seq_as_nat x3, felem_seq_as_nat y3, felem_seq_as_nat z3) in 
-      
-      let u1D = fromDomain_ (felem_seq_as_nat u1) in 
-      let u2D = fromDomain_ (felem_seq_as_nat u2) in 
-      let s1D = fromDomain_ (felem_seq_as_nat s1) in 
-      let s2D = fromDomain_ (felem_seq_as_nat s2) in 
-
-      let rD = fromDomain_ (felem_seq_as_nat r) in 
-      let hD = fromDomain_ (felem_seq_as_nat h) in 
-      if (not(u1D = u2D && s1D = s2D && z1D <> 0 && z2D <> 0)) then 
-      (
-	if z2D = 0 then 
-	  fromDomain_(felem_seq_as_nat x3) == x1D /\ fromDomain_(felem_seq_as_nat y3) == y1D /\ fromDomain_ (felem_seq_as_nat z3) == z1D
-	else if z1D = 0 then 
-	  fromDomain_(felem_seq_as_nat x3) == x2D /\ fromDomain_ (felem_seq_as_nat y3) == y2D /\ fromDomain_ (felem_seq_as_nat z3) == z2D 
-	else
-	  begin
-	    fromDomain_ (felem_seq_as_nat x3) == (rD * rD - hD * hD * hD - 2 * u1D * hD * hD) % prime /\
-	    fromDomain_ (felem_seq_as_nat y3) == (rD * (u1D * hD * hD - x3D) - s1D * hD*hD*hD) % prime /\
-	    fromDomain_ (felem_seq_as_nat z3) == (hD * z1D * z2D) % prime
-	  end)
-	  
-  else True)
-  )
-
-  (ensures 
-  (    
-     let x1, y1, z1 = sub p 0 4, sub p 4 4, sub p 8 4 in 
-     let x2, y2, z2 = sub q 0 4, sub q 4 4, sub q 8 4 in 
-     let x3, y3, z3 = sub result 0 4, sub result 4 4, sub result 8 4 in 
-     let x1D, y1D, z1D = fromDomainPoint (felem_seq_as_nat x1, felem_seq_as_nat y1, felem_seq_as_nat z1) in 
-     let x2D, y2D, z2D = fromDomainPoint (felem_seq_as_nat x2, felem_seq_as_nat y2, felem_seq_as_nat z2) in 
-     let x3D, y3D, z3D = fromDomainPoint (felem_seq_as_nat x3, felem_seq_as_nat y3, felem_seq_as_nat z3) in 
-     let (xN, yN, zN) = _point_add (x1D, y1D, z1D) (x2D, y2D, z2D) in
-     let u1D = fromDomain_ (felem_seq_as_nat u1) in let u2D = fromDomain_ (felem_seq_as_nat u2) in 
-     let s1D = fromDomain_ (felem_seq_as_nat s1) in let s2D = fromDomain_ (felem_seq_as_nat s2) in 
-     if (not(u1D = u2D && s1D = s2D && z1D <> 0 && z2D <> 0)) then
-       xN == x3D /\  yN == y3D /\ zN == z3D
-     else True
-  )
-)
-
-
-let lemma_xToSpecification_after_double p q result u1 u2 s1 s2 h r = 
+let lemma_xToSpecification_after_double_ x1D y1D z1D x2D y2D z2D x3 y3 z3  u1 u2 s1 s2 h r = 
     let open FStar.Tactics in 
     let open FStar.Tactics.Canon in 
+    
+    let u1D = fromDomain_ u1 in 
+    let u2D = fromDomain_ u2 in 
+    let s1D = fromDomain_ s1 in 
+    let s2D = fromDomain_ s2 in 
 
-    let x1, y1, z1 = sub p 0 4, sub p 4 4, sub p 8 4 in 
-    let x2, y2, z2 = sub q 0 4, sub q 4 4, sub q 8 4 in 
-    let x3, y3, z3 = sub result 0 4, sub result 4 4, sub result 8 4 in 
-    let x1D, y1D, z1D = fromDomainPoint (felem_seq_as_nat x1, felem_seq_as_nat y1, felem_seq_as_nat z1) in 
-    let x2D, y2D, z2D = fromDomainPoint (felem_seq_as_nat x2, felem_seq_as_nat y2, felem_seq_as_nat z2) in 
-    let x3D, y3D, z3D = fromDomainPoint (felem_seq_as_nat x3, felem_seq_as_nat y3, felem_seq_as_nat z3) in 
-
-    let u1D = fromDomain_ (felem_seq_as_nat u1) in 
-    let u2D = fromDomain_ (felem_seq_as_nat u2) in 
-    let s1D = fromDomain_ (felem_seq_as_nat s1) in 
-    let s2D = fromDomain_ (felem_seq_as_nat s2) in 
-
-    let hD = fromDomain_ (felem_seq_as_nat h) in 
-    let rD = fromDomain_ (felem_seq_as_nat r) in 
+    let hD = fromDomain_ h in 
+    let rD = fromDomain_ r in 
     
     let (xN, yN, zN) = _point_add (x1D, y1D, z1D) (x2D, y2D, z2D) in 
 
-    let u1N = x1D * z2D * z2D % prime in 
+    let u1N = x1D * z2D * z2D % prime in
     let u2N = x2D * z1D * z1D % prime in 
     let s1N = y1D * z2D * z2D * z2D % prime in 
     let s2N = y2D * z1D * z1D * z1D % prime in 
@@ -897,65 +801,20 @@ let lemma_xToSpecification_after_double p q result u1 u2 s1 s2 h r =
     let hN = (u2N - u1N) % prime in 
     let rN = (s2N - s1N) % prime in 
 
-    assert_by_tactic (x1D * z2D * z2D = x1D * (z2D * z2D)) canon;
-    assert_by_tactic (x2D * z1D * z1D = x2D * (z1D * z1D)) canon;
+    assert_by_tactic (x1D * z2D * z2D = (z2D * z2D) * x1D) canon;
+    assert_by_tactic (x1D * (z2D * z2D) == z2D * z2D * x1D) canon;
     
-    assert_by_tactic (y1D * z2D * (z2D * z2D) = y1D * z2D * z2D * z2D) canon;
-    assert_by_tactic (y2D * z1D * (z1D * z1D) = y2D * z1D * z1D * z1D) canon;
+    assert_by_tactic (x2D * z1D * z1D = x2D * (z1D * z1D)) canon;
+    assert_by_tactic (z1D * z1D * x2D = x2D * (z1D * z1D)) canon;
 
+    assert_by_tactic (z2D * z2D * z2D * y1D = y1D * z2D * (z2D * z2D)) canon;  
+    assert_by_tactic (z1D * z1D * z1D * y2D = y2D * z1D * (z1D * z1D)) canon;
+
+    assert_by_tactic (z1D * z2D * hD = hD * z1D * z2D) canon;
+    assert_by_tactic ((rD * (u1D * (hD * hD) - xN) - s1D * (hD * hD * hD)) = ((hD * hD * u1D - xN) * rD - s1D * hD*hD*hD)) canon;
+    
     assert_by_tactic (forall (n: nat). n * hN * hN = n * (hN * hN)) canon; 
-    assert_by_tactic (s1D * (hD * hD * hD) = s1D * hD * hD * hD) canon;
-
-     lemmaToDomainAndBackIsTheSame (u1N);
-     lemmaToDomainAndBackIsTheSame (u2N);
-     lemmaToDomainAndBackIsTheSame (s1N);
-     lemmaToDomainAndBackIsTheSame (s2N);
- 
-     lemmaToDomainAndBackIsTheSame (hN);
-     lemmaToDomainAndBackIsTheSame (rN);
-
-     lemmaFromDomainToDomain (felem_seq_as_nat x3);
-     lemmaFromDomainToDomain (felem_seq_as_nat y3);
-     lemmaFromDomainToDomain (felem_seq_as_nat z3)
-
-(*
-#reset-options "--z3rlimit 500 --z3refresh" 
-noextract
-val point_add_seq: p: point_prime -> q: point_prime -> Tot (r: point_prime {
-  let x3, y3, z3 = felem_seq_as_nat (sub r 0 4), felem_seq_as_nat (sub r 4 4), felem_seq_as_nat(sub r 8 4) in
-  let x1, y1, z1 = felem_seq_as_nat (sub p 0 4), felem_seq_as_nat (sub p 4 4), felem_seq_as_nat(sub p 8 4) in 
-  let x2, y2, z2 = felem_seq_as_nat (sub q 0 4), felem_seq_as_nat (sub q 4 4), felem_seq_as_nat(sub q 8 4) in 
-
-  let pxD, pyD, pzD = fromDomainPoint (x1, y1, z1) in 
-  let qxD, qyD, qzD = fromDomainPoint (x2, y2, z2) in 
-  let rxD, ryD, rzD = fromDomainPoint (x3, y3, z3) in 
-  
-  let (xN, yN, zN) = _point_add (pxD, pyD, pzD) (qxD, qyD, qzD) in 
-  rxD == xN /\ ryD == yN /\ rzD == zN
-})
-
-
-let point_add_seq p q = 
-  let x1, y1, z1 = sub p 0 4, sub p 4 4, sub p 8 4 in 
-  let x2, y2, z2 = sub q 0 4, sub q 4 4, sub q 8 4 in 
-
-  let (u1, u2, s1, s2) = move_from_jacobian_coordinates_seq p q in 
-  let flag = point_double_condition_seq u1 u2 s1 s2 z1 z2 in 
-  
-  if flag then begin  
-    (*let result = point_double_seq p in  *)
-    let x3, y3, z3  = sub result 0 4, sub result 4 4, sub result 8 4 in 
-    lemma_xToSpecification (fromDomain_ (felem_seq_as_nat x1)) (fromDomain_ (felem_seq_as_nat y1)) (fromDomain_ (felem_seq_as_nat z1)) (fromDomain_ (felem_seq_as_nat x2)) (fromDomain_ (felem_seq_as_nat y2)) (fromDomain_ (felem_seq_as_nat z2)) u1 u2 s1 s2 x3 y3 z3;
-    result end
-  else 
-    begin 
-      let (h, r, uh, hCube) = compute_common_params_point_add_seq u1 u2 s1 s2 in 
-      let result = point_add_if_second_branch_seq p q u1 u2 s1 s2 r h uh hCube in 
-      lemma_xToSpecification_after_double p q result u1 u2 s1 s2 h r;
-      result
-  end
-*)
-
+    assert_by_tactic (2 * hD * hD * u1D = 2 * u1D * hD * hD) canon
 
 assume val lemma_point_add_0: a: int -> b: int -> c: int -> Lemma 
   ((a - b - 2 * (c % prime256)) % prime256 == (a - b - 2 * c) % prime256)
