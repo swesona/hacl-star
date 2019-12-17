@@ -108,10 +108,10 @@ let montgomery_ladder_exponent_step a b scalar i =
   montgomery_ladder_exponent_step0 a b;
   cswap bit a b;
   Hacl.Spec.ECDSA.lemma_swaped_steps (fromDomain_ (as_nat h0 a)) (fromDomain_ (as_nat h0 b)); 
-  [@inline_let]
+    [@inline_let]
   let k: Lib.Sequence.lseq uint8 32 = as_seq h0 scalar in 
   let open Lib.RawIntTypes in 
-  [@inline_let]
+    [@inline_let]
   let bit_ = ith_bit k (255 - (uint_v i)) in 
   ()
 
@@ -139,11 +139,8 @@ let _montgomery_ladder_exponent a b scalar =
   Lib.LoopCombinators.eq_repeati0 256 (spec_exp h0) (acc h0);
   [@inline_let]
   let inv h (i: nat {i <= 256}) = 
-    live h a /\ live h b /\ live h scalar /\ 
-    modifies2 a b h0 h /\ 
-    as_nat h a < prime /\ as_nat h b < prime /\
-    acc h == Lib.LoopCombinators.repeati i (spec_exp h0) (acc h0)     
-    in 
+    live h a /\ live h b /\ live h scalar /\ modifies (loc a |+| loc b) h0 h /\ as_nat h a < prime /\ as_nat h b < prime /\
+    acc h == Lib.LoopCombinators.repeati i (spec_exp h0) (acc h0) in 
   for 0ul 256ul inv (
     fun i -> 
 	  montgomery_ladder_exponent_step a b scalar i;
@@ -159,8 +156,9 @@ let upload_one_montg_form b =
   upd b (size 0) (u64 884452912994769583);
   upd b (size 1) (u64 4834901526196019579);
   upd b (size 2) (u64 0);
-  upd b (size 3) (u64 4294967295)
-
+  upd b (size 3) (u64 4294967295);
+    assert_norm(toDomain_ 1 == 26959946660873538059280334323273029441504803697035324946844617595567)
+  
 
 let montgomery_ladder_exponent r = 
   push_frame(); 
@@ -222,7 +220,6 @@ let lemma_fromDomain2 a =
   power_one (prime_p256_order -2)
 
 
-
 let multPower a b result = 
   push_frame();
     let tempB1 = create (size 4) (u64 0) in 
@@ -260,8 +257,6 @@ let multPower a b result =
 
       lemma_l_ferm r;
       lemma_mod_mul_distr_r (pow (as_nat h0 a) (prime_p256_order - 2) * (as_nat h0 b)) (pow r (prime_p256_order - 1)) prime_p256_order
-
-
 
 
 let multPowerPartial s a b result = 
