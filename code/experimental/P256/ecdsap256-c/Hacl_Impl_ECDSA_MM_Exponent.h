@@ -9,6 +9,7 @@
 #ifndef __Hacl_Impl_ECDSA_MM_Exponent_H
 #define __Hacl_Impl_ECDSA_MM_Exponent_H
 
+#include "Hacl_Impl_P256.h"
 #include "Hacl_Impl_ECDSA_MontgomeryMultiplication.h"
 #include "kremlib.h"
 #include "FStar_UInt_8_16_32_64.h"

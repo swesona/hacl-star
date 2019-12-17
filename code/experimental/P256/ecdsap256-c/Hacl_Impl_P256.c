@@ -337,7 +337,7 @@ static uint64_t Hacl_Impl_LowLevel_isZero_uint64(uint64_t *f)
   return r01 & r23;
 }
 
-static void Hacl_Impl_LowLevel_uploadOneImpl(uint64_t *f)
+void Hacl_Impl_LowLevel_uploadOneImpl(uint64_t *f)
 {
   f[0U] = (uint64_t)1U;
   f[1U] = (uint64_t)0U;
@@ -736,32 +736,6 @@ static void Hacl_Spec_P256_Ladder_cswap(uint64_t bit, uint64_t *p1, uint64_t *p2
 }
 
 static void
-Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_round(
-  uint64_t *t,
-  uint64_t *round
-)
-{
-  uint64_t t2[8U] = { 0U };
-  uint64_t t3[8U] = { 0U };
-  uint64_t t1 = t[0U];
-  uint64_t uu____0;
-  Hacl_Impl_LowLevel_shortened_mul(Hacl_Impl_P256_LowLevel_prime256_buffer, t1, t2);
-  uu____0 = Hacl_Impl_LowLevel_add8(t, t2, t3);
-  Hacl_Impl_LowLevel_shift8(t3, round);
-}
-
-static void
-Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_round_twice(
-  uint64_t *t,
-  uint64_t *result
-)
-{
-  uint64_t tempRound[8U] = { 0U };
-  Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_round(t, tempRound);
-  Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_round(tempRound, result);
-}
-
-static void
 Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_buffer_by_one(
   uint64_t *a,
   uint64_t *result
@@ -772,17 +746,54 @@ Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_buffer_by_one(
   uint64_t round2[8U] = { 0U };
   uint64_t round4[8U] = { 0U };
   memcpy(t_low, a, (uint32_t)4U * sizeof a[0U]);
-  Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_round_twice(t, round2);
-  Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_round_twice(round2, round4);
   {
-    uint64_t tempBuffer[4U] = { 0U };
-    uint64_t tempBufferForSubborrow = (uint64_t)0U;
-    uint64_t cin = round4[4U];
-    uint64_t *x_ = round4;
-    uint64_t
-    c = Hacl_Impl_LowLevel_sub4_il(x_, Hacl_Impl_P256_LowLevel_prime256_buffer, tempBuffer);
-    uint64_t carry = Hacl_Impl_LowLevel_sub_borrow(c, cin, (uint64_t)0U, &tempBufferForSubborrow);
-    Hacl_Impl_LowLevel_cmovznz4(carry, tempBuffer, x_, result);
+    uint64_t tempRound[8U] = { 0U };
+    uint64_t t20[8U] = { 0U };
+    uint64_t t30[8U] = { 0U };
+    uint64_t t10 = t[0U];
+    uint64_t uu____0;
+    Hacl_Impl_LowLevel_shortened_mul(Hacl_Impl_P256_LowLevel_prime256_buffer, t10, t20);
+    uu____0 = Hacl_Impl_LowLevel_add8(t, t20, t30);
+    Hacl_Impl_LowLevel_shift8(t30, tempRound);
+    {
+      uint64_t t21[8U] = { 0U };
+      uint64_t t31[8U] = { 0U };
+      uint64_t t11 = tempRound[0U];
+      uint64_t uu____1;
+      Hacl_Impl_LowLevel_shortened_mul(Hacl_Impl_P256_LowLevel_prime256_buffer, t11, t21);
+      uu____1 = Hacl_Impl_LowLevel_add8(tempRound, t21, t31);
+      Hacl_Impl_LowLevel_shift8(t31, round2);
+      {
+        uint64_t tempRound0[8U] = { 0U };
+        uint64_t t2[8U] = { 0U };
+        uint64_t t32[8U] = { 0U };
+        uint64_t t12 = round2[0U];
+        uint64_t uu____2;
+        Hacl_Impl_LowLevel_shortened_mul(Hacl_Impl_P256_LowLevel_prime256_buffer, t12, t2);
+        uu____2 = Hacl_Impl_LowLevel_add8(round2, t2, t32);
+        Hacl_Impl_LowLevel_shift8(t32, tempRound0);
+        {
+          uint64_t t22[8U] = { 0U };
+          uint64_t t3[8U] = { 0U };
+          uint64_t t1 = tempRound0[0U];
+          uint64_t uu____3;
+          Hacl_Impl_LowLevel_shortened_mul(Hacl_Impl_P256_LowLevel_prime256_buffer, t1, t22);
+          uu____3 = Hacl_Impl_LowLevel_add8(tempRound0, t22, t3);
+          Hacl_Impl_LowLevel_shift8(t3, round4);
+          {
+            uint64_t tempBuffer[4U] = { 0U };
+            uint64_t tempBufferForSubborrow = (uint64_t)0U;
+            uint64_t cin = round4[4U];
+            uint64_t *x_ = round4;
+            uint64_t
+            c = Hacl_Impl_LowLevel_sub4_il(x_, Hacl_Impl_P256_LowLevel_prime256_buffer, tempBuffer);
+            uint64_t
+            carry = Hacl_Impl_LowLevel_sub_borrow(c, cin, (uint64_t)0U, &tempBufferForSubborrow);
+            Hacl_Impl_LowLevel_cmovznz4(carry, tempBuffer, x_, result);
+          }
+        }
+      }
+    }
   }
 }
 
@@ -797,17 +808,54 @@ Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_buffer(
   uint64_t round2[8U] = { 0U };
   uint64_t round4[8U] = { 0U };
   Hacl_Impl_LowLevel_mul(a, b, t);
-  Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_round_twice(t, round2);
-  Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_round_twice(round2, round4);
   {
-    uint64_t tempBuffer[4U] = { 0U };
-    uint64_t tempBufferForSubborrow = (uint64_t)0U;
-    uint64_t cin = round4[4U];
-    uint64_t *x_ = round4;
-    uint64_t
-    c = Hacl_Impl_LowLevel_sub4_il(x_, Hacl_Impl_P256_LowLevel_prime256_buffer, tempBuffer);
-    uint64_t carry = Hacl_Impl_LowLevel_sub_borrow(c, cin, (uint64_t)0U, &tempBufferForSubborrow);
-    Hacl_Impl_LowLevel_cmovznz4(carry, tempBuffer, x_, result);
+    uint64_t tempRound[8U] = { 0U };
+    uint64_t t20[8U] = { 0U };
+    uint64_t t30[8U] = { 0U };
+    uint64_t t10 = t[0U];
+    uint64_t uu____0;
+    Hacl_Impl_LowLevel_shortened_mul(Hacl_Impl_P256_LowLevel_prime256_buffer, t10, t20);
+    uu____0 = Hacl_Impl_LowLevel_add8(t, t20, t30);
+    Hacl_Impl_LowLevel_shift8(t30, tempRound);
+    {
+      uint64_t t21[8U] = { 0U };
+      uint64_t t31[8U] = { 0U };
+      uint64_t t11 = tempRound[0U];
+      uint64_t uu____1;
+      Hacl_Impl_LowLevel_shortened_mul(Hacl_Impl_P256_LowLevel_prime256_buffer, t11, t21);
+      uu____1 = Hacl_Impl_LowLevel_add8(tempRound, t21, t31);
+      Hacl_Impl_LowLevel_shift8(t31, round2);
+      {
+        uint64_t tempRound0[8U] = { 0U };
+        uint64_t t2[8U] = { 0U };
+        uint64_t t32[8U] = { 0U };
+        uint64_t t12 = round2[0U];
+        uint64_t uu____2;
+        Hacl_Impl_LowLevel_shortened_mul(Hacl_Impl_P256_LowLevel_prime256_buffer, t12, t2);
+        uu____2 = Hacl_Impl_LowLevel_add8(round2, t2, t32);
+        Hacl_Impl_LowLevel_shift8(t32, tempRound0);
+        {
+          uint64_t t22[8U] = { 0U };
+          uint64_t t3[8U] = { 0U };
+          uint64_t t1 = tempRound0[0U];
+          uint64_t uu____3;
+          Hacl_Impl_LowLevel_shortened_mul(Hacl_Impl_P256_LowLevel_prime256_buffer, t1, t22);
+          uu____3 = Hacl_Impl_LowLevel_add8(tempRound0, t22, t3);
+          Hacl_Impl_LowLevel_shift8(t3, round4);
+          {
+            uint64_t tempBuffer[4U] = { 0U };
+            uint64_t tempBufferForSubborrow = (uint64_t)0U;
+            uint64_t cin = round4[4U];
+            uint64_t *x_ = round4;
+            uint64_t
+            c = Hacl_Impl_LowLevel_sub4_il(x_, Hacl_Impl_P256_LowLevel_prime256_buffer, tempBuffer);
+            uint64_t
+            carry = Hacl_Impl_LowLevel_sub_borrow(c, cin, (uint64_t)0U, &tempBufferForSubborrow);
+            Hacl_Impl_LowLevel_cmovznz4(carry, tempBuffer, x_, result);
+          }
+        }
+      }
+    }
   }
 }
 

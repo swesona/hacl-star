@@ -32,7 +32,7 @@ let add8_without_carry1 t t1 result  =
   let _  = add8 t t1 result in 
     assert_norm (pow2 320 + prime256 * prime256 < pow2 512)
 
-
+inline_for_extraction
 val montgomery_multiplication_round: t: widefelem -> round: widefelem -> Stack unit 
   (requires fun h -> live h t /\ live h round /\ wide_as_nat h t < prime256 * prime256)
   (ensures fun h0 _ h1 -> modifies (loc round)  h0 h1 /\
@@ -65,7 +65,7 @@ let montgomery_multiplication_one_round_proof t result co =
   lemma_div_lt (t + (t % pow2 64) * prime256) 575 64; 
   assert_norm (prime256 * prime256 > pow2 (575 - 64))
 
-
+inline_for_extraction
 val montgomery_multiplication_round_twice: t: widefelem -> result: widefelem -> Stack unit 
   (requires fun h -> live h t /\ live h result  /\ wide_as_nat h t < prime256 * prime256)
   (ensures fun h0 _ h1 -> 

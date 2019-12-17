@@ -11,6 +11,7 @@ open Lib.Buffer
 open FStar.Math.Lemmas
 open Hacl.Math
 
+open Hacl.Impl.LowLevel
 open FStar.Tactics
 open FStar.Tactics.Canon 
 
@@ -160,17 +161,6 @@ let upload_one_montg_form b =
   upd b (size 2) (u64 0);
   upd b (size 3) (u64 4294967295)
 
-inline_for_extraction noextract 
-val upload_one: b: felem -> Stack unit 
-  (requires fun h -> live h b)
-  (ensures fun h0 _ h1 -> modifies (loc b)  h0 h1 /\ as_nat h1 b == 1)
-
-let upload_one b = 
-  upd b (size 0) (u64 1);
-  upd b (size 1) (u64 0);
-  upd b (size 2) (u64 0);
-  upd b (size 3) (u64 0)
-
 
 let montgomery_ladder_exponent r = 
   push_frame(); 
@@ -186,7 +176,7 @@ let montgomery_ladder_exponent r =
 let fromDomainImpl a result = 
   push_frame();
     let one = create (size 4) (u64 0) in 
-    upload_one one;
+    uploadOneImpl one;
     montgomery_multiplication_ecdsa_module one a result;
   pop_frame()   
 

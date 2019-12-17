@@ -193,7 +193,7 @@ let p256_double arg1 out =
   additionInDomain (as_nat h0 arg1) (as_nat h0 arg1);
   inDomain_mod_is_not_mod (fromDomain_ (as_nat h0 arg1) + fromDomain_ (as_nat h0 arg1))
 
-(* to check *)
+
 val p256_sub: arg1: felem -> arg2: felem -> out: felem -> Stack unit 
   (requires 
     (fun h0 -> live h0 out /\ live h0 arg1 /\ live h0 arg2 /\ 
@@ -201,7 +201,6 @@ val p256_sub: arg1: felem -> arg2: felem -> out: felem -> Stack unit
       as_nat h0 arg1 < prime256 /\ as_nat h0 arg2 < prime256))
     (ensures (fun h0 _ h1 -> modifies1 out h0 h1 /\ 
 	as_nat h1 out == (as_nat h0 arg1 - as_nat h0 arg2) % prime256 /\
-	(*as_seq h1 out == felem_sub_seq (as_seq h0 arg1) (as_seq h0 arg2) /\ *)
 	as_nat h1 out == toDomain_ ((fromDomain_ (as_nat h0 arg1) - fromDomain_ (as_nat h0 arg2)) % prime256)
     )
 )    
@@ -228,8 +227,6 @@ let p256_sub arg1 arg2 out =
 	    modulo_lemma (as_nat h2 out) prime256;
             as_nat h2 out == (as_nat h0 arg1 - as_nat h0 arg2) % prime256
 	  end);
-
     substractionInDomain (felem_seq_as_nat (as_seq h0 arg1)) (felem_seq_as_nat (as_seq h0 arg2));
     inDomain_mod_is_not_mod (fromDomain_ (felem_seq_as_nat (as_seq h0 arg1)) - fromDomain_ (felem_seq_as_nat (as_seq h0 arg2)))
-    (* lemma_eq_funct (as_seq h2 out) (felem_sub_seq (as_seq h0 arg1) (as_seq h0 arg2)) *)
-    
+

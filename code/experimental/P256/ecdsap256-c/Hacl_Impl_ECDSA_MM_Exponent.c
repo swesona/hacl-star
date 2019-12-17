@@ -71,10 +71,7 @@ void Hacl_Impl_ECDSA_MM_Exponent_montgomery_ladder_exponent(uint64_t *r)
 void Hacl_Impl_ECDSA_MM_Exponent_fromDomainImpl(uint64_t *a, uint64_t *result)
 {
   uint64_t one1[4U] = { 0U };
-  one1[0U] = (uint64_t)1U;
-  one1[1U] = (uint64_t)0U;
-  one1[2U] = (uint64_t)0U;
-  one1[3U] = (uint64_t)0U;
+  Hacl_Impl_LowLevel_uploadOneImpl(one1);
   Hacl_Impl_ECDSA_MontgomeryMultiplication_montgomery_multiplication_ecdsa_module(one1,
     a,
     result);
