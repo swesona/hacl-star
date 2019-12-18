@@ -635,3 +635,11 @@ let lemma_low_level0 o0 o1 o2 o3 f0 f1 f2 f3 u h2 c1 c2 c3 h3 h4 =
   assert((f0 + f1 * pow2 64 + f2 * pow2 128 + f3 * pow2 192) * u < pow2 320);
   assert((c3 + h4) * pow2 256 < pow2 320);
   assert(c3 + h4 < pow2 64)
+
+
+assume val lemma_ll0: a: int -> b: int -> c: int -> d: int -> Lemma (
+    (a + b * pow2 64 + c * pow2 64 * pow2 64 +  d * pow2 64 * pow2 64 * pow2 64) * pow2 256 == 
+    a * pow2 64 * pow2 64 * pow2 64 * pow2 64  +
+    b * pow2 64 * pow2 64 * pow2 64 * pow2 64 * pow2 64 +
+    c * pow2 64 * pow2 64 * pow2 64 * pow2 64 * pow2 64 * pow2 64 +
+    d * pow2 64 * pow2 64 * pow2 64 * pow2 64 * pow2 64 * pow2 64 * pow2 64)

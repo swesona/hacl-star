@@ -27,9 +27,11 @@ let prime256order_buffer: x: ilbuffer uint64 (size 4)
   felem_seq_as_nat (Lib.Sequence.of_list (p256_order_prime_list)) == prime_p256_order} = 
   createL_global p256_order_prime_list
 
+
 inline_for_extraction
 let order_inverse_buffer: x: ilbuffer uint8 32ul {witnessed x prime_p256_order_inverse_seq /\ recallable x} = 
   createL_global prime_p256_order_inverse_list
+
 
 inline_for_extraction
 let order_buffer: x: ilbuffer uint8 32ul {witnessed x prime_p256_order_seq /\ recallable x} = 
@@ -40,7 +42,7 @@ val reduction_prime_prime_2prime_with_carry : x: widefelem -> result: felem ->
   Stack unit 
     (requires fun h -> live h x /\ live h result /\  eq_or_disjoint x result /\ wide_as_nat h x < 2 * prime_p256_order)
     (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\ as_nat h1 result = wide_as_nat h0 x % prime_p256_order)  
-
+    
 
 val reduction_prime_prime_2prime_with_carry2 : carry: uint64 ->  x: felem -> result: felem ->
   Stack unit 
@@ -48,6 +50,7 @@ val reduction_prime_prime_2prime_with_carry2 : carry: uint64 ->  x: felem -> res
       uint_v carry * pow2 256 + as_nat h x < 2 * prime_p256_order )
     (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\ 
       as_nat h1 result = (uint_v carry * pow2 256 + as_nat h0 x) % prime_p256_order)  
+
 
 val reduction_prime_2prime_order: x: felem -> result: felem -> 
   Stack unit 

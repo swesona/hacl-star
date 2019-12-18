@@ -42,8 +42,8 @@ uint64_t Hacl_Impl_LowLevel_add4(uint64_t *x, uint64_t *y, uint64_t *result)
   uint64_t *r1 = result + (uint32_t)1U;
   uint64_t *r2 = result + (uint32_t)2U;
   uint64_t *r3 = result + (uint32_t)3U;
-  uint64_t cc = Hacl_Impl_LowLevel_add_carry((uint64_t)0U, x[0U], y[0U], r0);
-  uint64_t cc1 = Hacl_Impl_LowLevel_add_carry(cc, x[1U], y[1U], r1);
+  uint64_t cc0 = Hacl_Impl_LowLevel_add_carry((uint64_t)0U, x[0U], y[0U], r0);
+  uint64_t cc1 = Hacl_Impl_LowLevel_add_carry(cc0, x[1U], y[1U], r1);
   uint64_t cc2 = Hacl_Impl_LowLevel_add_carry(cc1, x[2U], y[2U], r2);
   uint64_t cc3 = Hacl_Impl_LowLevel_add_carry(cc2, x[3U], y[3U], r3);
   return cc3;

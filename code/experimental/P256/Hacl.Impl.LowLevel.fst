@@ -11,15 +11,16 @@ open Hacl.Spec.P256.Definitions
 open Hacl.Spec.P256.Lemmas
 open Hacl.Spec.ECDSA
 
+open FStar.Math
 open FStar.Math.Lemmas
 open FStar.Mul
 
 open FStar.Tactics
 open FStar.Tactics.Canon 
 
-#reset-options "--z3rlimit 100"
+open Hacl.Spec.P256.Lemmas
 
-
+#reset-options "--z3rlimit 400"
 
 (* This code is not side channel resistant *)
 inline_for_extraction noextract
@@ -31,12 +32,12 @@ let eq_u64 a b =
   FStar.UInt64.(u64_to_UInt64 a =^ u64_to_UInt64 b)
 
 
-
 (* This code is not side channel resistant *)
 inline_for_extraction noextract
 val eq_0_u64: a: uint64 -> Tot (r: bool {if uint_v a = 0 then r == true else r == false})
 
 let eq_0_u64 a = eq_u64 a (u64 0)
+
 
 inline_for_extraction noextract
 val lt_u64:a:uint64 -> b:uint64 -> Tot bool
@@ -51,7 +52,6 @@ let le_u64 a b =
   FStar.UInt64.(u64_to_UInt64 a <=^ u64_to_UInt64 b)
 
 
-
 inline_for_extraction noextract
 val load_buffer8: 
   a0: uint64 -> a1: uint64 -> 
@@ -62,7 +62,6 @@ val load_buffer8:
   Stack unit
     (requires fun h -> live h o)
     (ensures fun h0 _ h1 -> modifies (loc o) h0 h1 /\ wide_as_nat h1 o == wide_as_nat4 (a0, a1, a2, a3, a4, a5, a6, a7))
-
 
 let load_buffer8 a0 a1 a2 a3 a4 a5 a6 a7  o = 
     let h0 = ST.get() in 
@@ -91,7 +90,7 @@ val add_carry: cin: uint64 -> x: uint64 -> y: uint64 -> r: lbuffer uint64 (size 
       (
 	let r = Seq.index (as_seq h1 r) 0 in 
 	uint_v r + uint_v c * pow2 64 == uint_v x + uint_v y + uint_v cin)
-    )
+      )
 
 let add_carry cin x y result1 = 
   let res1 = x +. cin in 
@@ -115,17 +114,22 @@ let add4 x y result =
   let r1 = sub result (size 1) (size 1) in 
   let r2 = sub result (size 2) (size 1) in 
   let r3 = sub result (size 3) (size 1) in 
-    
-  let cc = add_carry (u64 0) x.(0ul) y.(0ul) r0 in 
-  let cc = add_carry cc x.(1ul) y.(1ul) r1 in 
-  let cc = add_carry cc x.(2ul) y.(2ul) r2 in 
-  let cc = add_carry cc x.(3ul) y.(3ul) r3 in   
-  
+
     assert(let r1_0 = as_seq h0 r1 in let r0_ = as_seq h0 result in Seq.index r0_ 1 == Seq.index r1_0 0);
     assert(let r2_0 = as_seq h0 r2 in let r0_ = as_seq h0 result in Seq.index r0_ 2 == Seq.index r2_0 0);
     assert(let r3_0 = as_seq h0 r3 in let r0_ = as_seq h0 result in Seq.index r0_ 3 == Seq.index r3_0 0);   
+
     
-  cc
+  let cc0 = add_carry (u64 0) x.(0ul) y.(0ul) r0 in 
+  let cc1 = add_carry cc0 x.(1ul) y.(1ul) r1 in 
+  let cc2 = add_carry cc1 x.(2ul) y.(2ul) r2 in 
+  let cc3 = add_carry cc2 x.(3ul) y.(3ul) r3 in 
+
+  assert_norm (pow2 64 * pow2 64 = pow2 128);
+  assert_norm (pow2 64 * pow2 64 * pow2 64 = pow2 192);
+  assert_norm (pow2 64 * pow2 64 * pow2 64 * pow2 64 = pow2 256);
+
+  cc3
 
 
 val add4_with_carry: c: uint64 ->  x: felem -> y: felem -> result: felem -> 
@@ -147,10 +151,14 @@ let add4_with_carry c x y result =
     let cc = add_carry cc x.(1ul) y.(1ul) r1 in 
     let cc = add_carry cc x.(2ul) y.(2ul) r2 in 
     let cc = add_carry cc x.(3ul) y.(3ul) r3 in   
-
+    
       assert(let r1_0 = as_seq h0 r1 in let r0_ = as_seq h0 result in Seq.index r0_ 1 == Seq.index r1_0 0);
       assert(let r2_0 = as_seq h0 r2 in let r0_ = as_seq h0 result in Seq.index r0_ 2 == Seq.index r2_0 0);
       assert(let r3_0 = as_seq h0 r3 in let r0_ = as_seq h0 result in Seq.index r0_ 3 == Seq.index r3_0 0);
+
+      assert_norm (pow2 64 * pow2 64 = pow2 128);
+      assert_norm (pow2 64 * pow2 64 * pow2 64 = pow2 192);
+      assert_norm (pow2 64 * pow2 64 * pow2 64 * pow2 64 = pow2 256);
     
     cc
 
@@ -161,6 +169,7 @@ val add8: x: widefelem -> y: widefelem -> result: widefelem -> Stack uint64
     wide_as_nat h1 result + v c * pow2 512 == wide_as_nat h0 x + wide_as_nat h0 y)
 
 let add8 x y result = 
+  let h0 = ST.get() in 
     let a0 = sub x (size 0) (size 4) in 
     let a1 = sub x (size 4) (size 4) in 
     let b0 = sub y (size 0) (size 4) in 
@@ -170,10 +179,42 @@ let add8 x y result =
     let c1 = sub result (size 4) (size 4) in 
 
     let carry0 = add4 a0 b0 c0 in
+      let h1 = ST.get() in 
     let carry1 = add4_with_carry carry0 a1 b1 c1 in 
-      
-      assert_norm (pow2 256 * pow2 256 = pow2 512); 
-    
+      let h2 = ST.get() in 	
+      assert(as_nat h2 c1 =  - uint_v carry1 * pow2 256 + as_nat h1 a1 + as_nat h1 b1 + uint_v carry0);
+      assert_norm (pow2 64 * pow2 64 * pow2 64 * pow2 64 = pow2 256);
+      assert_norm (pow2 256 * pow2 256 = pow2 512);
+  
+      assert(Lib.Sequence.index (as_seq h2 result) 4 == Lib.Sequence.index (as_seq h2 c1) 0);
+      assert(Lib.Sequence.index (as_seq h2 result) 5 == Lib.Sequence.index (as_seq h2 c1) 1);
+      assert(Lib.Sequence.index (as_seq h2 result) 6 == Lib.Sequence.index (as_seq h2 c1) 2);
+      assert(Lib.Sequence.index (as_seq h2 result) 7 == Lib.Sequence.index (as_seq h2 c1) 3);
+
+      assert_by_tactic (as_nat h2 c1 * pow2 64 * pow2 64 * pow2 64 * pow2 64 == as_nat h2 c1 * pow2 256) canon;
+      assert_by_tactic (as_nat h2 a1 * pow2 64 * pow2 64 * pow2 64 * pow2 64 == as_nat h2 a1 * pow2 256) canon;
+  
+      assert_by_tactic ((- uint_v carry1 * pow2 256 + as_nat h1 a1 + as_nat h1 b1 + uint_v carry0) * pow2 256 == - uint_v carry1 * pow2 256 * pow2 256 + as_nat h1 a1 * pow2 256 + as_nat h1 b1 * pow2 256 + uint_v carry0 * pow2 256) canon;
+
+      lemma_ll0 (uint_v (Lib.Sequence.index (as_seq h0 a1) 0)) (uint_v (Lib.Sequence.index (as_seq h0 a1) 1)) (uint_v (Lib.Sequence.index (as_seq h0 a1) 2)) (uint_v (Lib.Sequence.index (as_seq h0 a1) 3));
+      lemma_ll0 (uint_v (Lib.Sequence.index (as_seq h0 b1) 0)) (uint_v (Lib.Sequence.index (as_seq h0 b1) 1)) (uint_v (Lib.Sequence.index (as_seq h0 b1) 2)) (uint_v (Lib.Sequence.index (as_seq h0 b1) 3));
+
+      assert(wide_as_nat h0 x = as_nat h0 a0 + as_nat h0 a1 * pow2 256);
+      assert(wide_as_nat h0 y = as_nat h0 b0 + as_nat h0 b1 * pow2 256);
+
+      assert(
+	let result_ = as_seq h2 result in 
+	let s0 = Lib.Sequence.index result_ 0 in 
+	let s1 = Lib.Sequence.index result_ 1 in 
+	let s2 = Lib.Sequence.index result_ 2 in 
+	let s3 = Lib.Sequence.index result_ 3 in 
+	let s4 = Lib.Sequence.index result_ 4 in 
+	let s5 = Lib.Sequence.index result_ 5 in 
+	let s6 = Lib.Sequence.index result_ 6 in 
+	let s7 = Lib.Sequence.index result_ 7 in 
+
+	wide_as_nat h2 result = wide_as_nat h0 x + wide_as_nat h0 y - uint_v carry1 * pow2 512);
+
     carry1
 
 
@@ -197,8 +238,10 @@ let add4_variables x cin y0 y1 y2 y3 result =
     let cc = add_carry cc x.(2ul) y2 r2 in 
     let cc = add_carry cc x.(3ul) y3 r3 in 
       
-    assert_norm (pow2 64 * pow2 64 = pow2 128);
-    assert_norm (pow2 64 * pow2 64 * pow2 64 = pow2 192);
+
+  assert_norm (pow2 64 * pow2 64 = pow2 128);
+  assert_norm (pow2 64 * pow2 64 * pow2 64 = pow2 192);
+  assert_norm (pow2 64 * pow2 64 * pow2 64 * pow2 64 = pow2 256);
     
     assert(let r1_0 = as_seq h0 r1 in let r0_ = as_seq h0 result in Seq.index r0_ 1 == Seq.index r1_0 0);
     assert(let r2_0 = as_seq h0 r2 in let r0_ = as_seq h0 result in Seq.index r0_ 2 == Seq.index r2_0 0);
@@ -244,6 +287,10 @@ let sub4_il x y result =
     let cc = sub_borrow cc x.(size 1) y.(size 1) r1 in 
     let cc = sub_borrow cc x.(size 2) y.(size 2) r2 in 
     let cc = sub_borrow cc x.(size 3) y.(size 3) r3 in 
+
+      assert_norm (pow2 64 * pow2 64 = pow2 128);
+      assert_norm (pow2 64 * pow2 64 * pow2 64 = pow2 192);
+      assert_norm (pow2 64 * pow2 64 * pow2 64 * pow2 64 = pow2 256);
     
     cc
 
@@ -269,6 +316,10 @@ let sub4 x y result =
     assert(let r1_0 = as_seq h0 r1 in let r0_ = as_seq h0 result in Seq.index r0_ 1 == Seq.index r1_0 0);
     assert(let r2_0 = as_seq h0 r2 in let r0_ = as_seq h0 result in Seq.index r0_ 2 == Seq.index r2_0 0);
     assert(let r3_0 = as_seq h0 r3 in let r0_ = as_seq h0 result in Seq.index r0_ 3 == Seq.index r3_0 0);
+
+    assert_norm (pow2 64 * pow2 64 = pow2 128);
+    assert_norm (pow2 64 * pow2 64 * pow2 64 = pow2 192);
+    assert_norm (pow2 64 * pow2 64 * pow2 64 * pow2 64 = pow2 256);
     
   cc
 
@@ -291,7 +342,7 @@ let mul64 x y result temp =
   upd temp (size 0) h0
 
 
-val mult64_0: x: felem -> u: uint64 -> result:  lbuffer uint64 (size 1) -> temp: lbuffer uint64 (size 1) -> Stack unit 
+val mult64_0: x: felem -> u: uint64 -> result: lbuffer uint64 (size 1) -> temp: lbuffer uint64 (size 1) -> Stack unit 
   (requires fun h -> live h x /\ live h result /\ live h temp /\ disjoint result temp)
   (ensures fun h0 _ h1 -> 
     let result_ = Seq.index (as_seq h1 result) 0 in 
@@ -333,7 +384,6 @@ let mult64_c x u cin result temp =
   let l = index result (size 0) in     
   add_carry cin l h result
 
-#reset-options "--z3rlimit 200"
 
 val mul1_il: f:  ilbuffer uint64 (size 4) -> u: uint64 -> result: lbuffer uint64 (size 4) -> Stack uint64
   (requires fun h -> live h result /\ live h f)
@@ -447,11 +497,11 @@ let mul1_add f1 u2 f3 result =
   pop_frame();  
   c +! c3
 
-
+#reset-options "--z3rlimit 1000"
 val mul: f: felem -> r: felem -> out: widefelem
   -> Stack unit
     (requires fun h -> live h out /\ live h f /\ live h r)
-    (ensures  fun h0 _ h1 -> modifies(loc out) h0 h1 /\ wide_as_nat h1 out =  as_nat h0 r * as_nat h0 f)
+    (ensures  fun h0 _ h1 -> modifies (loc out) h0 h1 /\ wide_as_nat h1 out = as_nat h0 r * as_nat h0 f)
       
 let mul f r out =
   push_frame();
@@ -503,6 +553,7 @@ let mul f r out =
   dist_lemma_0 (as_nat h0 r) (uint_v f2 * pow2 64 * pow2 64) (uint_v f1 * pow2 64) (uint_v f0) (uint_v f3 * pow2 64 * pow2 64 * pow2 64);
 
   copy out temp; 
+  
   pop_frame()
 
 
@@ -561,6 +612,8 @@ let shift_256_impl i o =
   assert_norm(pow2 64 * pow2 64 * pow2 64  * pow2 64 * pow2 64* pow2 64 * pow2 64 = pow2 (7 * 64));
   assert_norm(pow2 64 * pow2 64 * pow2 64  * pow2 64 * pow2 64* pow2 64 * pow2 64 * pow2 64 = pow2 (8 * 64))
 
+
+#reset-options "--z3rlimit 200"
 inline_for_extraction noextract
 val mod64: a: widefelem -> Stack uint64 
   (requires fun h -> live h a) 
@@ -738,18 +791,3 @@ let compare_felem a b =
       logand_lemma r01 r23;
       lemma_equality (a_0, a_1, a_2, a_3) (b_0, b_1, b_2, b_3); 
     r
-
-
-inline_for_extraction noextract
-val mul64_u128:
-    x:uint64
-  -> y:uint64
-  -> Pure (uint64 & uint64)
-    (requires True)
-    (ensures fun (l0, l1) ->
-      v l0 + v l1 * pow2 64 = v x * v y)
-      
-[@CInline]
-let mul64_u128 x y =
-  let res = mul64_wide x y in
-  (to_u64 res, to_u64 (res >>. 64ul))

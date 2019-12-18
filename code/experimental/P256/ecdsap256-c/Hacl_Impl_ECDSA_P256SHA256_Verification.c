@@ -67,7 +67,7 @@ bool Hacl_Impl_ECDSA_P256SHA256_Verification_isOrderCorrect(uint64_t *p, uint64_
     bool result;
     scalarMultiplicationI(pBuffer,
       multResult,
-      (uint8_t *)Hacl_Impl_ECDSA_MontgomeryMultiplication_prime256order_buffer,
+      Hacl_Impl_ECDSA_MontgomeryMultiplication_order_buffer,
       tempBuffer);
     result = isPointAtInfinity(multResult);
     return result;

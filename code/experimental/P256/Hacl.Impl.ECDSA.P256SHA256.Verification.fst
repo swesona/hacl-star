@@ -172,8 +172,8 @@ val multByOrder: p: point -> result: point ->  tempBuffer: lbuffer uint64 (size 
 let multByOrder p result tempBuffer =
   push_frame();
     let h0 = ST.get() in 
-    recall_contents prime256order_buffer prime_p256_order_seq;
-  scalarMultiplication #IMMUT p result prime256order_buffer tempBuffer;
+    recall_contents order_buffer prime_p256_order_seq;
+  scalarMultiplication #IMMUT p result order_buffer tempBuffer;
     let h2 = ST.get() in 
     assert(
     let xN, yN, zN = scalar_multiplication  prime_p256_order_seq (point_prime_to_coordinates (as_seq h0 p)) in 

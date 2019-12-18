@@ -212,20 +212,21 @@ let montgomery_multiplication_round_twice t result k0 =
    montgomery_multiplication_one_round_proof (wide_as_nat h1 tempRound) (uint_v k0) (wide_as_nat h2 result) (wide_as_nat h0 t * modp_inv2_prime (pow2 64) prime_p256_order); 
    lemma_montgomery_mod_inverse_addition (wide_as_nat h0 t); 
   pop_frame()
-
-
+  
 (* broken *)
 let reduction_prime_prime_2prime_with_carry x result  = 
   push_frame();
+    let h0 = ST.get() in 
     let tempBuffer = create (size 4) (u64 0) in 
     let tempBufferForSubborrow = create (size 1) (u64 0) in 
     let cin = Lib.Buffer.index x (size 4) in 
     let x = Lib.Buffer.sub x (size 0) (size 4) in 
         recall_contents prime256order_buffer (Lib.Sequence.of_list p256_order_prime_list);
     let c = Hacl.Impl.LowLevel.sub4_il x prime256order_buffer tempBuffer in
+      let h1 = ST.get() in 
+      admit();
     let carry = sub_borrow c cin (u64 0) tempBufferForSubborrow in 
     cmovznz4 carry tempBuffer x result;
-    admit();
  pop_frame()   
 
 
