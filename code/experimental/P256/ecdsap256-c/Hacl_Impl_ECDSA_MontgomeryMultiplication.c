@@ -16,6 +16,28 @@ Hacl_Impl_ECDSA_MontgomeryMultiplication_prime256order_buffer[4U] =
     (uint64_t)18446744069414584320U
   };
 
+uint8_t
+Hacl_Impl_ECDSA_MontgomeryMultiplication_order_inverse_buffer[32U] =
+  {
+    (uint8_t)79U, (uint8_t)37U, (uint8_t)99U, (uint8_t)252U, (uint8_t)194U, (uint8_t)202U,
+    (uint8_t)185U, (uint8_t)243U, (uint8_t)132U, (uint8_t)158U, (uint8_t)23U, (uint8_t)167U,
+    (uint8_t)173U, (uint8_t)250U, (uint8_t)230U, (uint8_t)188U, (uint8_t)255U, (uint8_t)255U,
+    (uint8_t)255U, (uint8_t)255U, (uint8_t)255U, (uint8_t)255U, (uint8_t)255U, (uint8_t)255U,
+    (uint8_t)0U, (uint8_t)0U, (uint8_t)0U, (uint8_t)0U, (uint8_t)255U, (uint8_t)255U, (uint8_t)255U,
+    (uint8_t)255U
+  };
+
+uint8_t
+Hacl_Impl_ECDSA_MontgomeryMultiplication_order_buffer[32U] =
+  {
+    (uint8_t)81U, (uint8_t)37U, (uint8_t)99U, (uint8_t)252U, (uint8_t)194U, (uint8_t)202U,
+    (uint8_t)185U, (uint8_t)243U, (uint8_t)132U, (uint8_t)158U, (uint8_t)23U, (uint8_t)167U,
+    (uint8_t)173U, (uint8_t)250U, (uint8_t)230U, (uint8_t)188U, (uint8_t)255U, (uint8_t)255U,
+    (uint8_t)255U, (uint8_t)255U, (uint8_t)255U, (uint8_t)255U, (uint8_t)255U, (uint8_t)255U,
+    (uint8_t)0U, (uint8_t)0U, (uint8_t)0U, (uint8_t)0U, (uint8_t)255U, (uint8_t)255U, (uint8_t)255U,
+    (uint8_t)255U
+  };
+
 static void
 Hacl_Impl_ECDSA_MontgomeryMultiplication_add8_without_carry1(
   uint64_t *t,
@@ -60,6 +82,25 @@ Hacl_Impl_ECDSA_MontgomeryMultiplication_montgomery_multiplication_round_twice(
   Hacl_Impl_ECDSA_MontgomeryMultiplication_montgomery_multiplication_round(tempRound,
     result,
     k0);
+}
+
+void
+Hacl_Impl_ECDSA_MontgomeryMultiplication_reduction_prime_prime_2prime_with_carry(
+  uint64_t *x,
+  uint64_t *result
+)
+{
+  uint64_t tempBuffer[4U] = { 0U };
+  uint64_t tempBufferForSubborrow = (uint64_t)0U;
+  uint64_t cin = x[4U];
+  uint64_t *x1 = x;
+  uint64_t
+  c =
+    Hacl_Impl_LowLevel_sub4_il(x1,
+      Hacl_Impl_ECDSA_MontgomeryMultiplication_prime256order_buffer,
+      tempBuffer);
+  uint64_t carry = Hacl_Impl_LowLevel_sub_borrow(c, cin, (uint64_t)0U, &tempBufferForSubborrow);
+  Hacl_Impl_LowLevel_cmovznz4(carry, tempBuffer, x1, result);
 }
 
 void
@@ -117,19 +158,8 @@ Hacl_Impl_ECDSA_MontgomeryMultiplication_montgomery_multiplication_ecdsa_module(
   Hacl_Impl_ECDSA_MontgomeryMultiplication_montgomery_multiplication_round_twice(round2,
     round4,
     k0);
-  {
-    uint64_t tempBuffer[4U] = { 0U };
-    uint64_t tempBufferForSubborrow = (uint64_t)0U;
-    uint64_t cin = round4[4U];
-    uint64_t *x = round4;
-    uint64_t
-    c =
-      Hacl_Impl_LowLevel_sub4_il(x,
-        Hacl_Impl_ECDSA_MontgomeryMultiplication_prime256order_buffer,
-        tempBuffer);
-    uint64_t carry = Hacl_Impl_LowLevel_sub_borrow(c, cin, (uint64_t)0U, &tempBufferForSubborrow);
-    Hacl_Impl_LowLevel_cmovznz4(carry, tempBuffer, x, result);
-  }
+  Hacl_Impl_ECDSA_MontgomeryMultiplication_reduction_prime_prime_2prime_with_carry(round4,
+    result);
 }
 
 void

@@ -7,28 +7,6 @@
 
 #include "Hacl_Impl_ECDSA_MM_Exponent.h"
 
-uint8_t
-Hacl_Impl_ECDSA_MM_Exponent_order_inverse_buffer[32U] =
-  {
-    (uint8_t)79U, (uint8_t)37U, (uint8_t)99U, (uint8_t)252U, (uint8_t)194U, (uint8_t)202U,
-    (uint8_t)185U, (uint8_t)243U, (uint8_t)132U, (uint8_t)158U, (uint8_t)23U, (uint8_t)167U,
-    (uint8_t)173U, (uint8_t)250U, (uint8_t)230U, (uint8_t)188U, (uint8_t)255U, (uint8_t)255U,
-    (uint8_t)255U, (uint8_t)255U, (uint8_t)255U, (uint8_t)255U, (uint8_t)255U, (uint8_t)255U,
-    (uint8_t)0U, (uint8_t)0U, (uint8_t)0U, (uint8_t)0U, (uint8_t)255U, (uint8_t)255U, (uint8_t)255U,
-    (uint8_t)255U
-  };
-
-uint8_t
-Hacl_Impl_ECDSA_MM_Exponent_order_buffer[32U] =
-  {
-    (uint8_t)81U, (uint8_t)37U, (uint8_t)99U, (uint8_t)252U, (uint8_t)194U, (uint8_t)202U,
-    (uint8_t)185U, (uint8_t)243U, (uint8_t)132U, (uint8_t)158U, (uint8_t)23U, (uint8_t)167U,
-    (uint8_t)173U, (uint8_t)250U, (uint8_t)230U, (uint8_t)188U, (uint8_t)255U, (uint8_t)255U,
-    (uint8_t)255U, (uint8_t)255U, (uint8_t)255U, (uint8_t)255U, (uint8_t)255U, (uint8_t)255U,
-    (uint8_t)0U, (uint8_t)0U, (uint8_t)0U, (uint8_t)0U, (uint8_t)255U, (uint8_t)255U, (uint8_t)255U,
-    (uint8_t)255U
-  };
-
 static void Hacl_Impl_ECDSA_MM_Exponent_cswap(uint64_t bit, uint64_t *p1, uint64_t *p2)
 {
   uint64_t mask = (uint64_t)0U - bit;
@@ -55,7 +33,7 @@ void Hacl_Impl_ECDSA_MM_Exponent_montgomery_ladder_exponent(uint64_t *r)
       uint32_t bit0 = (uint32_t)255U - i;
       uint64_t
       bit =
-        (uint64_t)(Hacl_Impl_ECDSA_MM_Exponent_order_inverse_buffer[bit0
+        (uint64_t)(Hacl_Impl_ECDSA_MontgomeryMultiplication_order_inverse_buffer[bit0
         / (uint32_t)8U]
         >> bit0 % (uint32_t)8U
         & (uint8_t)1U);

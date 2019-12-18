@@ -334,7 +334,7 @@ let lemma_reduce_mod_ecdsa_prime prime t k0 =
     assert_norm (exp #(pow2 64) 884452912994769583 (pow2 64  - 1)  = 14758798090332847183);
   lemma_mod_mul_distr_l (-1) t (pow2 64);
   lemma_mod_add_distr t (-t) (pow2 64)
-  
+
 
 val mult_one_round_ecdsa_prime: t: nat -> 
   prime: pos {prime = 115792089210356248762697446949407573529996955224135760342422259061068512044369} -> 
@@ -342,17 +342,17 @@ val mult_one_round_ecdsa_prime: t: nat ->
     let result = (t + prime * ((k0 * (t % pow2 64)) % pow2 64)) / pow2 64 in 
     result % prime == (co * modp_inv2_prime (pow2 64) prime) % prime)
 
+
 let mult_one_round_ecdsa_prime t prime co k0 = 
   let t2 = ((k0 * (t % pow2 64)) % pow2 64) * prime in 
-  let t3 = t + t2 in 
-    modulo_addition_lemma t prime ((k0 * (t % pow2 64)) % pow2 64);
+  let t3 = t + t2 in  
+    modulo_addition_lemma t prime ((k0 * (t % pow2 64)) % pow2 64); 
     lemma_div_mod t3 (pow2 64);
     lemma_reduce_mod_ecdsa_prime prime t k0;
-    assert(let rem = t3/ pow2 64 in rem * pow2 64 = t3);
-    assert(exists (k: nat). k * pow2 64 = t3);
+      assert(let rem = t3/ pow2 64 in rem * pow2 64 = t3);
+      assert(exists (k: nat). k * pow2 64 = t3);
     lemma_division_is_multiplication t3 prime;
     lemma_multiplication_to_same_number t3 co (modp_inv2_prime (pow2 64) prime) prime
-
 
 val lemma_decrease_pow: a: nat -> Lemma (
   (a * modp_inv2 (pow2 64) * modp_inv2 (pow2 64) * modp_inv2 (pow2 64) * modp_inv2 (pow2 64)) % prime256 == 

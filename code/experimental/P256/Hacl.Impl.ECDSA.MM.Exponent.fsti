@@ -28,13 +28,6 @@ open Lib.Loops
 noextract
 let prime = prime_p256_order
 
-let order_inverse_buffer: x: ilbuffer uint8 32ul {witnessed x prime_p256_order_inverse_seq /\ recallable x} = 
-  createL_global prime_p256_order_inverse_list
-
-let order_buffer: x: ilbuffer uint8 32ul {witnessed x prime_p256_order_seq /\ recallable x} = 
-  createL_global prime_p256_order_list 
-
-
 val montgomery_ladder_exponent: a: felem -> Stack unit 
   (requires fun h -> live h a /\ as_nat h a < prime)
   (ensures fun h0 _ h1 -> modifies (loc a) h0 h1 /\ 

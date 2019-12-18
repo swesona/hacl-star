@@ -20,7 +20,6 @@ open FStar.Mul
 
 #reset-options "--z3rlimit 200"
 
-(* broken *)
 val add8_without_carry1:  t: widefelem -> t1: widefelem -> result: widefelem  -> Stack unit
   (requires fun h -> live h t /\ live h t1 /\ live h result /\ wide_as_nat h t1 < pow2 320 /\
     wide_as_nat h t <  prime_p256_order * prime_p256_order /\ eq_or_disjoint t result /\ eq_or_disjoint t1 result  )
@@ -28,7 +27,7 @@ val add8_without_carry1:  t: widefelem -> t1: widefelem -> result: widefelem  ->
 
 let add8_without_carry1 t t1 result  = 
   let _ = Hacl.Impl.LowLevel.add8 t t1 result in 
-  admit()
+    assert_norm (pow2 320 + prime_p256_order * prime_p256_order < pow2 512)
 
 
 val lemma_montgomery_mult_1: t : int  -> 
@@ -145,24 +144,23 @@ let lemma_montgomery_mod_inverse_addition2 a =
     lemma_mod_mul_distr_r a (modp_inv2_prime (pow2 256) prime_p256_order) prime_p256_order
 
 
-(* broken *)
 val montgomery_multiplication_one_round_proof: 
   t: nat ->
-  k0: nat {k0 = modp_inv2_prime (-prime_p256_order) (pow2 64)}  ->  
+  k0: nat {k0 = min_one_prime (pow2 64) (- prime)}  ->  
   round: nat {round = (t + prime_p256_order * ((k0 * (t % pow2 64)) % pow2 64)) / pow2 64} -> 
   co: nat {co % prime_p256_order = t % prime_p256_order} -> 
-  Lemma (round  % prime_p256_order == co * (modp_inv2_prime (pow2 64) prime_p256_order) % prime_p256_order )
+  Lemma (round  % prime_p256_order == co * (modp_inv2_prime (pow2 64) prime_p256_order) % prime_p256_order)
 
 let montgomery_multiplication_one_round_proof t k0 round co = 
-  admit();
-  mult_one_round_ecdsa_prime t prime_p256_order co k0 
+  mult_one_round_ecdsa_prime t prime_p256_order co k0
 
+#reset-options "--z3rlimit 500"
 
 val montgomery_multiplication_round: t: widefelem ->  round: widefelem -> k0: uint64 ->
   Stack unit 
     (requires fun h -> live h t /\ live h round  /\ wide_as_nat h t < prime_p256_order * prime_p256_order)
     (ensures fun h0 _ h1 -> modifies (loc round) h0 h1 /\ 
-      wide_as_nat h1 round = (wide_as_nat h0 t + prime_p256_order * ((uint_v k0 * (wide_as_nat h0 t % pow2 64)) % pow2 64) ) / pow2 64)
+      wide_as_nat h1 round = (wide_as_nat h0 t + prime_p256_order * ((uint_v k0 * (wide_as_nat h0 t % pow2 64)) % pow2 64)) / pow2 64)
 
 let montgomery_multiplication_round t round k0 = 
   push_frame(); 
@@ -174,24 +172,27 @@ let montgomery_multiplication_round t round k0 =
     let t3 = create (size 8) (u64 0) in 
     let t1 = mod64 t in
     mul64 t1 k0 y temp;
+      let h1 = ST.get() in 
+      assert(uint_v (Lib.Sequence.index (as_seq h1 y) 0) + uint_v (Lib.Sequence.index (as_seq h1 temp) 0) * pow2 64 = uint_v t1 * uint_v k0);
+      assert((uint_v (Lib.Sequence.index (as_seq h1 y) 0) + uint_v (Lib.Sequence.index (as_seq h1 temp) 0) * pow2 64) % pow2 64 = uint_v (Lib.Sequence.index (as_seq h1 y) 0));
+      assert((uint_v (Lib.Sequence.index (as_seq h1 y) 0) + uint_v (Lib.Sequence.index (as_seq h1 temp) 0) * pow2 64) % pow2 64 = (uint_v t1 * uint_v k0) % pow2 64);
+      assert(uint_v (Lib.Sequence.index (as_seq h1 y) 0) = (uint_v t1 * uint_v k0) % pow2 64); 
       recall_contents prime256order_buffer (Lib.Sequence.of_list p256_order_prime_list);
     let y = index y (size 0) in   
     shortened_mul prime256order_buffer y t2;
     add8_without_carry1 t t2 t3;
       assert_by_tactic ((wide_as_nat h0 t % pow2 64) * uint_v k0 == uint_v k0 * (wide_as_nat h0 t % pow2 64)) canon;
     shift8 t3 round;
-    admit();
   pop_frame()
 
 
+#reset-options "--z3rlimit 200"
+
 val montgomery_multiplication_round_twice: t: widefelem -> result: widefelem -> k0: uint64-> 
   Stack unit 
-    (
-      requires fun h -> live h t /\ live h result /\ 
-      wide_as_nat h t < prime_p256_order * prime_p256_order /\ uint_v k0 == modp_inv2_prime (-prime_p256_order) (pow2 64)
-    )
-    (
-      ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\ 
+    (requires fun h -> live h t /\ live h result /\ uint_v k0 = min_one_prime (pow2 64) (- prime) /\
+      wide_as_nat h t < prime_p256_order * prime_p256_order)
+    (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\ 
       wide_as_nat h1 result % prime_p256_order == (wide_as_nat h0 t * modp_inv2_prime (pow2 128) prime_p256_order) % prime_p256_order /\
       (
 	let round = (wide_as_nat h0 t + prime_p256_order * ((uint_v k0 * (wide_as_nat h0 t % pow2 64)) % pow2 64)) / pow2 64 in 
@@ -213,6 +214,7 @@ let montgomery_multiplication_round_twice t result k0 =
   pop_frame()
 
 
+(* broken *)
 let reduction_prime_prime_2prime_with_carry x result  = 
   push_frame();
     let tempBuffer = create (size 4) (u64 0) in 
@@ -223,6 +225,7 @@ let reduction_prime_prime_2prime_with_carry x result  =
     let c = Hacl.Impl.LowLevel.sub4_il x prime256order_buffer tempBuffer in
     let carry = sub_borrow c cin (u64 0) tempBufferForSubborrow in 
     cmovznz4 carry tempBuffer x result;
+    admit();
  pop_frame()   
 
 
@@ -244,7 +247,7 @@ let lemma_reduction1 a r =
   let prime256 = prime_p256_order in 
   assert_norm (pow2 256 - prime_p256_order < prime_p256_order)
 
-
+(* broken *)
 let reduction_prime_2prime_order x result  = 
   push_frame();
     let tempBuffer = create (size 4) (u64 0) in 

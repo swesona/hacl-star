@@ -12,6 +12,8 @@ open FStar.Math.Lemmas
 open Hacl.Spec.P256.Lemmas
 open Hacl.Spec.ECDSAP256.Definition
 open Hacl.Impl.LowLevel
+open Hacl.Spec.ECDSA
+  
 
 open FStar.Mul
 
@@ -20,13 +22,20 @@ let prime = prime_p256_order
 
 inline_for_extraction
 let prime256order_buffer: x: ilbuffer uint64 (size 4)  
-{witnessed #uint64 #(size 4) x 
-(Lib.Sequence.of_list p256_order_prime_list) /\ recallable x /\ 
-felem_seq_as_nat (Lib.Sequence.of_list (p256_order_prime_list)) == prime_p256_order} = 
-createL_global p256_order_prime_list
+  {witnessed #uint64 #(size 4) x 
+  (Lib.Sequence.of_list p256_order_prime_list) /\ recallable x /\ 
+  felem_seq_as_nat (Lib.Sequence.of_list (p256_order_prime_list)) == prime_p256_order} = 
+  createL_global p256_order_prime_list
+
+inline_for_extraction
+let order_inverse_buffer: x: ilbuffer uint8 32ul {witnessed x prime_p256_order_inverse_seq /\ recallable x} = 
+  createL_global prime_p256_order_inverse_list
+
+inline_for_extraction
+let order_buffer: x: ilbuffer uint8 32ul {witnessed x prime_p256_order_seq /\ recallable x} = 
+  createL_global prime_p256_order_list 
 
 
-inline_for_extraction noextract
 val reduction_prime_prime_2prime_with_carry : x: widefelem -> result: felem ->
   Stack unit 
     (requires fun h -> live h x /\ live h result /\  eq_or_disjoint x result /\ wide_as_nat h x < 2 * prime_p256_order)

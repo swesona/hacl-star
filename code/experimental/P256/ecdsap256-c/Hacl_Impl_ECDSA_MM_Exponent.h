@@ -16,10 +16,6 @@
 #include "c/Lib_PrintBuffer.h"
 #include "FStar_UInt_8_16_32_64.h"
 
-extern uint8_t Hacl_Impl_ECDSA_MM_Exponent_order_inverse_buffer[32U];
-
-extern uint8_t Hacl_Impl_ECDSA_MM_Exponent_order_buffer[32U];
-
 void Hacl_Impl_ECDSA_MM_Exponent_montgomery_ladder_exponent(uint64_t *r);
 
 void Hacl_Impl_ECDSA_MM_Exponent_fromDomainImpl(uint64_t *a, uint64_t *result);
