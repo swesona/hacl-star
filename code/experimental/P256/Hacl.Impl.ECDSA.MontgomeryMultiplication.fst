@@ -212,25 +212,32 @@ let montgomery_multiplication_round_twice t result k0 =
    montgomery_multiplication_one_round_proof (wide_as_nat h1 tempRound) (uint_v k0) (wide_as_nat h2 result) (wide_as_nat h0 t * modp_inv2_prime (pow2 64) prime_p256_order); 
    lemma_montgomery_mod_inverse_addition (wide_as_nat h0 t); 
   pop_frame()
-  
-(* broken *)
-let reduction_prime_prime_2prime_with_carry x result  = 
+
+
+let reduction_prime_2prime_with_carry x result  = 
   push_frame();
     let h0 = ST.get() in 
     let tempBuffer = create (size 4) (u64 0) in 
     let tempBufferForSubborrow = create (size 1) (u64 0) in 
     let cin = Lib.Buffer.index x (size 4) in 
-    let x = Lib.Buffer.sub x (size 0) (size 4) in 
+    let x_ = Lib.Buffer.sub x (size 0) (size 4) in 
         recall_contents prime256order_buffer (Lib.Sequence.of_list p256_order_prime_list);
-    let c = Hacl.Impl.LowLevel.sub4_il x prime256order_buffer tempBuffer in
+    let c = Hacl.Impl.LowLevel.sub4_il x_ prime256order_buffer tempBuffer in
       let h1 = ST.get() in 
-      admit();
+      assert_norm (pow2 64 * pow2 64 * pow2 64 * pow2 64 == pow2 256);
+      assert(if uint_v c = 0 then as_nat h0 x_ >= prime_p256_order else as_nat h0 x_ < prime_p256_order);
+      assert(wide_as_nat h0 x = as_nat h0 x_ + uint_v cin * pow2 256);
     let carry = sub_borrow c cin (u64 0) tempBufferForSubborrow in 
-    cmovznz4 carry tempBuffer x result;
+      let h2 = ST.get() in 
+      assert(if (as_nat h0 x_ >= prime_p256_order) then uint_v carry = 0 
+	else if uint_v cin < uint_v c then uint_v carry = 1 
+	else uint_v carry = 0);
+
+    cmovznz4 carry tempBuffer x_ result;
  pop_frame()   
 
 
-let reduction_prime_prime_2prime_with_carry2 cin x result  = 
+let reduction_prime_2prime_with_carry2 cin x result  = 
   push_frame();
     let tempBuffer = create (size 4) (u64 0) in 
     let tempBufferForSubborrow = create (size 1) (u64 0) in 
@@ -251,6 +258,7 @@ let lemma_reduction1 a r =
 (* broken *)
 let reduction_prime_2prime_order x result  = 
   push_frame();
+  admit();
     let tempBuffer = create (size 4) (u64 0) in 
     recall_contents prime256order_buffer (Lib.Sequence.of_list p256_order_prime_list);
       let h0 = ST.get() in 
@@ -261,6 +269,7 @@ let reduction_prime_2prime_order x result  =
     cmovznz4 c tempBuffer x result ;
     let h2 = ST.get() in 
     lemma_reduction1 (as_nat h0 x) (as_nat h2 result);
+    admit();
   pop_frame()  
   
 (*
@@ -283,16 +292,6 @@ let lemma_montgomery_mult_2 a b  =
    lemma_mod_mul_distr_r (a * b) (k * k * k * k) prime_p256_order; 
    lemma_mod_mul_distr_r (a * b) (modp_inv2_prime (pow2 256) prime_p256_order) prime_p256_order
 
-
-val upload_ecdsa_prime_p256_order: p: lbuffer uint64 (size 4) -> Stack unit
-  (requires fun h -> live h p)
-  (ensures fun h0 _ h1 -> modifies (loc p) h0 h1 /\ as_nat h1 p == prime_p256_order)
-
-let upload_ecdsa_prime_p256_order p = 
-  upd p (size 0) (u64 17562291160714782033);
-  upd p (size 1) (u64 13611842547513532036);
-  upd p (size 2) (u64 18446744073709551615);
-  upd p (size 3) (u64 18446744069414584320)
 *)
 
 val upload_k0: unit ->  Tot (r: uint64 {uint_v r == modp_inv2_prime (-prime_p256_order) (pow2 64)})
@@ -390,7 +389,7 @@ let montgomery_multiplication_ecdsa_module a b result =
      lemma_mod_mul_distr_l (as_nat h0 a * as_nat h0 b * modp_inv2_prime (pow2 128) prime_p256_order) (modp_inv2_prime (pow2 128) prime_p256_order) prime_p256_order;
      lemma_montgomery_mod_inverse_addition2 (as_nat h0 a * as_nat h0 b);
      lemma_montgomery_mult_result_less_than_prime_p256_order (as_nat h0 a) (as_nat h0 b) (uint_v k0);
-   reduction_prime_prime_2prime_with_carry round4 result; 
+   reduction_prime_2prime_with_carry round4 result; 
      
      lemmaFromDomainToDomain (as_nat h0 a);
      lemmaFromDomainToDomain (as_nat h0 b);
@@ -404,7 +403,7 @@ let montgomery_multiplication_ecdsa_module a b result =
 let felem_add arg1 arg2 out = 
   let open Hacl.Impl.LowLevel in 
   let t = add4 arg1 arg2 out in 
-  reduction_prime_prime_2prime_with_carry2 t out out
+  reduction_prime_2prime_with_carry2 t out out
 
 
 let lemma_felem_add a b = 

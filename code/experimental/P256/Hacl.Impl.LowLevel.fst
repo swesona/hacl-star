@@ -271,9 +271,8 @@ val sub4_il: x: felem -> y: ilbuffer uint64 (size 4) -> result: felem ->
     (requires fun h -> live h x /\ live h y /\ live h result /\ disjoint x result /\ disjoint y result)
     (ensures fun h0 c h1 -> modifies1 result h0 h1 /\ v c <= 1 /\
       (
-	let y = as_seq h0 y in 
- 	as_nat h1 result - v c * pow2 256 == as_nat h0 x  - felem_seq_as_nat y /\
-	(if uint_v c = 0 then as_nat h0 x >= felem_seq_as_nat y else as_nat h0 x < felem_seq_as_nat y)
+ 	as_nat h1 result - v c * pow2 256 == as_nat h0 x  - as_nat_il h0 y /\
+	(if uint_v c = 0 then as_nat h0 x >= as_nat_il h0 y else as_nat h0 x < as_nat_il h0 y)
       )
    )
 

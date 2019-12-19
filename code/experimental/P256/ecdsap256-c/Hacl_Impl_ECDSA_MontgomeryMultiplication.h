@@ -22,13 +22,13 @@ extern uint8_t Hacl_Impl_ECDSA_MontgomeryMultiplication_order_inverse_buffer[32U
 extern uint8_t Hacl_Impl_ECDSA_MontgomeryMultiplication_order_buffer[32U];
 
 void
-Hacl_Impl_ECDSA_MontgomeryMultiplication_reduction_prime_prime_2prime_with_carry(
+Hacl_Impl_ECDSA_MontgomeryMultiplication_reduction_prime_2prime_with_carry(
   uint64_t *x,
   uint64_t *result
 );
 
 void
-Hacl_Impl_ECDSA_MontgomeryMultiplication_reduction_prime_prime_2prime_with_carry2(
+Hacl_Impl_ECDSA_MontgomeryMultiplication_reduction_prime_2prime_with_carry2(
   uint64_t cin,
   uint64_t *x,
   uint64_t *result

@@ -85,7 +85,7 @@ Hacl_Impl_ECDSA_MontgomeryMultiplication_montgomery_multiplication_round_twice(
 }
 
 void
-Hacl_Impl_ECDSA_MontgomeryMultiplication_reduction_prime_prime_2prime_with_carry(
+Hacl_Impl_ECDSA_MontgomeryMultiplication_reduction_prime_2prime_with_carry(
   uint64_t *x,
   uint64_t *result
 )
@@ -93,18 +93,18 @@ Hacl_Impl_ECDSA_MontgomeryMultiplication_reduction_prime_prime_2prime_with_carry
   uint64_t tempBuffer[4U] = { 0U };
   uint64_t tempBufferForSubborrow = (uint64_t)0U;
   uint64_t cin = x[4U];
-  uint64_t *x1 = x;
+  uint64_t *x_ = x;
   uint64_t
   c =
-    Hacl_Impl_LowLevel_sub4_il(x1,
+    Hacl_Impl_LowLevel_sub4_il(x_,
       Hacl_Impl_ECDSA_MontgomeryMultiplication_prime256order_buffer,
       tempBuffer);
   uint64_t carry = Hacl_Impl_LowLevel_sub_borrow(c, cin, (uint64_t)0U, &tempBufferForSubborrow);
-  Hacl_Impl_LowLevel_cmovznz4(carry, tempBuffer, x1, result);
+  Hacl_Impl_LowLevel_cmovznz4(carry, tempBuffer, x_, result);
 }
 
 void
-Hacl_Impl_ECDSA_MontgomeryMultiplication_reduction_prime_prime_2prime_with_carry2(
+Hacl_Impl_ECDSA_MontgomeryMultiplication_reduction_prime_2prime_with_carry2(
   uint64_t cin,
   uint64_t *x,
   uint64_t *result
@@ -158,8 +158,7 @@ Hacl_Impl_ECDSA_MontgomeryMultiplication_montgomery_multiplication_ecdsa_module(
   Hacl_Impl_ECDSA_MontgomeryMultiplication_montgomery_multiplication_round_twice(round2,
     round4,
     k0);
-  Hacl_Impl_ECDSA_MontgomeryMultiplication_reduction_prime_prime_2prime_with_carry(round4,
-    result);
+  Hacl_Impl_ECDSA_MontgomeryMultiplication_reduction_prime_2prime_with_carry(round4, result);
 }
 
 void
@@ -170,6 +169,6 @@ Hacl_Impl_ECDSA_MontgomeryMultiplication_felem_add(
 )
 {
   uint64_t t = Hacl_Impl_LowLevel_add4(arg1, arg2, out);
-  Hacl_Impl_ECDSA_MontgomeryMultiplication_reduction_prime_prime_2prime_with_carry2(t, out, out);
+  Hacl_Impl_ECDSA_MontgomeryMultiplication_reduction_prime_2prime_with_carry2(t, out, out);
 }
 
