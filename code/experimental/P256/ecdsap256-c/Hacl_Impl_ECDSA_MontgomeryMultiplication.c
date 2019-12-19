@@ -60,11 +60,11 @@ Hacl_Impl_ECDSA_MontgomeryMultiplication_montgomery_multiplication_round(
   uint64_t t2[8U] = { 0U };
   uint64_t t3[8U] = { 0U };
   uint64_t t1 = t[0U];
-  uint64_t y1;
+  uint64_t y_;
   Hacl_Impl_LowLevel_mul64(t1, k0, &y, &temp);
-  y1 = y;
+  y_ = y;
   Hacl_Impl_LowLevel_shortened_mul(Hacl_Impl_ECDSA_MontgomeryMultiplication_prime256order_buffer,
-    y1,
+    y_,
     t2);
   Hacl_Impl_ECDSA_MontgomeryMultiplication_add8_without_carry1(t, t2, t3);
   Hacl_Impl_LowLevel_shift8(t3, round);

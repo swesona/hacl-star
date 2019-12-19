@@ -72,7 +72,6 @@ val lemmaFromDomainToDomain: a: nat { a < prime} -> Lemma (toDomain_ (fromDomain
 val lemmaToDomainFromDomain: a: nat { a < prime} -> Lemma (fromDomain_ (toDomain_ a) == a)
 
 
-
 val montgomery_multiplication_ecdsa_module: a: felem -> b: felem ->result: felem-> 
   Stack unit 
     (requires fun h -> live h a /\ live h b /\ live h result /\
@@ -81,6 +80,7 @@ val montgomery_multiplication_ecdsa_module: a: felem -> b: felem ->result: felem
       modifies (loc result) h0 h1 /\ 
       as_nat h1 result = (as_nat h0 a * as_nat h0 b * modp_inv2_prime (pow2 256) prime_p256_order) % prime_p256_order /\ 
       as_nat h1 result = toDomain_ (fromDomain_ (as_nat h0 a) * fromDomain_ (as_nat h0 b) % prime_p256_order))
+
 
 val felem_add: arg1: felem -> arg2: felem -> out: felem -> Stack unit 
   (requires (fun h0 ->  
