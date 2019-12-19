@@ -19,6 +19,7 @@ open Hacl.Impl.LowLevel
 open Hacl.Impl.P256.LowLevel
 open Hacl.Impl.P256.MontgomeryMultiplication
 open Hacl.Spec.P256
+open Hacl.Math
 
 open FStar.Tactics 
 open FStar.Tactics.Canon
@@ -109,7 +110,7 @@ let multByTwo a out =
   p256_add a a out;
     inDomain_mod_is_not_mod (2 * fromDomain_ (as_nat h0 a))
 
-(*to check *)
+
 val multByThree: a: felem -> result: felem -> Stack unit 
   (requires fun h -> live h a /\ live h result /\ disjoint a result /\ as_nat h a < prime )
   (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\ as_nat h1 result < prime /\ 
@@ -120,7 +121,11 @@ val multByThree: a: felem -> result: felem -> Stack unit
 let multByThree a result = 
     let h0 = ST.get() in 
   multByTwo a result;
+    let h1 = ST.get() in 
+      assert(as_nat h1 result == toDomain_ (2 * fromDomain_ (as_nat h0 a) % prime256));
   p256_add a result result;
+    let h2 = ST.get() in 
+    lemma_mod_add_distr (fromDomain_ (as_nat h0 a)) (2 * fromDomain_ (as_nat h0 a)) prime256;
     inDomain_mod_is_not_mod (3 * fromDomain_ (as_nat h0 a))
   
 
@@ -172,10 +177,11 @@ let multByMinusThree a result  =
     push_frame();
     multByThree a result;
     let zeros = create (size 4) (u64 0) in 
-      let h1 = ST.get() in 
     p256_sub zeros result result;
-  pop_frame();
-  admit()
+      assert_norm (fromDomain_ 0 == 0);
+      lemma_mod_sub_distr 0 (3 * fromDomain_ (as_nat h0 a)) prime256;
+      inDomain_mod_is_not_mod ((-3) * fromDomain_ (as_nat h0 a));
+  pop_frame()
 
 
 val copy_point: p: point -> result: point -> Stack unit 
@@ -378,10 +384,8 @@ val copy_point_conditional: x3_out: felem -> y3_out: felem -> z3_out: felem -> p
       let z = gsub p (size 8) (size 4) in 
 
       if mask = 0 then 
-	(*as_seq h1 x3_out == as_seq h0 x /\ as_seq h1 y3_out == as_seq h0 y /\ as_seq h1 z3_out == as_seq h0 z /\ *)
 	as_nat h1 x3_out == as_nat h0 x /\ as_nat h1 y3_out == as_nat h0 y /\ as_nat h1 z3_out == as_nat h0 z
       else 
-	(*as_seq h1 x3_out == as_seq h0 x3_out /\ as_seq h1 y3_out == as_seq h0 y3_out /\ as_seq h1 z3_out == as_seq h0 z3_out *) 
 	as_nat h1 x3_out == as_nat h0 x3_out /\ as_nat h1 y3_out == as_nat h0 y3_out /\ as_nat h1 z3_out == as_nat h0 z3_out
     )
 )
@@ -884,7 +888,7 @@ inline_for_extraction noextract
 val normalisation_update: z2x: felem -> z3y: felem ->p: point ->  resultPoint: point -> Stack unit 
   (requires fun h -> live h z2x /\ live h z3y /\ live h resultPoint /\ live h p /\ 
     as_nat h z2x < prime256 /\ as_nat h z3y < prime /\
-
+    as_nat h (gsub p (size 8) (size 4)) < prime256 /\
     disjoint z2x z3y /\ disjoint z2x resultPoint /\ disjoint z3y resultPoint)
   (ensures fun h0 _ h1 -> modifies (loc resultPoint) h0 h1 /\
     (
@@ -922,7 +926,7 @@ let normalisation_update z2x z3y p resultPoint =
   pop_frame()
   
  
-#reset-options "--z3refresh --z3rlimit 500" 
+#reset-options "--z3rlimit 500" 
 let norm p resultPoint tempBuffer = 
   let xf = sub p (size 0) (size 4) in 
   let yf = sub p (size 4) (size 4) in 
@@ -934,20 +938,30 @@ let norm p resultPoint tempBuffer =
   let tempBuffer20 = sub tempBuffer (size 12) (size 20) in 
 
     let h0 = ST.get() in 
-  montgomery_multiplication_buffer zf zf z2f;
+  montgomery_multiplication_buffer zf zf z2f; 
+    let h1 = ST.get() in 
   montgomery_multiplication_buffer z2f zf z3f;
+    let h2 = ST.get() in 
+      lemma_mod_mul_distr_l (fromDomain_ (as_nat h0 zf) * fromDomain_ (as_nat h0 zf)) (fromDomain_ (as_nat h0 zf)) prime256;
+      assert (as_nat h1 z2f = toDomain_ (fromDomain_ (as_nat h0 zf) * fromDomain_ (as_nat h0 zf) % prime256));
+      assert (as_nat h2 z3f = toDomain_ (fromDomain_ (as_nat h0 zf) * fromDomain_ (as_nat h0 zf) * fromDomain_ (as_nat h0 zf) % prime256));
 
   exponent z2f z2f tempBuffer20;
+    let h3 = ST.get() in 
+      assert(as_nat h3 z2f = toDomain_ (pow (fromDomain_ (as_nat h2 z2f)) (prime256 - 2) % prime256));
   exponent z3f z3f tempBuffer20;
+    let h4 = ST.get() in 
+      assert(as_nat h4 z3f = toDomain_ (pow (fromDomain_ (as_nat h3 z3f)) (prime256 - 2) % prime256));
      
   montgomery_multiplication_buffer xf z2f z2f;
   montgomery_multiplication_buffer yf z3f z3f;
 
-  normalisation_update z2f z3f p resultPoint;
+  normalisation_update z2f z3f p resultPoint; 
     let h3 = ST.get() in 
-    lemmaEraseToDomainFromDomain (fromDomain_ (as_nat h0 zf));
+    lemmaEraseToDomainFromDomain (fromDomain_ (as_nat h0 zf)); 
     power_distributivity (fromDomain_ (as_nat h0 zf) * fromDomain_ (as_nat h0 zf)) (prime -2) prime;
     power_distributivity (fromDomain_ (as_nat h0 zf) * fromDomain_ (as_nat h0 zf) * fromDomain_ (as_nat h0 zf)) (prime -2) prime;
+
     lemma_norm_as_specification (fromDomain_ (point_x_as_nat h0 p)) (fromDomain_ (point_y_as_nat h0 p)) (fromDomain_ (point_z_as_nat h0 p)) (point_x_as_nat h3 resultPoint) (point_y_as_nat h3 resultPoint) (point_z_as_nat h3 resultPoint);
 
     assert(
@@ -976,41 +990,6 @@ let scalar_bit #buf_type s n =
   to_u64 ((s.(n /. 8ul) >>. (n %. 8ul)) &. u8 1)
 
 
-val lemma_modifies3: a: LowStar.Monotonic.Buffer.loc -> b: LowStar.Monotonic.Buffer.loc -> c: LowStar.Monotonic.Buffer.loc -> 
-  Lemma (ensures ((a |+| b |+| c) == (c |+| b |+| a)))
-
-let lemma_modifies3 a b c = 
-  LowStar.Monotonic.Buffer.loc_union_comm a b;
-  LowStar.Monotonic.Buffer.loc_union_assoc b a c;
-  LowStar.Monotonic.Buffer.loc_union_comm a c;
-  LowStar.Monotonic.Buffer.loc_union_assoc b c a;
-  LowStar.Monotonic.Buffer.loc_union_comm b c
-
-
-val lemma_modifies3_1: a: LowStar.Monotonic.Buffer.loc -> b: LowStar.Monotonic.Buffer.loc -> c: LowStar.Monotonic.Buffer.loc -> 
-  Lemma (ensures ((a |+| b |+| c) == (a |+| c |+| b)))
-
-let lemma_modifies3_1 a b c = 
-  LowStar.Monotonic.Buffer.loc_union_assoc a b c;
-  LowStar.Monotonic.Buffer.loc_union_comm b c;
-  LowStar.Monotonic.Buffer.loc_union_assoc a c b
-
-val lemma_modifies_3_two_parts: 
-  (#a0: Type0) ->
-  (#a1: Type0) -> 
-  (#a2: Type0) -> 
-  a: buffer_t MUT a0 ->
-  b: buffer_t MUT a1 ->
-  c: buffer_t MUT a2 ->
-  h0: FStar.HyperStack.mem ->
-  h1: FStar.HyperStack.mem -> 
-  h2: FStar.HyperStack.mem -> 
-  Lemma (requires (modifies3 a b c h0 h1 /\ modifies3 a c b h1 h2))
-  (ensures (modifies3  c b a h0 h2))
-
-let lemma_modifies_3_two_parts #a0 #a1 #a2 a b c h0 h1 h2 = ()
-
-
 inline_for_extraction noextract  
 val montgomery_ladder_step1: p: point -> q: point ->tempBuffer: lbuffer uint64 (size 88) -> Stack unit
   (requires fun h -> live h p /\ live h q /\ live h tempBuffer /\ 
@@ -1027,38 +1006,47 @@ val montgomery_ladder_step1: p: point -> q: point ->tempBuffer: lbuffer uint64 (
   )
   (ensures fun h0 _ h1 -> modifies (loc p |+| loc q |+|  loc tempBuffer) h0 h1 /\ 
     (
-      let p1 = as_seq h1 p in let q1 = as_seq h1 q in 
-      let pN, qN = Hacl.Spec.P256.Ladder.montgomery_ladder_step1_seq (as_seq h0 p) (as_seq h0 q) in 
-      pN == p1 /\ qN == q1 /\
+      let pX = as_nat h0 (gsub p (size 0) (size 4)) in
+      let pY = as_nat h0 (gsub p (size 4) (size 4)) in
+      let pZ = as_nat h0 (gsub p (size 8) (size 4)) in
 
-    as_nat h1 (gsub p (size 0) (size 4)) < prime /\ 
-    as_nat h1 (gsub p (size 4) (size 4)) < prime /\
-    as_nat h1 (gsub p (size 8) (size 4)) < prime /\
-	
-    as_nat h1 (gsub q (size 0) (size 4)) < prime /\  
-    as_nat h1 (gsub q (size 4) (size 4)) < prime /\
-    as_nat h1 (gsub q (size 8) (size 4)) < prime
-      ) 
-    )
+      let qX = as_nat h0 (gsub q (size 0) (size 4)) in
+      let qY = as_nat h0 (gsub q (size 4) (size 4)) in
+      let qZ = as_nat h0 (gsub q (size 8) (size 4)) in
+
+      let r0X = as_nat h1 (gsub p (size 0) (size 4)) in
+      let r0Y = as_nat h1 (gsub p (size 4) (size 4)) in
+      let r0Z = as_nat h1 (gsub p (size 8) (size 4)) in
+
+      let r1X = as_nat h1 (gsub q (size 0) (size 4)) in
+      let r1Y = as_nat h1 (gsub q (size 4) (size 4)) in
+      let r1Z = as_nat h1 (gsub q (size 8) (size 4)) in
+
+
+      let (rN0X, rN0Y, rN0Z), (rN1X, rN1Y, rN1Z) = _ml_step1 (fromDomain_ pX, fromDomain_ pY, fromDomain_ pZ) (fromDomain_ qX, fromDomain_ qY, fromDomain_ qZ) in 
+      
+      fromDomain_ r0X == rN0X /\ fromDomain_ r0Y == rN0Y /\ fromDomain_ r0Z == rN0Z /\
+      fromDomain_ r1X == rN1X /\ fromDomain_ r1Y == rN1Y /\ fromDomain_ r1Z == rN1Z /\ 
+
+      as_nat h1 (gsub p (size 0) (size 4)) < prime /\ 
+      as_nat h1 (gsub p (size 4) (size 4)) < prime /\
+      as_nat h1 (gsub p (size 8) (size 4)) < prime /\
+	     
+      as_nat h1 (gsub q (size 0) (size 4)) < prime /\  
+      as_nat h1 (gsub q (size 4) (size 4)) < prime /\
+      as_nat h1 (gsub q (size 8) (size 4)) < prime
+  ) 
+)
 
 
 let montgomery_ladder_step1 r0 r1 tempBuffer = 
-    let h0 = ST.get() in 
   point_add r0 r1 r1 tempBuffer;
-    let h1 = ST.get() in 
-  point_double r0 r0 tempBuffer; 
-    let h2 = ST.get() in 
-    
-  modifies2_is_modifies3 tempBuffer r1 r0 h0 h1; 
-  modifies2_is_modifies3 tempBuffer r0 r1 h1 h2;
-  lemma_modifies_3_two_parts tempBuffer r1 r0 h0 h1 h2;
-  assert(modifies3 r0 r1 tempBuffer h0 h2);
-  assert(let pN, qN = Hacl.Spec.P256.Ladder.montgomery_ladder_step1_seq (as_seq h0 r0) (as_seq h0 r1) in 
-      Lib.Sequence.equal (as_seq h2 r0) pN /\ Lib.Sequence.equal (as_seq h2 r1) qN)
+  point_double r0 r0 tempBuffer
       
 
 val lemma_step: i: size_t {uint_v i < 256} -> Lemma  (uint_v ((size 255) -. i) == 255 - (uint_v i))
 let lemma_step i = ()
+
 
 val lemma_to_point_buffer: h: mem -> b: lbuffer uint64 (size 12) {
     as_nat h (gsub b (size 0) (size 4)) < prime /\ 
@@ -1071,22 +1059,6 @@ val lemma_to_point_buffer: h: mem -> b: lbuffer uint64 (size 12) {
       felem_seq_as_nat x < prime /\ felem_seq_as_nat y < prime /\ felem_seq_as_nat z < prime))
 
 let lemma_to_point_buffer h b = ()
-
-val lemma_test: h: mem -> r0: point -> 
-  Lemma 
-  (requires (
-     let x = Lib.Sequence.sub (as_seq h r0) 0 4 in 
-    let y = Lib.Sequence.sub (as_seq h r0) 4 4 in
-    let z = Lib.Sequence.sub (as_seq h r0) 8 4 in 
-    felem_seq_as_nat x < prime /\ felem_seq_as_nat y < prime /\ felem_seq_as_nat z < prime))
-  (ensures 
-    (
-      as_nat h (gsub r0 (size 0) (size 4)) < prime /\ 
-      as_nat h (gsub r0 (size 4) (size 4)) < prime /\
-      as_nat h (gsub r0 (size 8) (size 4)) < prime)
-  )
-
-let lemma_test h r0 = ()
 
 
 inline_for_extraction noextract 
@@ -1129,33 +1101,12 @@ let montgomery_ladder_step #buf_type r0 r1 tempBuffer scalar i =
   let bit = scalar_bit scalar bit0 in 
 
   cswap bit r0 r1; 
-    let h1 = ST.get() in 
-    assert(modifies (loc r0 |+| loc r1) h0 h1);
   montgomery_ladder_step1 r0 r1 tempBuffer; 
-    let h2 = ST.get() in 
-    assert(modifies (loc r0 |+| loc r1 |+| loc tempBuffer) h1 h2);
   cswap bit r0 r1; 
-  let h3 = ST.get() in 
-    assert(modifies (loc r0 |+| loc r1) h2 h3);
-    assert(modifies (loc r0 |+| loc r1 |+| loc tempBuffer) h0 h2);
-    assert(modifies (loc r0 |+| loc r1 |+| loc tempBuffer) h0 h3);
-  lemma_to_point_buffer h0 r0;
-  lemma_to_point_buffer h0 r1;
-  lemma_step i;
- 
-  assert(let pN, qN = Hacl.Spec.P256.Ladder.montgomery_ladder_step_swap (as_seq h0 r0) (as_seq h0 r1) (as_seq h0 scalar) (uint_v i) in Lib.Sequence.equal pN (as_seq h3 r0));
-  lemma_test h3 r0;  
-  assert(let pN, qN = 
-     Hacl.Spec.P256.Ladder.montgomery_ladder_step_swap (as_seq h0 r0) (as_seq h0 r1) (as_seq h0 scalar) (uint_v i) in Lib.Sequence.equal qN (as_seq h3 r1));
-
-  assert(
-      as_nat h3 (gsub r0 (size 0) (size 4)) < prime /\ 
-      as_nat h3 (gsub r0 (size 4) (size 4)) < prime /\
-      as_nat h3 (gsub r0 (size 8) (size 4)) < prime /\
-	     
-      as_nat h3 (gsub r1 (size 0) (size 4)) < prime /\  
-      as_nat h3 (gsub r1 (size 4) (size 4)) < prime /\
-      as_nat h3 (gsub r1 (size 8) (size 4)) < prime)
+    let h3 = ST.get() in 
+      lemma_to_point_buffer h0 r0;
+      lemma_to_point_buffer h0 r1;
+      lemma_step i
 
 
 inline_for_extraction noextract
@@ -1664,19 +1615,6 @@ let xcube_minus_x x r =
     lemma_mod_add_distr 41058363725152142129326129780047268409114441015993725554835256314039467401291 ((x_ * x_ * x_) - (3 * x_)) prime;
     lemma_xcube2 x_
 
-
-
-val lemma_modular_multiplication_p256_2: a: nat{a < prime256} -> b: nat{b < prime256} -> 
-  Lemma 
-  (a * pow2 256 % prime = b * pow2 256 % prime  <==> a == b)
-
-(*If k a ≡ k b (mod n) and k is coprime with n, then a ≡ b (mod n) *)
-(* if a ≡ b (mod n), then k a ≡ k b (mod n) for any integer k (compatibility with scaling) *)
-(*p = 2^256 - 2^224 + 2^192 + 2^96 - 1 
-
-gcd(2^256, p) = 1*)
-
-let lemma_modular_multiplication_p256_2 a b = admit()
 
 
 val lemma_modular_multiplication_p256_2_d: a: nat{a < prime256} -> b: nat {b < prime256} -> 

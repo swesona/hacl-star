@@ -26,6 +26,14 @@ assume val lemma_montgomery_mod_inverse_addition2: a: nat ->
     (a * modp_inv2_prime (pow2 128) prime256  * modp_inv2_prime (pow2 128) prime256) % prime256 == (a * modp_inv2_prime(pow2 256) prime256) % prime256)
 
 
+
+val lemma_modular_multiplication_p256_2: a: nat{a < prime256} -> b: nat{b < prime256} -> 
+  Lemma 
+  (a * pow2 256 % prime256 = b * pow2 256 % prime256  <==> a == b)
+
+
+let lemma_modular_multiplication_p256_2 a b = admit()
+
 (* fermat little theorem *)
 val lemma_l_ferm: a: nat -> Lemma (pow a (prime_p256_order - 1) % prime_p256_order == 1)
 
