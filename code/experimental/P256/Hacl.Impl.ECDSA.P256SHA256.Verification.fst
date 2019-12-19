@@ -346,12 +346,14 @@ val ecdsa_verification_step4: r: felem -> s: felem -> hash: felem -> bufferU1: l
     LowStar.Monotonic.Buffer.all_disjoint [loc r; loc s; loc hash; loc bufferU1; loc bufferU2] 
   )
   (ensures fun h0 _ h1 -> modifies (loc bufferU1 |+| loc  bufferU2) h0 h1 /\
+    prime_p256_order < pow2 256 /\ 
     as_seq h1 bufferU1 == Lib.ByteSequence.uints_to_bytes_le (nat_as_seq((pow (as_nat h0 s) (prime_p256_order - 2)  * (as_nat h0 hash)) % prime_p256_order)) /\ 
     as_seq h1 bufferU2 == Lib.ByteSequence.uints_to_bytes_le (nat_as_seq((pow (as_nat h0 s) (prime_p256_order - 2)  * (as_nat h0 r)) % prime_p256_order))  
   )
 
 let ecdsa_verification_step4 r s hash bufferU1 bufferU2 = 
   push_frame();
+    assert_norm(prime_p256_order < pow2 256);
     let tempBuffer = create (size 12) (u64 0) in 
       let inverseS = sub tempBuffer (size 0) (size 4) in 
       let u1 = sub tempBuffer (size 4) (size 4) in 
@@ -425,7 +427,6 @@ let ecdsa_verification_step5_0 pubKeyAsPoint u1 u2 tempBuffer points  =
     let pointU2Q = sub points (size 12) (size 12) in
     secretToPublicWithoutNorm pointU1G u1 tempBuffer; 
     scalarMultiplicationWithoutNorm pubKeyAsPoint pointU2Q u2 tempBuffer
-
 
 
 inline_for_extraction noextract
