@@ -1344,7 +1344,6 @@ let scalarMultiplication #buf_type p result scalar tempBuffer =
   |IMMUT -> scalarMultiplicationI p result scalar tempBuffer
 
 
-
 val uploadBasePoint: p: point -> Stack unit 
   (requires fun h -> live h p)
   (ensures fun h0 _ h1 -> modifies1 p h0 h1 /\ 
@@ -1396,42 +1395,25 @@ let scalarMultiplicationWithoutNorm p result scalar tempBuffer =
   let h0 = ST.get() in 
   let q = sub tempBuffer (size 0) (size 12) in 
   zero_buffer q;
-    let h1 = ST.get() in 
-    modifies1_is_modifies3 p result tempBuffer h0 h1;
-    assert(modifies3 p result tempBuffer h0 h1); 
   let buff = sub tempBuffer (size 12) (size 88) in 
   pointToDomain p result;
     let h2 = ST.get() in 
-      modifies2_is_modifies3 p result tempBuffer h1 h2;
-      assert(modifies3 p result tempBuffer h1 h2); 
   montgomery_ladder q result scalar buff;
   copy_point q result;  
     let h3 = ST.get() in 
     lemma_point_to_domain h0 h2 p result;
-    lemma_pif_to_domain h2 q;
-    assert(modifies3 p result tempBuffer h2 h3);
+    lemma_pif_to_domain h2 q
     
-    assert(
-      point_x_as_nat h2 result == toDomain_ (point_x_as_nat h0 p) /\
-      point_y_as_nat h2 result == toDomain_ (point_y_as_nat h0 p) /\
-      point_z_as_nat h2 result == toDomain_ (point_z_as_nat h0 p));
-
-    assert(	
-      let p1 = fromDomainPoint(point_prime_to_coordinates (as_seq h3 q)) in 
-      let rN, _ = montgomery_ladder_spec (as_seq h0 scalar) ((0, 0, 0),  point_prime_to_coordinates (as_seq h0 p)) in rN == p1)
-
 
 let secretToPublic result scalar tempBuffer = 
   push_frame(); 
        let basePoint = create (size 12) (u64 0) in 
-       let h0 = ST.get() in 
     uploadBasePoint basePoint;
       let q = sub tempBuffer (size 0) (size 12) in 
       let buff = sub tempBuffer (size 12) (size 88) in 
     zero_buffer q; 
       let h1 = ST.get() in 
       lemma_pif_to_domain h1 q;
-      
     montgomery_ladder q basePoint scalar buff; 
     norm q result buff;  
   pop_frame()
@@ -1440,7 +1422,6 @@ let secretToPublic result scalar tempBuffer =
 let secretToPublicWithoutNorm result scalar tempBuffer = 
     push_frame(); 
       let basePoint = create (size 12) (u64 0) in 
-      let h0 = ST.get() in 
     uploadBasePoint basePoint;
       let q = sub tempBuffer (size 0) (size 12) in 
       let buff = sub tempBuffer (size 12) (size 88) in 
@@ -1452,20 +1433,15 @@ let secretToPublicWithoutNorm result scalar tempBuffer =
   pop_frame()  
 
 
-
 inline_for_extraction noextract
 val y_2: y: felem -> r: felem -> Stack unit
   (requires fun h -> as_nat h y < prime /\  live h y /\ live h r /\ eq_or_disjoint y r)
   (ensures fun h0 _ h1 -> modifies1 r h0 h1 /\  as_nat h1 r == toDomain_ ((as_nat h0 y) * (as_nat h0 y) % prime))
 
 let y_2 y r = 
-    let h0 = ST.get() in 
   toDomain y r;
-    let h1 = ST.get() in 
-    assert(as_nat h1 r == toDomain_ (as_nat h0 y));
-  montgomery_multiplication_buffer r r r;
-    let h2 = ST.get() in  
-    assert(as_nat h2 r == toDomain_ ((as_nat h0 y) *  (as_nat h0 y) % prime))
+  montgomery_multiplication_buffer r r r
+
 
 inline_for_extraction noextract
 val upload_p256_point_on_curve_constant: x: felem -> Stack unit
@@ -1484,8 +1460,8 @@ let upload_p256_point_on_curve_constant x =
   assert_norm (
     15608596021259845087 + 12461466548982526096 * pow2 64 + 
     16546823903870267094 * pow2 64 * pow2 64 + 
-    15866188208926050356 * pow2 64 * pow2 64 * pow2 64 == (41058363725152142129326129780047268409114441015993725554835256314039467401291 * pow2 256) % prime);
-  assert(as_nat h1 x == toDomain_ (41058363725152142129326129780047268409114441015993725554835256314039467401291))
+    15866188208926050356 * pow2 64 * pow2 64 * pow2 64 == (41058363725152142129326129780047268409114441015993725554835256314039467401291 * pow2 256) % prime)
+
 
 val lemma_xcube: x_: nat {x_ < prime} -> Lemma 
   (((x_ * x_ * x_ % prime) - (3 * x_ % prime)) % prime == (x_ * x_ * x_ - 3* x_) % prime)
@@ -1494,6 +1470,7 @@ let lemma_xcube x_ =
   lemma_mod_add_distr (- (3 * x_ % prime)) (x_ * x_ * x_) prime;
   lemma_mod_sub_distr (x_ * x_ * x_ ) (3 * x_) prime
 
+
 val lemma_xcube2: x_ : nat {x_ < prime} -> Lemma 
   (toDomain_ ((((((x_ * x_ * x_) - (3 * x_)) % prime)) + 41058363725152142129326129780047268409114441015993725554835256314039467401291) % prime) == 
     toDomain_ ((x_ * x_ * x_ - 3 * x_ + 41058363725152142129326129780047268409114441015993725554835256314039467401291) % prime))
@@ -1501,6 +1478,7 @@ val lemma_xcube2: x_ : nat {x_ < prime} -> Lemma
 let lemma_xcube2 x_ = 
   lemma_mod_add_distr 41058363725152142129326129780047268409114441015993725554835256314039467401291 ((x_ * x_ * x_) - (3 * x_)) prime;
   assert(((((x_ * x_ * x_) - (3 * x_)) % prime) + 41058363725152142129326129780047268409114441015993725554835256314039467401291) % prime == (x_ * x_ * x_ - 3 * x_ + 41058363725152142129326129780047268409114441015993725554835256314039467401291) % prime)
+
 
 inline_for_extraction noextract
 val xcube_minus_x: x: felem ->r: felem -> Stack unit 
@@ -1512,31 +1490,21 @@ val xcube_minus_x: x: felem ->r: felem -> Stack unit
       as_nat h1 r =  toDomain_((x_ * x_ * x_ - 3 * x_ + 41058363725152142129326129780047268409114441015993725554835256314039467401291) % prime))
   )
 
+
 let xcube_minus_x x r = 
   push_frame();
+      let h0 = ST.get() in 
     let xToDomainBuffer = create (size 4) (u64 0) in 
     let minusThreeXBuffer = create (size 4) (u64 0) in 
     let p256_constant = create (size 4) (u64 0) in 
-    let h0 = ST.get() in 
   toDomain x xToDomainBuffer;
-    let h1 = ST.get() in 
-    assert(as_nat h1 xToDomainBuffer == toDomain_ (as_nat h0 x));
   montgomery_multiplication_buffer xToDomainBuffer xToDomainBuffer r;
-    let h2 = ST.get() in 
-    assert(as_nat h2 r == toDomain_ ((as_nat h0 x) * (as_nat h0 x) % prime));
   montgomery_multiplication_buffer r xToDomainBuffer r;
-    let h3 = ST.get() in 
     lemma_mod_mul_distr_l ((as_nat h0 x) * (as_nat h0 x)) (as_nat h0 x) prime;
-    assert(as_nat h3 r == toDomain_ ((as_nat h0 x) * (as_nat h0 x) * (as_nat h0 x) % prime));
   multByThree xToDomainBuffer minusThreeXBuffer;
-    let h4 = ST.get() in 
-    assert(as_nat h4 minusThreeXBuffer == toDomain_ (3 * (as_nat h0 x) % prime));
   p256_sub r minusThreeXBuffer r;
-    let h5 = ST.get() in 
-  upload_p256_point_on_curve_constant p256_constant;
-    let h6 = ST.get() in 
+    upload_p256_point_on_curve_constant p256_constant;
   p256_add r p256_constant r;
-    let h7 = ST.get() in 
   pop_frame(); 
   
     let x_ = as_nat h0 x in 
@@ -1544,7 +1512,6 @@ let xcube_minus_x x r =
     lemma_xcube x_;
     lemma_mod_add_distr 41058363725152142129326129780047268409114441015993725554835256314039467401291 ((x_ * x_ * x_) - (3 * x_)) prime;
     lemma_xcube2 x_
-
 
 
 val lemma_modular_multiplication_p256_2_d: a: nat{a < prime256} -> b: nat {b < prime256} -> 
