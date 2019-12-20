@@ -5,7 +5,8 @@ open FStar.HyperStack
 module ST = FStar.HyperStack.ST
 
 open Lib.IntTypes
-open Lib.IntTypes.Compatibility
+open Hacl.Impl.P256.Arithmetics
+
 open Lib.Buffer
 
 open Hacl.Spec.P256.Lemmas
@@ -80,108 +81,6 @@ let pointFromDomain p result =
     fromDomain p_x r_x;
     fromDomain p_y r_y;
     fromDomain p_z r_z
-
-
-val quatre: a: felem -> result: felem -> Stack unit
-  (requires fun h -> live h a /\ live h result /\ disjoint a result /\ as_nat h a < prime)
-  (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\ 
-    as_nat h1 result = toDomain_ (fromDomain_ (as_nat h0 a) * fromDomain_ (as_nat h0 a) * fromDomain_ (as_nat h0 a) * fromDomain_ (as_nat h0 a) % prime256) /\ 
-    as_nat h1 result = toDomain_ (fromDomain_ (as_nat h0 a) * fromDomain_ (as_nat h0 a) * fromDomain_ (as_nat h0 a) * fromDomain_ (as_nat h0 a)))
-
-let quatre a result = 
-    let h0 = ST.get() in 
-  montgomery_multiplication_buffer a a result;
-  montgomery_multiplication_buffer result result result;
-    inDomain_mod_is_not_mod ((fromDomain_ (as_nat h0 a) * fromDomain_ (as_nat h0 a) % prime256) * (fromDomain_ (as_nat h0 a) * fromDomain_ (as_nat h0 a) % prime256));
-    modulo_distributivity_mult2 (fromDomain_ (as_nat h0 a) * fromDomain_ (as_nat h0 a)) (fromDomain_ (as_nat h0 a) * fromDomain_ (as_nat h0 a)) 1 prime256;
-    lemma_brackets (fromDomain_ (as_nat h0 a) * fromDomain_ (as_nat h0 a)) (fromDomain_ (as_nat h0 a)) (fromDomain_ (as_nat h0 a));
-    inDomain_mod_is_not_mod (fromDomain_ (as_nat h0 a) * fromDomain_ (as_nat h0 a) * fromDomain_ (as_nat h0 a) * fromDomain_ (as_nat h0 a))
-
-
-val multByTwo: a: felem -> result: felem -> Stack unit 
-  (requires fun h -> live h a /\ live h result /\ eq_or_disjoint a result /\ as_nat h a < prime )
-  (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\ 
-    as_nat h1 result == toDomain_ (2 * fromDomain_ (as_nat h0 a) % prime256) /\ 
-    as_nat h1 result == toDomain_ (2 * fromDomain_ (as_nat h0 a)) /\ 
-    as_nat h1 result < prime)
-
-let multByTwo a out = 
-    let h0 = ST.get() in 
-  p256_add a a out;
-    inDomain_mod_is_not_mod (2 * fromDomain_ (as_nat h0 a))
-
-
-val multByThree: a: felem -> result: felem -> Stack unit 
-  (requires fun h -> live h a /\ live h result /\ disjoint a result /\ as_nat h a < prime )
-  (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\ as_nat h1 result < prime /\ 
-    as_nat h1 result == toDomain_ (3 * fromDomain_ (as_nat h0 a) % prime256) /\ 
-    as_nat h1 result == toDomain_ (3 * fromDomain_ (as_nat h0 a))
-  )
-
-let multByThree a result = 
-    let h0 = ST.get() in 
-  multByTwo a result;
-    let h1 = ST.get() in 
-      assert(as_nat h1 result == toDomain_ (2 * fromDomain_ (as_nat h0 a) % prime256));
-  p256_add a result result;
-    let h2 = ST.get() in 
-    lemma_mod_add_distr (fromDomain_ (as_nat h0 a)) (2 * fromDomain_ (as_nat h0 a)) prime256;
-    inDomain_mod_is_not_mod (3 * fromDomain_ (as_nat h0 a))
-  
-
-val multByFour: a: felem -> result: felem -> Stack unit 
-  (requires fun h -> live h a /\ live h result /\ eq_or_disjoint a result /\ as_nat h a < prime )
-  (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\ as_nat h1 result < prime /\ 
-    as_nat h1 result == toDomain_ (4 * fromDomain_ (as_nat h0 a) % prime256) /\ 
-    as_nat h1 result == toDomain_ (4 * fromDomain_ (as_nat h0 a))
-)
-
-let multByFour a result  = 
-    let h0 = ST.get() in 
-  multByTwo a result;
-  multByTwo result result;
-    lemma_mod_mul_distr_r 2 (2 * fromDomain_ (as_nat h0 a)) prime256;
-    lemma_brackets 2 2 (fromDomain_ (as_nat h0 a)); 
-    inDomain_mod_is_not_mod (4 * fromDomain_ (as_nat h0 a))
-
-
-val multByEight: a: felem -> result: felem -> Stack unit 
-  (requires fun h -> live h a /\ live h result /\ disjoint a result /\ as_nat h a < prime )
-  (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\ as_nat h1 result < prime /\ 
-    as_nat h1 result == toDomain_ (8 * fromDomain_ (as_nat h0 a) % prime256) /\ 
-    as_nat h1 result == toDomain_ (8 * fromDomain_ (as_nat h0 a))
-)
-
-let multByEight a result  = 
-    let h0 = ST.get() in 
-  multByTwo a result;
-  multByTwo result result;
-    lemma_mod_mul_distr_r 2 (2 * fromDomain_ (as_nat h0 a)) prime256;
-    lemma_brackets 2 2 (fromDomain_ (as_nat h0 a)); 
-    inDomain_mod_is_not_mod (4 * fromDomain_ (as_nat h0 a));
-  multByTwo result result;
-    lemma_mod_mul_distr_r 2 (4 * fromDomain_ (as_nat h0 a)) prime256;
-    lemma_brackets 2 4 (fromDomain_ (as_nat h0 a));
-    inDomain_mod_is_not_mod (8 * fromDomain_ (as_nat h0 a))
-
-
-val multByMinusThree: a: felem -> result: felem -> Stack unit 
-  (requires fun h -> live h a /\ live h result /\ disjoint a result /\ as_nat h a < prime )
-  (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\ 
-    as_nat h1 result < prime /\ 
-    as_nat h1 result == toDomain_ ((-3) * fromDomain_ (as_nat h0 a) % prime256) /\
-    as_nat h1 result == toDomain_ ((-3) * fromDomain_ (as_nat h0 a)))
-
-let multByMinusThree a result  = 
-  let h0 = ST.get() in 
-    push_frame();
-    multByThree a result;
-    let zeros = create (size 4) (u64 0) in 
-    p256_sub zeros result result;
-      assert_norm (fromDomain_ 0 == 0);
-      lemma_mod_sub_distr 0 (3 * fromDomain_ (as_nat h0 a)) prime256;
-      inDomain_mod_is_not_mod ((-3) * fromDomain_ (as_nat h0 a));
-  pop_frame()
 
 
 val copy_point: p: point -> result: point -> Stack unit 

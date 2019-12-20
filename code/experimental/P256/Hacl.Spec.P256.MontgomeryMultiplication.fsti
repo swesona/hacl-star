@@ -51,4 +51,4 @@ val additionInDomain: a: nat {a < prime256} -> b: nat {b < prime256} -> Lemma
   
 val substractionInDomain: a: nat {a < prime256} -> b: nat { b < prime256} -> Lemma 
   ((a - b) % prime256 == toDomain_ (fromDomain_ a - fromDomain_ b))
-  
+

@@ -90,10 +90,3 @@ let substractionInDomain a b =
   lemma_mod_sub_distr a (l * pow2 256) prime;
   lemma_mod_add_distr (-l * pow2 256) (k * pow2 256) prime
 
-
-val lemmaDistributivityInDomain: a: int -> b: int -> Lemma (toDomain_ (a * (b % prime) % prime) = toDomain_ (a * b % prime))
-  [SMTPat (toDomain_ (a * (b % prime) % prime))]
-
-let lemmaDistributivityInDomain a b = 
-  lemma_mod_mul_distr_r a b prime
-
