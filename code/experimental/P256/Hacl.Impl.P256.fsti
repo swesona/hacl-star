@@ -77,60 +77,6 @@ val pointFromDomain: p: point -> result: point-> Stack unit
     point_y_as_nat h1 result == fromDomain_ (point_y_as_nat h0 p) /\
     point_z_as_nat h1 result == fromDomain_ (point_z_as_nat h0 p))
     
-val point_double: p: point -> result: point -> tempBuffer: lbuffer uint64 (size 88) -> Stack unit
-  (requires fun h -> live h p /\ live h tempBuffer /\ live h result /\
-    disjoint p tempBuffer /\ disjoint result tempBuffer /\
-    eq_or_disjoint p result /\
-    as_nat h (gsub p (size 8) (size 4)) < prime /\ 
-    as_nat h (gsub p (size 0) (size 4)) < prime /\ 
-    as_nat h (gsub p (size 4) (size 4)) < prime)
-  (ensures fun h0 _ h1 -> modifies (loc tempBuffer |+| loc result)  h0 h1 /\  
-    as_nat h1 (gsub result (size 8) (size 4)) < prime /\ 
-    as_nat h1 (gsub result (size 0) (size 4)) < prime /\ 
-    as_nat h1 (gsub result (size 4) (size 4)) < prime /\
-    (
-      let x, y, z = gsub p (size 0) (size 4),  gsub p (size 4) (size 4), gsub p (size 8) (size 4) in 
-      let x3, y3, z3 = gsub result (size 0) (size 4), gsub result (size 4) (size 4), gsub result (size 8) (size 4) in 
-      
-      let xD, yD, zD = fromDomain_ (as_nat h0 x), fromDomain_ (as_nat h0 y), fromDomain_ (as_nat h0 z) in 
-      let x3D, y3D, z3D = fromDomain_ (as_nat h1 x3), fromDomain_ (as_nat h1 y3), fromDomain_ (as_nat h1 z3) in
-      
-      let xN, yN, zN = _point_double (xD, yD, zD) in 
-      x3D == xN /\ y3D == yN /\ z3D == zN
-  )
-) 
-
-
-
-val point_add: p: point -> q: point -> result: point -> tempBuffer: lbuffer uint64 (size 88) -> 
-   Stack unit (requires fun h -> live h p /\ live h q /\ live h result /\ live h tempBuffer /\ 
-   eq_or_disjoint q result /\
-   disjoint p q /\ disjoint p tempBuffer /\ disjoint q tempBuffer /\ disjoint p result /\ disjoint result tempBuffer /\  
-    as_nat h (gsub p (size 8) (size 4)) < prime /\ 
-    as_nat h (gsub p (size 0) (size 4)) < prime /\ 
-    as_nat h (gsub p (size 4) (size 4)) < prime /\
-    as_nat h (gsub q (size 8) (size 4)) < prime /\ 
-    as_nat h (gsub q (size 0) (size 4)) < prime /\  
-    as_nat h (gsub q (size 4) (size 4)) < prime 
-    ) 
-   (ensures fun h0 _ h1 -> 
-     modifies (loc tempBuffer |+| loc result) h0 h1 /\ 
-     as_nat h1 (gsub result (size 8) (size 4)) < prime /\ 
-     as_nat h1 (gsub result (size 0) (size 4)) < prime /\ 
-     as_nat h1 (gsub result (size 4) (size 4)) < prime /\
-     (
-       let pX, pY, pZ = gsub p (size 0) (size 4), gsub p (size 4) (size 4), gsub p (size 8) (size 4) in 
-       let qX, qY, qZ = gsub q (size 0) (size 4), gsub q (size 4) (size 4), gsub q (size 8) (size 4) in 
-       let x3, y3, z3 = gsub result (size 0) (size 4), gsub result (size 4) (size 4), gsub result (size 8) (size 4) in 
-       
-       let pxD, pyD, pzD = fromDomain_ (as_nat h0 pX), fromDomain_ (as_nat h0 pY), fromDomain_ (as_nat h0 pZ) in 
-       let qxD, qyD, qzD = fromDomain_ (as_nat h0 qX), fromDomain_ (as_nat h0 qY), fromDomain_ (as_nat h0 qZ) in 
-       let x3D, y3D, z3D = fromDomain_ (as_nat h1 x3), fromDomain_ (as_nat h1 y3), fromDomain_ (as_nat h1 z3) in
-      
-       let xN, yN, zN = _point_add (pxD, pyD, pzD) (qxD, qyD, qzD) in 
-       x3D == xN /\ y3D == yN /\ z3D == zN
-  )
-)
 
 val isPointAtInfinityPrivate: p: point -> Stack uint64
   (requires fun h -> live h p /\ as_nat h (gsub p (size 8) (size 4)) < prime)
