@@ -119,6 +119,17 @@ val norm: p: point -> resultPoint: point -> tempBuffer: lbuffer uint64 (size 88)
   )
 
 
+val normX: p: point -> result: felem -> tempBuffer: lbuffer uint64 (size 88) -> Stack unit
+  (requires fun h -> live h p /\ live h result /\ live h tempBuffer /\
+    LowStar.Monotonic.Buffer.all_disjoint [loc p; loc result; loc tempBuffer] /\ 
+    as_nat h (gsub p (size 0) (size 4)) < prime /\
+    as_nat h (gsub p (size 4) (size 4)) < prime /\
+    as_nat h (gsub p (size 8) (size 4)) < prime 
+  ) 
+  (ensures fun h0 _ h1 -> 
+      modifies (loc tempBuffer |+| loc result) h0 h1 
+  )
+
 
 inline_for_extraction noextract
 val scalarMultiplication: #buf_type: buftype->  p: point -> result: point -> 

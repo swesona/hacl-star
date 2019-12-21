@@ -34,42 +34,51 @@ open Hacl.Impl.ECDSA.P256SHA256.Verification
 val ecdsa_signature_step12: mLen: size_t -> m: lbuffer uint8 mLen {uint_v mLen < pow2 61} -> hashAsFelem: felem -> 
   Stack unit 
     (requires fun h -> live h m /\ live h hashAsFelem)
-    (ensures fun h0 _ h1 -> modifies (loc hashAsFelem) h0 h1) 
+    (ensures fun h0 _ h1 -> modifies (loc hashAsFelem) h0 h1 /\
+      (
+	let hashOfMessage = Spec.Hash.hash Spec.Hash.Definitions.SHA2_256 (as_seq h0 m) in 
+	let changedEndianHash = Hacl.Spec.ECDSA.changeEndian (Lib.ByteSequence.uints_from_bytes_be hashOfMessage) in 
+	as_nat h1 hashAsFelem == felem_seq_as_nat changedEndianHash % prime_p256_order
+      )
+  ) 
 
 let ecdsa_signature_step12 mLen m hashAsFelem  = 
   push_frame(); 
     let mHash = create (size 32) (u8 0) in  
       let h0 = ST.get() in 
     hash_256 m mLen mHash;
-      let h1 = ST.get() in 
-      assert(Seq.equal (as_seq h1 mHash) (Spec.Hash.hash Spec.Hash.Definitions.SHA2_256 (as_seq h0 m)));
     toUint64 mHash hashAsFelem;
+      let h2 = ST.get() in 
+      lemma_eq_funct (as_seq h2 hashAsFelem) (Hacl.Spec.ECDSA.changeEndian 
+	(Lib.ByteSequence.uints_from_bytes_be (Spec.Hash.hash Spec.Hash.Definitions.SHA2_256 (as_seq h0 m))));
     reduction_prime_2prime_order hashAsFelem hashAsFelem;
   pop_frame()
 
 
-assume val ecdsa_signature_step4: k: lbuffer uint8 (size 32) -> result: point -> tempBuffer: lbuffer uint64 (size 100) -> 
-  Stack unit 
+val ecdsa_signature_step45: k: lbuffer uint8 (size 32) -> 
+  tempBuffer: lbuffer uint64 (size 100) -> 
+  x: felem -> 
+  Stack bool 
     (requires fun h -> 
-      live h k /\ live h result /\ live h tempBuffer /\
-      LowStar.Monotonic.Buffer.all_disjoint [loc tempBuffer; loc k; loc result]
+      live h k /\ live h x /\ live h tempBuffer /\ 
+      LowStar.Monotonic.Buffer.all_disjoint [loc tempBuffer; loc k; loc x]
     )
     (
-    ensures fun h0 _ h1 -> modifies (loc result |+| loc tempBuffer) h0 h1 /\
-      as_nat h1 (gsub result (size 0) (size 4)) < prime /\ 
-      as_nat h1 (gsub result (size 4) (size 4)) < prime /\ 
-      as_nat h1 (gsub result (size 8) (size 4)) < prime /\
-      (
-	let x3, y3, z3 = as_nat h1 (gsub result (size 0) (size 4)), as_nat h1 (gsub result (size 0) (size 4)), as_nat h1 (gsub result (size 0) (size 4)) in 
-	let (xN, yN, zN) = secret_to_public (as_seq h0 k)  in 
-	x3 == xN /\ y3 == yN /\ z3 == zN 
-    )
+    ensures fun h0 _ h1 -> modifies (loc x |+| loc tempBuffer) h0 h1
   )
 
-(*
-let ecdsa_signature_step4 k result tempBuffer = 
-  secretToPublicWithPartialNorm result scalar tempBuffer
-*)
+
+let ecdsa_signature_step45 k tempBuffer x = 
+  push_frame();
+    let result = create (size 12) (u64 0) in 
+    let tempForNorm = sub tempBuffer (size 0) (size 88) in 
+    secretToPublicWithoutNorm result k tempBuffer; 
+    normX result x tempForNorm;
+    reduction_prime_2prime_order x x;
+  pop_frame();
+    isZero_bool x
+    
+
 
 val ecdsa_signature_step6: kFelem: felem -> z: felem -> r: felem -> da: felem ->result: felem -> Stack unit
   (requires fun h -> live h kFelem /\ live h z /\ live h r /\ live h da /\ as_nat h z < prime /\ as_nat h r < prime /\ as_nat h da < prime /\ as_nat h kFelem < prime /\ live h result)
@@ -108,7 +117,7 @@ let ecdsa_signature_step6 kFelem z r da result =
   pop_frame()
 
 
-val ecdsa_signature_core: mLen: size_t -> m: lbuffer uint8 mLen {uint_v mLen < pow2 61} ->  privKey: felem  -> k: felem -> result: point -> Stack unit
+val ecdsa_signature_core: mLen: size_t -> m: lbuffer uint8 mLen {uint_v mLen < pow2 61} ->  privKey: felem  -> k: felem -> result: lbuffer uint8 (size 64) -> Stack bool
   (requires fun h -> live h m )
   (ensures fun h0 _ h1 -> True)
 
@@ -116,9 +125,17 @@ val ecdsa_signature_core: mLen: size_t -> m: lbuffer uint8 mLen {uint_v mLen < p
 let ecdsa_signature_core mLen m privKey k result = 
   push_frame();
     let hashAsFelem = create (size 4) (u64 0) in     
+    let r = create (size 4) (u64 0) in 
+    let s = create (size 4) (u64 0) in 
+    let tempBuffer = create (size 100) (u64 0) in 
     ecdsa_signature_step12 mLen m hashAsFelem;
-  pop_frame()
-
+    let step5Flag = ecdsa_signature_step45 k tempBuffer r in 
+      if not step5Flag then
+    ecdsa_signature_step6 k hashAsFelem r privKey s;
+    let step6Flag = isZero_bool s in 
+  pop_frame();
+    step6Flag
+  
 val ecdsa_signature:  mLen: size_t -> m: lbuffer uint8 mLen {uint_v mLen < pow2 61} ->   privKey: felem -> k: felem -> result: point -> Stack bool
   (requires fun h -> live h privKey /\ live h k /\ live h result /\ live h m)
   (ensures fun h0 _ h1 -> True)
@@ -127,5 +144,5 @@ let ecdsa_signature mLen m privKey k result =
   let f = isMoreThanZeroLessThanOrderMinusOne privKey in 
   let s = isMoreThanZeroLessThanOrderMinusOne k in 
 
-  ecdsa_signature_core mLen m privKey k result; 
-  f && s
+  let r = ecdsa_signature_core mLen m privKey k result in 
+  f && s && r

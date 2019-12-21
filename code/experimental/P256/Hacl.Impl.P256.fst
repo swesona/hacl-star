@@ -155,6 +155,7 @@ val normalisation_update: z2x: felem -> z3y: felem ->p: point ->  resultPoint: p
       ))
   )
 
+
 #reset-options "--z3rlimit 400"
 
 let normalisation_update z2x z3y p resultPoint = 
@@ -219,6 +220,26 @@ let norm p resultPoint tempBuffer =
        let yD = fromDomain_(point_y_as_nat h0 p) in 
        let (xN, yN, zN) = _norm (xD, yD, zD) in 
        point_x_as_nat h3 resultPoint == xN /\ point_y_as_nat h3 resultPoint == yN /\ point_z_as_nat h3 resultPoint == zN)
+
+
+
+#reset-options "--z3rlimit 500" 
+let normX p result tempBuffer = 
+  let xf = sub p (size 0) (size 4) in 
+  let yf = sub p (size 4) (size 4) in 
+  let zf = sub p (size 8) (size 4) in 
+
+  
+  let z2f = sub tempBuffer (size 4) (size 4) in 
+  let z3f = sub tempBuffer (size 8) (size 4) in
+  let tempBuffer20 = sub tempBuffer (size 12) (size 20) in 
+
+    let h0 = ST.get() in 
+  montgomery_multiplication_buffer zf zf z2f; 
+  exponent z2f z2f tempBuffer20;
+  montgomery_multiplication_buffer xf z2f z2f;
+  fromDomain z2f result
+
 
 
 (* this piece of code is taken from Hacl.Curve25519 *)

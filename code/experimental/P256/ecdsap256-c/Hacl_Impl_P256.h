@@ -34,6 +34,8 @@ void Hacl_Impl_LowLevel_shortened_mul(uint64_t *a, uint64_t b, uint64_t *result)
 
 void Hacl_Impl_LowLevel_shift8(uint64_t *t, uint64_t *out);
 
+bool Hacl_Impl_LowLevel_isZero_bool(uint64_t *f);
+
 void Hacl_Impl_LowLevel_uploadOneImpl(uint64_t *f);
 
 extern uint64_t Hacl_Impl_P256_LowLevel_prime256_buffer[4U];
@@ -53,6 +55,8 @@ void pointFromDomain(uint64_t *p, uint64_t *result);
 uint64_t isPointAtInfinityPrivate(uint64_t *p);
 
 void norm(uint64_t *p, uint64_t *resultPoint, uint64_t *tempBuffer);
+
+void normX(uint64_t *p, uint64_t *result, uint64_t *tempBuffer);
 
 void
 scalarMultiplicationI(uint64_t *p, uint64_t *result, uint8_t *scalar, uint64_t *tempBuffer);

@@ -707,6 +707,15 @@ let isZero_uint64 f =
       r
 
 
+val isZero_bool: f: felem -> Stack bool 
+  (requires fun h -> live h f) 
+  (ensures fun h0 r h1 -> modifies0 h0 h1 /\ (if as_nat h0 f = 0 then r == true else r == false))
+  
+let isZero_bool f = 
+  let r = isZero_uint64 f in 
+  not (eq_0_u64 r)
+
+
 val uploadOneImpl: f: felem -> Stack unit
   (requires fun h -> live h f)
   (ensures fun h0 _ h1 -> as_nat h1 f == 1 /\ modifies (loc f) h0 h1)

@@ -21,6 +21,21 @@ Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_step12(
     hashAsFelem);
 }
 
+bool
+Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_step45(
+  uint8_t *k,
+  uint64_t *tempBuffer,
+  uint64_t *x
+)
+{
+  uint64_t result[12U] = { 0U };
+  uint64_t *tempForNorm = tempBuffer;
+  secretToPublicWithoutNorm(result, k, tempBuffer);
+  normX(result, x, tempForNorm);
+  Hacl_Impl_ECDSA_MontgomeryMultiplication_reduction_prime_2prime_order(x, x);
+  return Hacl_Impl_LowLevel_isZero_bool(x);
+}
+
 void
 Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_step6(
   uint64_t *kFelem,
@@ -43,17 +58,32 @@ Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_step6(
     result);
 }
 
-void
+bool
 Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_core(
   uint32_t mLen,
   uint8_t *m,
   uint64_t *privKey,
   uint64_t *k,
-  uint64_t *result
+  uint8_t *result
 )
 {
   uint64_t hashAsFelem[4U] = { 0U };
+  uint64_t r[4U] = { 0U };
+  uint64_t s1[4U] = { 0U };
+  uint64_t tempBuffer[100U] = { 0U };
+  bool step5Flag;
+  bool step6Flag;
   Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_step12(mLen, m, hashAsFelem);
+  step5Flag =
+    Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_step45((uint8_t *)k,
+      tempBuffer,
+      r);
+  if (!step5Flag)
+  {
+    Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_step6(k, hashAsFelem, r, privKey, s1);
+  }
+  step6Flag = Hacl_Impl_LowLevel_isZero_bool(s1);
+  return step6Flag;
 }
 
 bool
@@ -67,7 +97,13 @@ Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature(
 {
   bool f = Hacl_Impl_ECDSA_P256SHA256_Verification_isMoreThanZeroLessThanOrderMinusOne(privKey);
   bool s1 = Hacl_Impl_ECDSA_P256SHA256_Verification_isMoreThanZeroLessThanOrderMinusOne(k);
-  Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_core(mLen, m, privKey, k, result);
-  return f && s1;
+  bool
+  r =
+    Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_core(mLen,
+      m,
+      privKey,
+      k,
+      (uint8_t *)result);
+  return f && s1 && r;
 }
 

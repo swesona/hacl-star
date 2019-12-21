@@ -337,6 +337,12 @@ static uint64_t Hacl_Impl_LowLevel_isZero_uint64(uint64_t *f)
   return r01 & r23;
 }
 
+bool Hacl_Impl_LowLevel_isZero_bool(uint64_t *f)
+{
+  uint64_t r = Hacl_Impl_LowLevel_isZero_uint64(f);
+  return !(r == (uint64_t)0U);
+}
+
 void Hacl_Impl_LowLevel_uploadOneImpl(uint64_t *f)
 {
   f[0U] = (uint64_t)1U;
@@ -1265,6 +1271,18 @@ void norm(uint64_t *p, uint64_t *resultPoint, uint64_t *tempBuffer)
     Hacl_Impl_LowLevel_uploadOneImpl(resultZ);
     Hacl_Impl_LowLevel_copy_conditional(resultZ, zeroBuffer, bit);
   }
+}
+
+void normX(uint64_t *p, uint64_t *result, uint64_t *tempBuffer)
+{
+  uint64_t *xf = p;
+  uint64_t *zf = p + (uint32_t)8U;
+  uint64_t *z2f = tempBuffer + (uint32_t)4U;
+  uint64_t *tempBuffer20 = tempBuffer + (uint32_t)12U;
+  Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_buffer(zf, zf, z2f);
+  Hacl_Impl_P256_MontgomeryMultiplication_exponent(z2f, z2f, tempBuffer20);
+  Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_buffer(xf, z2f, z2f);
+  fromDomain(z2f, result);
 }
 
 static void zero_buffer(uint64_t *p)
