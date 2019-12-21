@@ -1281,7 +1281,7 @@ void normX(uint64_t *p, uint64_t *result, uint64_t *tempBuffer)
   uint64_t *tempBuffer20 = tempBuffer + (uint32_t)12U;
   Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_buffer(zf, zf, z2f);
   Hacl_Impl_P256_MontgomeryMultiplication_exponent(z2f, z2f, tempBuffer20);
-  Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_buffer(xf, z2f, z2f);
+  Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_buffer(z2f, xf, z2f);
   fromDomain(z2f, result);
 }
 

@@ -222,7 +222,6 @@ let norm p resultPoint tempBuffer =
        point_x_as_nat h3 resultPoint == xN /\ point_y_as_nat h3 resultPoint == yN /\ point_z_as_nat h3 resultPoint == zN)
 
 
-
 #reset-options "--z3rlimit 500" 
 let normX p result tempBuffer = 
   let xf = sub p (size 0) (size 4) in 
@@ -237,9 +236,9 @@ let normX p result tempBuffer =
     let h0 = ST.get() in 
   montgomery_multiplication_buffer zf zf z2f; 
   exponent z2f z2f tempBuffer20;
-  montgomery_multiplication_buffer xf z2f z2f;
-  fromDomain z2f result
-
+  montgomery_multiplication_buffer z2f xf z2f;
+  fromDomain z2f result;
+    power_distributivity (fromDomain_ (as_nat h0 zf) * fromDomain_ (as_nat h0 zf)) (prime -2) prime
 
 
 (* this piece of code is taken from Hacl.Curve25519 *)

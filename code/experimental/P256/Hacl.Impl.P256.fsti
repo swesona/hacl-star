@@ -127,8 +127,18 @@ val normX: p: point -> result: felem -> tempBuffer: lbuffer uint64 (size 88) -> 
     as_nat h (gsub p (size 8) (size 4)) < prime 
   ) 
   (ensures fun h0 _ h1 -> 
-      modifies (loc tempBuffer |+| loc result) h0 h1 
+      modifies (loc tempBuffer |+| loc result) h0 h1  /\
+      (
+	let pxD = fromDomain_ (as_nat h0 (gsub p (size 0) (size 4))) in 
+	let pyD = fromDomain_ (as_nat h0 (gsub p (size 4) (size 4))) in 
+	let pzD = fromDomain_ (as_nat h0 (gsub p (size 8) (size 4))) in 
+      
+	let x3 = as_nat h1 (gsub result (size 0) (size 4)) in 
+	let (xN, _, _) = _norm (pxD, pyD, pzD) in 
+	x3 == xN
+      )
   )
+
 
 
 inline_for_extraction noextract
