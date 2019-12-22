@@ -63,15 +63,20 @@ val ecdsa_signature_step45: k: lbuffer uint8 (size 32) ->
       live h k /\ live h x /\ live h tempBuffer /\ 
       LowStar.Monotonic.Buffer.all_disjoint [loc tempBuffer; loc k; loc x]
     )
-    (
-    ensures fun h0 _ h1 -> modifies (loc x |+| loc tempBuffer) h0 h1
-  )
-
+    (ensures fun h0 r h1 -> modifies (loc x |+| loc tempBuffer) h0 h1 /\
+      (
+	let basePoint = (0x6B17D1F2E12C4247F8BCE6E563A440F277037D812DEB33A0F4A13945D898C296, 0x4FE342E2FE1A7F9B8EE7EB4A7C0F9E162BCE33576B315ECECBB6406837BF51F5, 1) in
+	let (rxN, ryN, rzN), _ = montgomery_ladder_spec (as_seq h0 k) ((0,0,0), basePoint) in 
+	let (xN, _, _) = _norm (rxN, ryN, rzN) in 
+	let x = xN % prime_p256_order in 
+	if x = 0 then r == true else r == false
+      )
+    )
 
 let ecdsa_signature_step45 k tempBuffer x = 
   push_frame();
-    let result = create (size 12) (u64 0) in 
-    let tempForNorm = sub tempBuffer (size 0) (size 88) in 
+      let result = create (size 12) (u64 0) in 
+      let tempForNorm = sub tempBuffer (size 0) (size 88) in 
     secretToPublicWithoutNorm result k tempBuffer; 
     normX result x tempForNorm;
     reduction_prime_2prime_order x x;
