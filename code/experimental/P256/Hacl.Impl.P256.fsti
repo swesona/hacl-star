@@ -102,17 +102,7 @@ val norm: p: point -> resultPoint: point -> tempBuffer: lbuffer uint64 (size 88)
       modifies (loc tempBuffer |+| loc resultPoint) h0 h1 /\
       (
       let resultPoint =  point_prime_to_coordinates (as_seq h1 resultPoint) in 
-      
-      (* let x3 = point_x_as_nat h1 resultPoint in  
-      let y3 = point_y_as_nat h1 resultPoint in 
-      let z3 = point_z_as_nat h1 resultPoint in  *)
-
       let pointD = fromDomainPoint (point_prime_to_coordinates (as_seq h0 p)) in 
-(*
-      let xD = fromDomain_ (point_x_as_nat h0 p) in 
-      let yD = fromDomain_ (point_y_as_nat h0 p) in 
-      let zD = fromDomain_ (point_z_as_nat h0 p) in 
-*)
       let pointNorm = _norm pointD in 
       pointNorm == resultPoint
    )   
@@ -244,7 +234,6 @@ val isPointAtInfinity: p: point -> Stack bool
   ) 
 
 
-(* after norm *)
 val isPointOnCurve: p: point -> Stack bool
   (requires fun h -> live h p /\    
     as_nat h (gsub p (size 0) (size 4)) < prime /\ 

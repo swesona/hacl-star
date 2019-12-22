@@ -419,7 +419,6 @@ let montgomery_ladder #a p q scalar tempBuffer =
   (fromDomainPoint(point_prime_to_coordinates (as_seq h p)), fromDomainPoint(point_prime_to_coordinates (as_seq h q)))  in 
   
   Lib.LoopCombinators.eq_repeati0 256 (spec_ml h0) (acc h0);
-
   [@inline_let]
   let inv h (i: nat {i <= 256}) = 
     as_nat h (gsub p (size 0) (size 4)) < prime /\ 
@@ -436,21 +435,9 @@ let montgomery_ladder #a p q scalar tempBuffer =
 
   for 0ul 256ul inv 
     (fun i -> let h2 = ST.get() in
-      assert(modifies3 p q tempBuffer h0 h2);
-      montgomery_ladder_step p q tempBuffer scalar i;  
-      let h3 = ST.get() in 
-      assert(modifies3 p q tempBuffer h2 h3);
-      assert(modifies3 p q tempBuffer h0 h3);
-
-      assert(
-	let p1 = as_seq h3 p in 
-	let q1 = as_seq h3 q in  
-        let pN, qN = Hacl.Spec.P256.Ladder.montgomery_ladder_step_swap 
-	(as_seq h2 p) (as_seq h2 q) (as_seq h2 scalar) (uint_v i) in 
-	pN == p1 /\ qN == q1);
-
-       assert(acc h3 == _ml_step (as_seq h2 scalar) (uint_v i) (acc h2));
-       Lib.LoopCombinators.unfold_repeati 256 (spec_ml h0) (acc h0) (uint_v i))
+      montgomery_ladder_step p q tempBuffer scalar i; 
+      Lib.LoopCombinators.unfold_repeati 256 (spec_ml h0) (acc h0) (uint_v i)
+    )
 
 val zero_buffer: p: point -> 
   Stack unit
