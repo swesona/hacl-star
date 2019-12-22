@@ -23,6 +23,7 @@ open Hacl.Impl.P256
 open Hacl.Spec.P256
 
 open Hacl.Spec.ECDSAP256.Definition
+open FStar.Math.Lemmas
 
 open FStar.Mul
 
@@ -82,11 +83,35 @@ let ecdsa_signature_step45 k tempBuffer x =
     reduction_prime_2prime_order x x;
   pop_frame();
     isZero_bool x
-    
+
+
+val lemma_power_step6: kInv: nat  -> Lemma 
+  (Hacl.Spec.ECDSA.exponent_spec (fromDomain_ kInv)  == toDomain_ (pow kInv (prime_p256_order - 2)))
+
+let lemma_power_step6 kInv = 
+  let a = Hacl.Spec.ECDSA.exponent_spec (fromDomain_ kInv) in 
+  lemmaFromDomain kInv;
+
+  power_distributivity (kInv * modp_inv2_prime (pow2 256) prime_p256_order) (prime_p256_order - 2) prime_p256_order;
+  power_distributivity_2 kInv (modp_inv2_prime (pow2 256) prime_p256_order % prime_p256_order) (prime_p256_order - 2);
+  lemma_mod_mul_distr_r (pow kInv (prime_p256_order - 2)) (pow (modp_inv2_prime (pow2 256) prime_p256_order) (prime_p256_order - 2)) prime_p256_order;
+
+
+  lemma_pow_mod_n_is_fpow prime_p256_order (pow2 256 % prime_p256_order) (prime_p256_order - 2);
+  assert_norm(modp_inv2_prime (pow2 256) prime_p256_order = 43790243014242295660885426880012836369732278457577312309071968676491870960761); 
+
+  lemma_pow_mod_n_is_fpow prime_p256_order 43790243014242295660885426880012836369732278457577312309071968676491870960761 (prime_p256_order - 2);
+  assert_norm(exp #prime_p256_order 43790243014242295660885426880012836369732278457577312309071968676491870960761 (prime_p256_order - 2) == pow2 256 % prime_p256_order);
+
+  lemma_mod_mul_distr_r (pow kInv (prime_p256_order - 2)) (pow2 256) prime_p256_order;
+   lemmaToDomain (pow kInv (prime_p256_order - 2))
+
 
 
 val ecdsa_signature_step6: kFelem: felem -> z: felem -> r: felem -> da: felem ->result: felem -> Stack unit
-  (requires fun h -> live h kFelem /\ live h z /\ live h r /\ live h da /\ as_nat h z < prime /\ as_nat h r < prime /\ as_nat h da < prime /\ as_nat h kFelem < prime /\ live h result)
+  (requires fun h -> live h kFelem /\ live h z /\ live h r /\ live h da /\ 
+    as_nat h z < prime_p256_order /\ as_nat h r < prime_p256_order /\ as_nat h da < prime_p256_order /\ 
+    as_nat h kFelem < prime_p256_order /\ live h result)
   (ensures fun h0 _ h1 -> True)
 
 let ecdsa_signature_step6 kFelem z r da result = 
@@ -94,9 +119,9 @@ let ecdsa_signature_step6 kFelem z r da result =
     let rda = create (size 4) (u64 0) in 
     let zBuffer = create (size 4) (u64 0) in 
     let kInv = create (size 4) (u64 0) in 
-
 	let h0 = ST.get() in 
-      montgomery_multiplication_ecdsa_module r da rda;
+	montgomery_multiplication_ecdsa_module r da rda;
+
 	let h1 = ST.get() in 
 	lemmaFromDomain (as_nat h0 r * as_nat h0 da); 
 	assert(as_nat h1 rda = fromDomain_ (as_nat h0 r * as_nat h0 da));
@@ -110,15 +135,19 @@ let ecdsa_signature_step6 kFelem z r da result =
      assert(as_nat h3 zBuffer = fromDomain_ (as_nat h0 z + as_nat h0 r * as_nat h0 da));
      copy kInv kFelem;
        let h4 = ST.get() in 
-       assert(as_nat h4 kInv = as_nat h0 kFelem);
-     montgomery_ladder_exponent kInv;
+       assert(as_nat h3 kFelem == as_nat h4 kInv);
+     fromDomainImpl kInv kInv; 
        let h5 = ST.get() in 
-       assert(fromDomain_ (as_nat h5 kInv) == Hacl.Spec.ECDSA.exponent_spec (fromDomain_ (as_nat h0 kFelem)));
-     montgomery_multiplication_ecdsa_module zBuffer kInv result;
+       assert(as_nat h5 kInv = fromDomain_ (as_nat h0 kFelem));
+     montgomery_ladder_exponent kInv;
        let h6 = ST.get() in 
-       assert(as_nat h6 result = toDomain_ (fromDomain_ ((fromDomain_ (as_nat h0 z + as_nat h0 r * as_nat h0 da))) * Hacl.Spec.ECDSA.exponent_spec (fromDomain_ (as_nat h0 kFelem)) % prime_p256_order));
-     admit();
-     
+       assert(fromDomain_ (as_nat h6 kInv) == Hacl.Spec.ECDSA.exponent_spec (fromDomain_ (as_nat h5 kInv)));
+     montgomery_multiplication_ecdsa_module zBuffer kInv result;
+       let h7 = ST.get() in 
+       lemma_power_step6 (as_nat h5 kInv); 
+       assert(as_nat h7 result = toDomain_ (fromDomain_ (fromDomain_ (as_nat h0 z + as_nat h0 r * as_nat h0 da)) * toDomain_ (pow (as_nat h5 kInv) (prime_p256_order - 2)) % prime_p256_order));
+	 admit();
+
   pop_frame()
 
 

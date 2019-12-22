@@ -67,6 +67,10 @@ val toDomain_: a: nat -> Tot nat
 val lemmaFromDomain: a: nat ->  Lemma (
   (a * modp_inv2_prime (pow2 256) prime_p256_order) % prime_p256_order == fromDomain_ a)
 
+val lemmaToDomain: a: nat ->  Lemma (
+  (a * pow2 256) % prime_p256_order == toDomain_ a)
+
+
 val lemmaFromDomainToDomain: a: nat { a < prime} -> Lemma (toDomain_ (fromDomain_ a) == a)
 
 val lemmaToDomainFromDomain: a: nat { a < prime} -> Lemma (fromDomain_ (toDomain_ a) == a)

@@ -315,6 +315,7 @@ let toDomain_ a = (a * pow2 256) % prime_p256_order
 
 let lemmaFromDomain a = ()
 
+let lemmaToDomain a = ()
 
 let lemmaFromDomainToDomain a = 
    let fromA = (a * modp_inv2_prime (pow2 256) prime_p256_order) % prime_p256_order in 
