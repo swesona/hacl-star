@@ -382,7 +382,7 @@ val montgomery_ladder: #buf_type: buftype->  p: point -> q: point ->
     as_nat h (gsub q (size 0) (size 4)) < prime /\  
     as_nat h (gsub q (size 4) (size 4)) < prime /\
     as_nat h (gsub q (size 8) (size 4)) < prime )
-  (ensures fun h0 _ h1 -> modifies3 p q tempBuffer h0 h1 /\
+  (ensures fun h0 _ h1 -> modifies (loc p |+| loc q |+| loc tempBuffer) h0 h1 /\
     (
       as_nat h1 (gsub p (size 0) (size 4)) < prime /\ 
       as_nat h1 (gsub p (size 4) (size 4)) < prime /\
@@ -521,7 +521,7 @@ val scalarMultiplicationL: p: point -> result: point ->
     as_nat h (gsub p (size 8) (size 4)) < prime
     )
   (ensures fun h0 _ h1 -> 
-    modifies3 p result tempBuffer h0 h1 /\ 
+    modifies (loc p |+| loc result |+| loc tempBuffer) h0 h1 /\ 
     
     as_nat h1 (gsub result (size 0) (size 4)) < prime256 /\ 
     as_nat h1 (gsub result (size 4) (size 4)) < prime256 /\
@@ -563,7 +563,6 @@ val scalarMultiplicationI: p: point -> result: point ->
     as_nat h (gsub p (size 8) (size 4)) < prime
     )
   (ensures fun h0 _ h1 -> 
-    modifies3 p result tempBuffer h0 h1 /\ 
     modifies (loc p |+| loc result |+| loc tempBuffer) h0 h1 /\
   
     as_nat h1 (gsub result (size 0) (size 4)) < prime256 /\ 
@@ -602,7 +601,7 @@ let scalarMultiplication #buf_type p result scalar tempBuffer =
 
 val uploadBasePoint: p: point -> Stack unit 
   (requires fun h -> live h p)
-  (ensures fun h0 _ h1 -> modifies1 p h0 h1 /\ 
+  (ensures fun h0 _ h1 -> modifies (loc p) h0 h1 /\ 
     as_nat h1 (gsub p (size 0) (size 4)) < prime256 /\ 
     as_nat h1 (gsub p (size 4) (size 4)) < prime256 /\
     as_nat h1 (gsub p (size 8) (size 4)) < prime256 /\
@@ -692,7 +691,7 @@ let secretToPublicWithoutNorm result scalar tempBuffer =
 inline_for_extraction noextract
 val y_2: y: felem -> r: felem -> Stack unit
   (requires fun h -> as_nat h y < prime /\  live h y /\ live h r /\ eq_or_disjoint y r)
-  (ensures fun h0 _ h1 -> modifies1 r h0 h1 /\  as_nat h1 r == toDomain_ ((as_nat h0 y) * (as_nat h0 y) % prime))
+  (ensures fun h0 _ h1 -> modifies (loc r) h0 h1 /\ as_nat h1 r == toDomain_ ((as_nat h0 y) * (as_nat h0 y) % prime))
 
 let y_2 y r = 
   toDomain y r;
@@ -702,7 +701,7 @@ let y_2 y r =
 inline_for_extraction noextract
 val upload_p256_point_on_curve_constant: x: felem -> Stack unit
   (requires fun h -> live h x)
-  (ensures fun h0 _ h1 -> modifies1 x h0 h1 /\ 
+  (ensures fun h0 _ h1 -> modifies (loc x) h0 h1 /\ 
     as_nat h1 x == toDomain_ (41058363725152142129326129780047268409114441015993725554835256314039467401291) /\
     as_nat h1 x < prime
  )
@@ -740,7 +739,7 @@ inline_for_extraction noextract
 val xcube_minus_x: x: felem ->r: felem -> Stack unit 
   (requires fun h -> as_nat h x < prime /\ live h x  /\ live h r /\ eq_or_disjoint x r)
   (ensures fun h0 _ h1 -> 
-    modifies1 r h0 h1 /\
+    modifies (loc r) h0 h1 /\
     (
       let x_ = as_nat h0 x in 
       as_nat h1 r =  toDomain_((x_ * x_ * x_ - 3 * x_ + 41058363725152142129326129780047268409114441015993725554835256314039467401291) % prime))
