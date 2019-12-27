@@ -175,70 +175,49 @@ val ecdsa_signature_core: mLen: size_t -> m: lbuffer uint8 mLen {uint_v mLen < p
   )
   (ensures fun h0 flag h1 -> 
     (
-	let hashOfMessage = Spec.Hash.hash Spec.Hash.Definitions.SHA2_256 (as_seq h0 m) in 
-	let changedEndianHash = Hacl.Spec.ECDSA.changeEndian (Lib.ByteSequence.uints_from_bytes_be hashOfMessage) in 
-	let z = felem_seq_as_nat changedEndianHash % prime_p256_order in 
+      let hashOfMessage = Spec.Hash.hash Spec.Hash.Definitions.SHA2_256 (as_seq h0 m) in 
+      let changedEndianHash = Hacl.Spec.ECDSA.changeEndian (Lib.ByteSequence.uints_from_bytes_be hashOfMessage) in 
+      let z = felem_seq_as_nat changedEndianHash % prime_p256_order in 
 
-	let basePoint = (0x6B17D1F2E12C4247F8BCE6E563A440F277037D812DEB33A0F4A13945D898C296, 0x4FE342E2FE1A7F9B8EE7EB4A7C0F9E162BCE33576B315ECECBB6406837BF51F5, 1) in
-	let k = Lib.ByteSequence.uints_to_bytes_le (as_seq h0 kAsFelem) in 
-	let (rxN, ryN, rzN), _ = montgomery_ladder_spec k ((0,0,0), basePoint) in 
-	let (xN, _, _) = _norm (rxN, ryN, rzN) in 
-	as_nat h1 r == xN % prime_p256_order /\
-	(
-	  if as_nat h1 r = 0 then flag = false else True
-	)
-  )
+      let basePoint = (0x6B17D1F2E12C4247F8BCE6E563A440F277037D812DEB33A0F4A13945D898C296, 0x4FE342E2FE1A7F9B8EE7EB4A7C0F9E162BCE33576B315ECECBB6406837BF51F5, 1) in
+      let k = Lib.ByteSequence.uints_to_bytes_le (as_seq h0 kAsFelem) in 
+      let (rxN, ryN, rzN), _ = montgomery_ladder_spec k ((0,0,0), basePoint) in 
+      let (xN, _, _) = _norm (rxN, ryN, rzN) in 
+      as_nat h1 r == xN % prime_p256_order /\
+      (
+	if as_nat h1 r = 0 then flag = false else 
+	  as_nat h1 s == (z + (as_nat h1 r) * as_nat h0 privKeyAsFelem) * pow (as_nat h0 kAsFelem) (prime_p256_order - 2) % prime_p256_order /\
+	  (
+	    if (as_nat h1 s = 0) then 
+	      flag = false else flag = true
+	  )
+      )
+    )
 )
 
 let ecdsa_signature_core mLen m privKeyAsFelem kAsFelem r s = 
   push_frame();
     let h0 = ST.get() in 
-    assert(as_nat h0 privKeyAsFelem < prime_p256_order);
-    
-    let hashAsFelem = create (size 4) (u64 0) in     
-    let tempBuffer = create (size 100) (u64 0) in 
+      let hashAsFelem = create (size 4) (u64 0) in     
+      let tempBuffer = create (size 100) (u64 0) in 
       let k8 = create (size 32) (u8 0) in 
       toUint8 kAsFelem k8;
-      let h1 = ST.get() in 
-      assert(as_seq h1 k8 == Lib.ByteSequence.uints_to_bytes_le (as_seq h0 kAsFelem));
-    ecdsa_signature_step12 mLen m hashAsFelem;
-    
-      let h2 = ST.get() in 
-      assert(
-	let hashOfMessage = Spec.Hash.hash Spec.Hash.Definitions.SHA2_256 (as_seq h0 m) in 
-	let changedEndianHash = Hacl.Spec.ECDSA.changeEndian (Lib.ByteSequence.uints_from_bytes_be hashOfMessage) in 
-	as_nat h2 hashAsFelem == felem_seq_as_nat changedEndianHash % prime_p256_order);
-
+      ecdsa_signature_step12 mLen m hashAsFelem;
+  let h1 = ST.get() in 
     let step5Flag = ecdsa_signature_step45 k8 tempBuffer r in 
-      let h3 = ST.get() in 
-
       if not step5Flag then begin
 	ecdsa_signature_step6 kAsFelem hashAsFelem r privKeyAsFelem s;
 	pop_frame();
 	let step6Flag = isZero_bool s in 
-		let h4 = ST.get() in  
-		  assert(
-	let hashOfMessage = Spec.Hash.hash Spec.Hash.Definitions.SHA2_256 (as_seq h0 m) in 
-	let changedEndianHash = Hacl.Spec.ECDSA.changeEndian (Lib.ByteSequence.uints_from_bytes_be hashOfMessage) in 
-	let z = felem_seq_as_nat changedEndianHash % prime_p256_order in 
-
-	let basePoint = (0x6B17D1F2E12C4247F8BCE6E563A440F277037D812DEB33A0F4A13945D898C296, 0x4FE342E2FE1A7F9B8EE7EB4A7C0F9E162BCE33576B315ECECBB6406837BF51F5, 1) in
-	let k = Lib.ByteSequence.uints_to_bytes_le (as_seq h0 kAsFelem) in 
-	let (rxN, ryN, rzN), _ = montgomery_ladder_spec k ((0,0,0), basePoint) in 
-	let (xN, _, _) = _norm (rxN, ryN, rzN) in 
-	as_nat h4 r == xN % prime_p256_order);
-
-
-  not step6Flag
+	not step6Flag
       end
-    else 
-      begin
-	pop_frame();
-	false
+      else 
+	begin
+	  pop_frame();
+	  false
       end   
 
-
-  (*
+(*
 val ecdsa_signature:  mLen: size_t -> m: lbuffer uint8 mLen {uint_v mLen < pow2 61} ->   privKey: felem -> k: felem -> result: point -> Stack bool
   (requires fun h -> live h privKey /\ live h k /\ live h result /\ live h m)
   (ensures fun h0 _ h1 -> True)
@@ -249,4 +228,3 @@ let ecdsa_signature mLen m privKey k result =
 
   let r = ecdsa_signature_core mLen m privKey k result in 
   f && s && r
-*)
