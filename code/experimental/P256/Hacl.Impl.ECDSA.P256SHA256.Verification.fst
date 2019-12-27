@@ -248,7 +248,7 @@ let ecdsa_verification_step23 mLen m hashAsFelem =
     hash_256 m mLen mHash;
       let h1 = ST.get() in 
       assert(Seq.equal (as_seq h1 mHash) (Spec.Hash.hash Spec.Hash.Definitions.SHA2_256 (as_seq h0 m)));
-    toUint64 mHash hashAsFelem;
+    toUint64ChangeEndian mHash hashAsFelem;
     reduction_prime_2prime_order hashAsFelem hashAsFelem;
   pop_frame()
 
@@ -471,23 +471,6 @@ let compare_felem_bool a b   =
   eq_u64 a_0 b_0 && eq_u64 a_1 b_1 && eq_u64 a_2 b_2 && eq_u64 a_3 b_3
 
 
-val ecdsa_verification: 
-  pubKey: lbuffer uint64 (size 8)-> 
-  r: lbuffer uint64 (size 4) ->
-  s: lbuffer uint64 (size 4) ->
-  mLen: size_t{uint_v mLen < pow2 61} ->
-  m: lbuffer uint8 mLen -> 
-  Stack bool
-    (requires fun h -> live h pubKey /\ live h r /\ live h s /\ live h m /\
-      LowStar.Monotonic.Buffer.all_disjoint [loc pubKey; loc r; loc s; loc m] )  
-    (ensures fun h0 result h1 -> modifies0 h0 h1 /\
-	(
-	  let pubKeyX = as_nat h0 (gsub pubKey (size 0) (size 4)) in 
-	  let pubKeyY = as_nat h0 (gsub pubKey (size 4) (size 4)) in 
-	  result == ecdsa_verification (pubKeyX, pubKeyY) (as_nat h0 r) (as_nat h0 s) (v mLen) (as_seq h0 m)
-    )
-)
-
 val ecdsa_verification_core: publicKeyBuffer: point ->   
   hashAsFelem: felem -> 
   r: lbuffer uint64 (size 4) ->
@@ -539,6 +522,22 @@ let ecdsa_verification_core publicKeyBuffer hashAsFelem r s mLen m xBuffer tempB
    r
 
 
+val ecdsa_verification: 
+  pubKey: lbuffer uint64 (size 8)-> 
+  r: lbuffer uint64 (size 4) ->
+  s: lbuffer uint64 (size 4) ->
+  mLen: size_t{uint_v mLen < pow2 61} ->
+  m: lbuffer uint8 mLen -> 
+  Stack bool
+    (requires fun h -> live h pubKey /\ live h r /\ live h s /\ live h m /\
+      LowStar.Monotonic.Buffer.all_disjoint [loc pubKey; loc r; loc s; loc m] )  
+    (ensures fun h0 result h1 -> modifies0 h0 h1 /\
+  (
+    let pubKeyX = as_nat h0 (gsub pubKey (size 0) (size 4)) in 
+    let pubKeyY = as_nat h0 (gsub pubKey (size 4) (size 4)) in 
+    result == ecdsa_verification (pubKeyX, pubKeyY) (as_nat h0 r) (as_nat h0 s) (v mLen) (as_seq h0 m)
+    )
+)
 
 #reset-options "--z3refresh --z3rlimit 500"
 

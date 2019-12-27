@@ -46,7 +46,7 @@ let ecdsa_signature_step12 mLen m hashAsFelem  =
     let mHash = create (size 32) (u8 0) in  
       let h0 = ST.get() in 
     hash_256 m mLen mHash;
-    toUint64 mHash hashAsFelem;
+    toUint64ChangeEndian mHash hashAsFelem;
       let h2 = ST.get() in 
       lemma_eq_funct (as_seq h2 hashAsFelem) (Hacl.Spec.ECDSA.changeEndian 
 	(Lib.ByteSequence.uints_from_bytes_be (Spec.Hash.hash Spec.Hash.Definitions.SHA2_256 (as_seq h0 m))));
@@ -158,9 +158,21 @@ let ecdsa_signature_step6 kFelem z r da result =
        lemma_mod_mul_distr_r (br0 * br1) (modp_inv2_prime (pow2 256) prime_p256_order * pow2 256) prime_p256_order;
        lemma_mod_mul_distr_r br0 br1 prime_p256_order
 
+open Lib.ByteBuffer 
 
-val ecdsa_signature_core: mLen: size_t -> m: lbuffer uint8 mLen {uint_v mLen < pow2 61} ->  privKey: felem  -> k: felem -> result: lbuffer uint8 (size 64) -> Stack bool
-  (requires fun h -> live h m )
+
+assume val toUint64: i: lbuffer uint8 (size 32) -> o: felem -> Stack unit 
+  (requires fun h -> live h i /\ live h o /\ disjoint i o)
+  (ensures fun h0 _ h1 -> True)
+
+
+val ecdsa_signature_core: mLen: size_t -> m: lbuffer uint8 mLen {uint_v mLen < pow2 61} ->  
+  privKey: lbuffer uint8 (size 32)  -> 
+  k: lbuffer uint8 (size 32) -> 
+  result: lbuffer uint8 (size 64) -> Stack bool  
+  (requires fun h -> live h m /\ live h privKey /\ live h k /\ live h result /\ 
+    LowStar.Monotonic.Buffer.all_disjoint [loc m |+| loc privKey |+| loc result]
+  )
   (ensures fun h0 _ h1 -> True)
 
 
@@ -170,10 +182,15 @@ let ecdsa_signature_core mLen m privKey k result =
     let r = create (size 4) (u64 0) in 
     let s = create (size 4) (u64 0) in 
     let tempBuffer = create (size 100) (u64 0) in 
+    let kAsFelem = create (size 4) (u64 0) in 
+
+
     ecdsa_signature_step12 mLen m hashAsFelem;
     let step5Flag = ecdsa_signature_step45 k tempBuffer r in 
-      if not step5Flag then
-    ecdsa_signature_step6 k hashAsFelem r privKey s;
+      if not step5Flag then begin
+      admit();
+      ecdsa_signature_step6 k hashAsFelem r privKey s end;
+    admit();
     let step6Flag = isZero_bool s in 
   pop_frame();
     step6Flag

@@ -1,3 +1,4 @@
+
 module Hacl.Impl.ECDSA.P256SHA256.Common
 
 open FStar.HyperStack.All
@@ -45,13 +46,13 @@ let changeEndian i =
 open Lib.ByteBuffer 
 
 
-val toUint64: i: lbuffer uint8 (32ul) -> o: felem ->  Stack unit
+val toUint64ChangeEndian: i: lbuffer uint8 (32ul) -> o: felem ->  Stack unit
   (requires fun h -> live h i /\ live h o /\ disjoint i o)
   (ensures fun h0 _ h1 -> modifies (loc o) h0 h1 
     /\ as_seq h1 o == Hacl.Spec.ECDSA.changeEndian(Lib.ByteSequence.uints_from_bytes_be #_ #_ #4 (as_seq h0 i))
    )
 
-let toUint64 i o = 
+let toUint64ChangeEndian i o = 
   uints_from_bytes_be o i;
   changeEndian o
 
