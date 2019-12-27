@@ -5,29 +5,85 @@
   KreMLin version: 27ce15c8
  */
 
-#include "kremlib.h"
-#ifndef __FStar_H
-#define __FStar_H
+#include "Hacl_Impl_ECDSA_P256SHA256_Common.h"
 
+void Hacl_Impl_ECDSA_P256SHA256_Common_changeEndian(uint64_t *i)
+{
+  uint64_t zero1 = i[0U];
+  uint64_t one1 = i[1U];
+  uint64_t two = i[2U];
+  uint64_t three = i[3U];
+  i[0U] = three;
+  i[1U] = two;
+  i[2U] = one1;
+  i[3U] = zero1;
+}
 
-#include "kremlib.h"
-#include "FStar_UInt_8_16_32_64.h"
-#include "c/Lib_PrintBuffer.h"
-#include "FStar_UInt_8_16_32_64.h"
+void Hacl_Impl_ECDSA_P256SHA256_Common_toUint64(uint8_t *i, uint64_t *o)
+{
+  {
+    uint64_t *os = o;
+    uint8_t *bj = i + (uint32_t)0U * (uint32_t)8U;
+    uint64_t u = load64_be(bj);
+    uint64_t r = u;
+    uint64_t x = r;
+    os[0U] = x;
+  }
+  {
+    uint64_t *os = o;
+    uint8_t *bj = i + (uint32_t)1U * (uint32_t)8U;
+    uint64_t u = load64_be(bj);
+    uint64_t r = u;
+    uint64_t x = r;
+    os[1U] = x;
+  }
+  {
+    uint64_t *os = o;
+    uint8_t *bj = i + (uint32_t)2U * (uint32_t)8U;
+    uint64_t u = load64_be(bj);
+    uint64_t r = u;
+    uint64_t x = r;
+    os[2U] = x;
+  }
+  {
+    uint64_t *os = o;
+    uint8_t *bj = i + (uint32_t)3U * (uint32_t)8U;
+    uint64_t u = load64_be(bj);
+    uint64_t r = u;
+    uint64_t x = r;
+    os[3U] = x;
+  }
+  Hacl_Impl_ECDSA_P256SHA256_Common_changeEndian(o);
+}
 
-extern uint64_t FStar_UInt64_eq_mask(uint64_t a, uint64_t b);
+void Hacl_Impl_ECDSA_P256SHA256_Common_toUint8(uint64_t *i, uint8_t *o)
+{
+  uint32_t i0;
+  for (i0 = (uint32_t)0U; i0 < (uint32_t)4U; i0 = i0 + (uint32_t)1U)
+  {
+    store64_le(o + i0 * (uint32_t)8U, i[i0]);
+  }
+}
 
-extern uint128_t FStar_UInt128_add(uint128_t a, uint128_t b);
+bool Hacl_Impl_ECDSA_P256SHA256_Common_isMoreThanZeroLessThanOrderMinusOne(uint64_t *f)
+{
+  uint64_t tempBuffer[4U] = { 0U };
+  uint64_t
+  carry =
+    Hacl_Impl_LowLevel_sub4_il(f,
+      Hacl_Impl_ECDSA_MontgomeryMultiplication_prime256order_buffer,
+      tempBuffer);
+  bool less = carry == (uint64_t)1U;
+  uint64_t f0 = f[0U];
+  uint64_t f1 = f[1U];
+  uint64_t f2 = f[2U];
+  uint64_t f3 = f[3U];
+  bool z0_zero = f0 == (uint64_t)0U;
+  bool z1_zero = f1 == (uint64_t)0U;
+  bool z2_zero = f2 == (uint64_t)0U;
+  bool z3_zero = f3 == (uint64_t)0U;
+  bool more = z0_zero && z1_zero && z2_zero && z3_zero;
+  bool result = less && !more;
+  return result;
+}
 
-extern uint128_t FStar_UInt128_shift_left(uint128_t a, uint32_t s);
-
-extern uint128_t FStar_UInt128_shift_right(uint128_t a, uint32_t s);
-
-extern uint128_t FStar_UInt128_uint64_to_uint128(uint64_t a);
-
-extern uint64_t FStar_UInt128_uint128_to_uint64(uint128_t a);
-
-extern uint128_t FStar_UInt128_mul_wide(uint64_t x, uint64_t y);
-
-#define __FStar_H_DEFINED
-#endif

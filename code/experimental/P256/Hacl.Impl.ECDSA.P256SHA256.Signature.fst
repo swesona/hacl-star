@@ -25,12 +25,10 @@ open Hacl.Spec.P256
 open Hacl.Spec.ECDSAP256.Definition
 open FStar.Math.Lemmas
 
+open Hacl.Impl.ECDSA.P256SHA256.Common
 open FStar.Mul
 
 #set-options "--z3rlimit 100"
-
-(* yes, I know that it's a bad idea to include the full module, I will divide it at some point *)
-open Hacl.Impl.ECDSA.P256SHA256.Verification
 
 val ecdsa_signature_step12: mLen: size_t -> m: lbuffer uint8 mLen {uint_v mLen < pow2 61} -> hashAsFelem: felem -> 
   Stack unit 

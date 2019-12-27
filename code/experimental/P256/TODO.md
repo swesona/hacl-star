@@ -49,3 +49,12 @@ TO:
 	logand(gt_mask a b) (u64 1)  	
 WHY:
 	< is not constant time? 	
+
+
+
+_____________________________________________
+
+
+
+
+Constant time equalities!
