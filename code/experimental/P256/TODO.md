@@ -58,3 +58,5 @@ _____________________________________________
 
 
 Constant time equalities!
+
+(changeEndian(Lib.ByteSequence.uints_from_bytes_be)) ??

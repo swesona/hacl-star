@@ -99,7 +99,7 @@ Hacl_Impl_ECDSA_P256SHA256_Verification_ecdsa_verification_core(
   uint8_t *bufferU2 = tempBufferU8 + (uint32_t)32U;
   uint8_t mHash[32U] = { 0U };
   Hacl_Hash_SHA2_hash_256(m, mLen, mHash);
-  Hacl_Impl_ECDSA_P256SHA256_Common_toUint64(mHash, hashAsFelem);
+  Hacl_Impl_ECDSA_P256SHA256_Common_toUint64ChangeEndian(mHash, hashAsFelem);
   Hacl_Impl_ECDSA_MontgomeryMultiplication_reduction_prime_2prime_order(hashAsFelem,
     hashAsFelem);
   {
