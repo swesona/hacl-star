@@ -52,7 +52,6 @@ Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_step6(
   Hacl_Impl_ECDSA_MM_Exponent_fromDomainImpl(z, zBuffer);
   Hacl_Impl_ECDSA_MontgomeryMultiplication_felem_add(rda, zBuffer, zBuffer);
   memcpy(kInv, kFelem, (uint32_t)4U * sizeof kFelem[0U]);
-  Hacl_Impl_ECDSA_MM_Exponent_fromDomainImpl(kInv, kInv);
   Hacl_Impl_ECDSA_MM_Exponent_montgomery_ladder_exponent(kInv);
   Hacl_Impl_ECDSA_MontgomeryMultiplication_montgomery_multiplication_ecdsa_module(zBuffer,
     kInv,

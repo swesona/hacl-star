@@ -112,43 +112,53 @@ val ecdsa_signature_step6: kFelem: felem -> z: felem -> r: felem -> da: felem ->
   (requires fun h -> live h kFelem /\ live h z /\ live h r /\ live h da /\ 
     as_nat h z < prime_p256_order /\ as_nat h r < prime_p256_order /\ as_nat h da < prime_p256_order /\ 
     as_nat h kFelem < prime_p256_order /\ live h result)
-  (ensures fun h0 _ h1 -> True)
+  (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\
+    as_nat h1 result = (as_nat h0 z + as_nat h0 r * as_nat h0 da) * pow (as_nat h0 kFelem) (prime_p256_order - 2) % prime_p256_order)
+
 
 let ecdsa_signature_step6 kFelem z r da result = 
+  let open FStar.Tactics in 
+  let open FStar.Tactics.Canon in 
   push_frame();
     let rda = create (size 4) (u64 0) in 
     let zBuffer = create (size 4) (u64 0) in 
     let kInv = create (size 4) (u64 0) in 
 	let h0 = ST.get() in 
-	montgomery_multiplication_ecdsa_module r da rda;
+    montgomery_multiplication_ecdsa_module r da rda;
+    fromDomainImpl z zBuffer;
+    felem_add rda zBuffer zBuffer;  
+    copy kInv kFelem;
+    montgomery_ladder_exponent kInv;
+    montgomery_multiplication_ecdsa_module zBuffer kInv result;
+       pop_frame();
 
-	let h1 = ST.get() in 
-	lemmaFromDomain (as_nat h0 r * as_nat h0 da); 
-	assert(as_nat h1 rda = fromDomain_ (as_nat h0 r * as_nat h0 da));
-     fromDomainImpl z zBuffer;
-       let h2 = ST.get() in 
-       assert(as_nat h2 zBuffer = fromDomain_ (as_nat h0 z));
-     felem_add rda zBuffer zBuffer;  
-       let h3 = ST.get() in 
-     lemma_felem_add (as_nat h0 r * as_nat h0 da) (as_nat h0 z);
-     
-     assert(as_nat h3 zBuffer = fromDomain_ (as_nat h0 z + as_nat h0 r * as_nat h0 da));
-     copy kInv kFelem;
-       let h4 = ST.get() in 
-       assert(as_nat h3 kFelem == as_nat h4 kInv);
-     fromDomainImpl kInv kInv; 
-       let h5 = ST.get() in 
-       assert(as_nat h5 kInv = fromDomain_ (as_nat h0 kFelem));
-     montgomery_ladder_exponent kInv;
-       let h6 = ST.get() in 
-       assert(fromDomain_ (as_nat h6 kInv) == Hacl.Spec.ECDSA.exponent_spec (fromDomain_ (as_nat h5 kInv)));
-     montgomery_multiplication_ecdsa_module zBuffer kInv result;
-       let h7 = ST.get() in 
-       lemma_power_step6 (as_nat h5 kInv); 
-       assert(as_nat h7 result = toDomain_ (fromDomain_ (fromDomain_ (as_nat h0 z + as_nat h0 r * as_nat h0 da)) * toDomain_ (pow (as_nat h5 kInv) (prime_p256_order - 2)) % prime_p256_order));
-	 admit();
+       let br0 = as_nat h0 z + as_nat h0 r * as_nat h0 da in
+       let br1 = pow (as_nat h0 kFelem) (prime_p256_order - 2) in 
+       
+       lemmaFromDomain (as_nat h0 r * as_nat h0 da); 
+       lemma_felem_add (as_nat h0 r * as_nat h0 da) (as_nat h0 z);
+       lemma_power_step6 (as_nat h0 kFelem);
 
-  pop_frame()
+       lemmaFromDomain (fromDomain_ br0);
+       lemmaToDomain br1;
+       assert_norm ((modp_inv2_prime (pow2 256) prime_p256_order * pow2 256) % prime_p256_order = 1);
+       
+       lemma_mod_mul_distr_l (fromDomain_ br0 * modp_inv2_prime (pow2 256) prime_p256_order) (br1 * pow2 256 % prime_p256_order) prime_p256_order;
+       lemma_mod_mul_distr_r (fromDomain_ br0 * modp_inv2_prime (pow2 256) prime_p256_order) (br1 * pow2 256) prime_p256_order;
+       
+       assert_by_tactic (fromDomain_ br0 * modp_inv2_prime (pow2 256) prime_p256_order * (br1 * pow2 256) == fromDomain_ br0 * modp_inv2_prime (pow2 256) prime_p256_order * br1 * pow2 256) canon;
+       assert_by_tactic (fromDomain_ br0 * br1 * (modp_inv2_prime (pow2 256) prime_p256_order * pow2 256) == fromDomain_ br0 * modp_inv2_prime (pow2 256) prime_p256_order * br1 * pow2 256) canon;
+       
+       lemma_mod_mul_distr_r (fromDomain_ br0 * br1) (modp_inv2_prime (pow2 256) prime_p256_order * pow2 256) prime_p256_order;
+       lemmaToDomain ((fromDomain_ br0 * br1) % prime_p256_order);
+       lemmaFromDomain br0;
+       
+       lemma_mod_mul_distr_l (br0 * modp_inv2_prime (pow2 256) prime_p256_order) br1 prime_p256_order;
+       lemma_mod_mul_distr_l (br0 * modp_inv2_prime (pow2 256) prime_p256_order * br1) (pow2 256) prime_p256_order;
+       
+       assert_by_tactic (br0 * modp_inv2_prime (pow2 256) prime_p256_order * br1 * pow2 256 = br0 * br1 * (modp_inv2_prime (pow2 256) prime_p256_order * pow2 256)) canon;
+       lemma_mod_mul_distr_r (br0 * br1) (modp_inv2_prime (pow2 256) prime_p256_order * pow2 256) prime_p256_order;
+       lemma_mod_mul_distr_r br0 br1 prime_p256_order
 
 
 val ecdsa_signature_core: mLen: size_t -> m: lbuffer uint8 mLen {uint_v mLen < pow2 61} ->  privKey: felem  -> k: felem -> result: lbuffer uint8 (size 64) -> Stack bool
