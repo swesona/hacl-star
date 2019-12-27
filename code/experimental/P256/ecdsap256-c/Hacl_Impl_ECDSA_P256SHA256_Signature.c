@@ -58,36 +58,21 @@ Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_step6(
     result);
 }
 
-void Hacl_Impl_ECDSA_P256SHA256_Signature_toUint64(uint8_t *i, uint64_t *o)
-{
-  uint32_t i0;
-  for (i0 = (uint32_t)0U; i0 < (uint32_t)4U; i0 = i0 + (uint32_t)1U)
-  {
-    uint64_t *os = o;
-    uint8_t *bj = i + i0 * (uint32_t)8U;
-    uint64_t u = load64_le(bj);
-    uint64_t r = u;
-    uint64_t x = r;
-    os[i0] = x;
-  }
-}
-
 bool
 Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_core(
   uint32_t mLen,
   uint8_t *m,
   uint64_t *privKeyAsFelem,
   uint64_t *kAsFelem,
-  uint8_t *result
+  uint64_t *r,
+  uint64_t *s1
 )
 {
   uint64_t hashAsFelem[4U] = { 0U };
-  uint64_t r[4U] = { 0U };
-  uint64_t s1[4U] = { 0U };
   uint64_t tempBuffer[100U] = { 0U };
   uint8_t k8[32U] = { 0U };
   bool step5Flag;
-  bool step6Flag;
+  bool ite;
   Hacl_Impl_ECDSA_P256SHA256_Common_toUint8(kAsFelem, k8);
   Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_step12(mLen, m, hashAsFelem);
   step5Flag = Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_step45(k8, tempBuffer, r);
@@ -98,29 +83,15 @@ Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_core(
       r,
       privKeyAsFelem,
       s1);
+    {
+      bool step6Flag = Hacl_Impl_LowLevel_isZero_bool(s1);
+      ite = !step6Flag;
+    }
   }
-  step6Flag = Hacl_Impl_LowLevel_isZero_bool(s1);
-  return step6Flag;
-}
-
-bool
-Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature(
-  uint32_t mLen,
-  uint8_t *m,
-  uint64_t *privKey,
-  uint64_t *k,
-  uint64_t *result
-)
-{
-  bool f = Hacl_Impl_ECDSA_P256SHA256_Common_isMoreThanZeroLessThanOrderMinusOne(privKey);
-  bool s1 = Hacl_Impl_ECDSA_P256SHA256_Common_isMoreThanZeroLessThanOrderMinusOne(k);
-  bool
-  r =
-    Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_core(mLen,
-      m,
-      privKey,
-      k,
-      (uint8_t *)result);
-  return f && s1 && r;
+  else
+  {
+    ite = false;
+  }
+  return ite;
 }
 
