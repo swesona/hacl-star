@@ -173,53 +173,83 @@ let toUint64 i o =
 
 
 
+val lemma_core_0: a: lbuffer uint64 (size 4) -> h: mem -> 
+  Lemma (Lib.ByteSequence.nat_from_intseq_le (as_seq h a) == as_nat h a)
+
+let lemma_core_0 a h = 
+  let open Lib.ByteSequence in 
+  
+    let k = as_seq h a in 
+    let z = nat_from_intseq_le k in 
+    
+    nat_from_intseq_le_slice_lemma k 1;
+    nat_from_intseq_le_lemma0 (Seq.slice k 0 1);
+
+    let k1 = Seq.slice k 1 4 in 
+      nat_from_intseq_le_slice_lemma #_ #_ #3 k1 1;
+      nat_from_intseq_le_lemma0 (Seq.slice k1 0 1);
+      
+    let k2 = Seq.slice k1 1 3 in 
+      nat_from_intseq_le_slice_lemma #_ #_ #2 k2 1;
+      nat_from_intseq_le_lemma0 (Seq.slice k2 0 1);
+      nat_from_intseq_le_lemma0 (Seq.slice k2 1 2)
+
+
 val ecdsa_signature_core_nist_compliant: m: lbuffer uint8 (size 32) -> 
   privKeyAsFelem: felem  -> 
-  kAsFelem: felem -> 
+  k: lbuffer uint8 (size 32) -> 
   r: felem -> 
   s: felem -> 
   Stack bool  
-  (requires fun h -> live h m /\ live h privKeyAsFelem /\ live h kAsFelem /\ live h r /\ live h s /\ 
-    LowStar.Monotonic.Buffer.all_disjoint [loc privKeyAsFelem |+| loc kAsFelem |+| loc r |+| loc s] /\
-    disjoint privKeyAsFelem r /\ disjoint kAsFelem r /\ disjoint r s /\
+  (requires fun h -> live h m /\ live h privKeyAsFelem /\ live h k /\ live h r /\ live h s /\ 
+    LowStar.Monotonic.Buffer.all_disjoint [loc privKeyAsFelem |+| loc k |+| loc r |+| loc s] /\
+    disjoint privKeyAsFelem r /\ disjoint k r /\ disjoint r s /\
     as_nat h privKeyAsFelem < prime_p256_order /\
-    as_nat h kAsFelem < prime_p256_order
+    Lib.ByteSequence.nat_from_bytes_le (as_seq h m) < prime_p256_order /\
+    Lib.ByteSequence.nat_from_bytes_le (as_seq h k) < prime_p256_order
   )
   (ensures fun h0 flag h1 -> modifies (loc r |+| loc s) h0 h1 /\
-    (
-      let message = Lib.ByteSequence.uints_from_bytes_le (as_seq h0 m) in 
-      let z = felem_seq_as_nat message % prime_p256_order in 
-
+  (
       let basePoint = (0x6B17D1F2E12C4247F8BCE6E563A440F277037D812DEB33A0F4A13945D898C296, 0x4FE342E2FE1A7F9B8EE7EB4A7C0F9E162BCE33576B315ECECBB6406837BF51F5, 1) in
-      let k = Lib.ByteSequence.uints_to_bytes_le (as_seq h0 kAsFelem) in 
-      let (rxN, ryN, rzN), _ = montgomery_ladder_spec k ((0,0,0), basePoint) in 
+      let (rxN, ryN, rzN), _ = montgomery_ladder_spec (as_seq h0 k) ((0,0,0), basePoint) in 
       let (xN, _, _) = _norm (rxN, ryN, rzN) in 
+      let z = Lib.ByteSequence.nat_from_bytes_le (as_seq h0 m) in 
+      let kFelem = Lib.ByteSequence.nat_from_bytes_le (as_seq h0 k) in 
       as_nat h1 r == xN % prime_p256_order /\
       (
-	if as_nat h1 r = 0 then flag = false else 
-	  as_nat h1 s == (z + (as_nat h1 r) * as_nat h0 privKeyAsFelem) * pow (as_nat h0 kAsFelem) (prime_p256_order - 2) % prime_p256_order /\
-	  (
-	    if (as_nat h1 s = 0) then 
-	      flag = false else flag = true
-	  )
+	if as_nat h1 r = 0 then flag = false else
+	  as_nat h1 s == (z + (as_nat h1 r) * as_nat h0 privKeyAsFelem) * pow kFelem (prime_p256_order - 2) % prime_p256_order /\
+	(
+	  if (as_nat h1 s = 0) then flag = false else flag = true
+	)
       )
     )
 )
 
-let ecdsa_signature_core_nist_compliant m privKeyAsFelem kAsFelem r s = 
+
+
+let ecdsa_signature_core_nist_compliant m privKeyAsFelem k r s = 
   push_frame();
     let h0 = ST.get() in 
+      let open Lib.ByteSequence in 
       let hashAsFelem = create (size 4) (u64 0) in     
       let tempBuffer = create (size 100) (u64 0) in 
-      let k8 = create (size 32) (u8 0) in 
+      let kAsFelem = create (size 4) (u64 0) in 
       let hashAsFelem = create (size 4) (u64 0) in 
 	toUint64 m hashAsFelem;
-	reduction_prime_2prime_order hashAsFelem hashAsFelem;
-	toUint8 kAsFelem k8;
-  let h1 = ST.get() in 
-    let step5Flag = ecdsa_signature_step45 k8 tempBuffer r in 
+	toUint64 k kAsFelem;
+	  
+	  let h1 = ST.get() in 
+	    lemma_core_0 kAsFelem h1;
+	    uints_from_bytes_le_nat_lemma #U64 #_ #4 (as_seq h0 k);
+
+	    lemma_core_0 hashAsFelem h1;
+	    uints_from_bytes_le_nat_lemma #U64 #_ #4 (as_seq h0 m);
+	    
+    let step5Flag = ecdsa_signature_step45 k tempBuffer r in 
       if not step5Flag then begin
-	ecdsa_signature_step6 kAsFelem hashAsFelem r privKeyAsFelem s;
+	   ecdsa_signature_step6 kAsFelem hashAsFelem r privKeyAsFelem s;
+	   
 	pop_frame();
 	let step6Flag = isZero_bool s in 
 	not step6Flag
@@ -235,16 +265,24 @@ val ecdsa_signature_nist_compliant: m: lbuffer uint8 (size 32) ->
   privKey: lbuffer uint8 (size 32) -> 
   k: lbuffer uint8 (size 32) -> 
   result: lbuffer uint8 (size 64) -> Stack bool
-  (requires fun h -> live h privKey /\ live h k /\ live h result /\ live h m)
+  (requires fun h -> live h privKey /\ live h k /\ live h result /\ live h m /\ 
+    LowStar.Monotonic.Buffer.all_disjoint [loc m; loc privKey; loc k; loc result]
+  )
   (ensures fun h0 _ h1 -> 
   True
   
   )
 
+(*assume val lemma_sign0: a: lbuffer uint64 (size 4) -> h: mem -> 
+  Lemma (Lib.ByteSequence.nat_from_intseq_le (as_seq h a) == as_nat h a)
+
+*)
+
 
 let ecdsa_signature_nist_compliant m privKey k result = 
   push_frame();
-    let kAsFelem = create (size 4) (u64 0) in 
+    let h0 = ST.get() in 
+    
     let privKeyAsFelem = create (size 4) (u64 0) in 
     let r = create (size 4) (u64 0) in 
     let s = create (size 4) (u64 0) in  
@@ -252,11 +290,24 @@ let ecdsa_signature_nist_compliant m privKey k result =
     let resultR = sub result (size 0) (size 32) in 
     let resultS = sub result (size 32) (size 32) in 
       toUint64 privKey privKeyAsFelem;
-	reduction_prime_2prime_order privKeyAsFelem privKeyAsFelem;
-      toUint64 k kAsFelem;
-	reduction_prime_2prime_order kAsFelem kAsFelem;
+	let h1 = ST.get() in 
+	Lib.ByteSequence.uints_from_bytes_le_nat_lemma #U64 #_ #4 (as_seq h0 privKey);
+	(* lemma_sign0 privKeyAsFelem h1; *)
 
-    let flag = ecdsa_signature_core_nist_compliant m privKeyAsFelem kAsFelem r s in 
+	Lib.ByteSequence.uints_from_bytes_le_nat_lemma #U64 #_ #4 (as_seq h0 k);
+	(* lemma_sign0 kAsFelem h1; *)
+	
+      reduction_prime_2prime_order privKeyAsFelem privKeyAsFelem;
+      
+      let h2 = ST.get() in 
+
+	admit();
+
+
+
+    let flag = ecdsa_signature_core_nist_compliant m privKeyAsFelem k r s in 
+
+admit();
       toUint8 r resultR;
       toUint8 s resultS;
     flag  
