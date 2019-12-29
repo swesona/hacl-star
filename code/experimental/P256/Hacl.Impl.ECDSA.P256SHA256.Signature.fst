@@ -107,6 +107,7 @@ let lemma_power_step6 kInv =
    lemmaToDomain (pow kInv (prime_p256_order - 2))
 
 
+#reset-options "--z3rlimit 300"
 
 val ecdsa_signature_step6: kFelem: felem -> z: felem -> r: felem -> da: felem ->result: felem -> Stack unit
   (requires fun h -> live h kFelem /\ live h z /\ live h r /\ live h da /\ 
@@ -160,8 +161,6 @@ let ecdsa_signature_step6 kFelem z r da result =
        lemma_mod_mul_distr_r (br0 * br1) (modp_inv2_prime (pow2 256) prime_p256_order * pow2 256) prime_p256_order;
        lemma_mod_mul_distr_r br0 br1 prime_p256_order
 
-#reset-options "--z3rlimit 300"
-
 
 val toUint64: i: lbuffer uint8 (32ul) -> o: felem -> Stack unit
   (requires fun h -> live h i /\ live h o /\ disjoint i o)
@@ -186,8 +185,26 @@ val ecdsa_signature_core_nist_compliant: m: lbuffer uint8 (size 32) ->
     as_nat h privKeyAsFelem < prime_p256_order /\
     as_nat h kAsFelem < prime_p256_order
   )
-  (ensures fun h0 flag h1 -> True)
+  (ensures fun h0 flag h1 -> modifies (loc r |+| loc s) h0 h1 /\
+    (
+      let message = Lib.ByteSequence.uints_from_bytes_le (as_seq h0 m) in 
+      let z = felem_seq_as_nat message % prime_p256_order in 
 
+      let basePoint = (0x6B17D1F2E12C4247F8BCE6E563A440F277037D812DEB33A0F4A13945D898C296, 0x4FE342E2FE1A7F9B8EE7EB4A7C0F9E162BCE33576B315ECECBB6406837BF51F5, 1) in
+      let k = Lib.ByteSequence.uints_to_bytes_le (as_seq h0 kAsFelem) in 
+      let (rxN, ryN, rzN), _ = montgomery_ladder_spec k ((0,0,0), basePoint) in 
+      let (xN, _, _) = _norm (rxN, ryN, rzN) in 
+      as_nat h1 r == xN % prime_p256_order /\
+      (
+	if as_nat h1 r = 0 then flag = false else 
+	  as_nat h1 s == (z + (as_nat h1 r) * as_nat h0 privKeyAsFelem) * pow (as_nat h0 kAsFelem) (prime_p256_order - 2) % prime_p256_order /\
+	  (
+	    if (as_nat h1 s = 0) then 
+	      flag = false else flag = true
+	  )
+      )
+    )
+)
 
 let ecdsa_signature_core_nist_compliant m privKeyAsFelem kAsFelem r s = 
   push_frame();
@@ -219,7 +236,10 @@ val ecdsa_signature_nist_compliant: m: lbuffer uint8 (size 32) ->
   k: lbuffer uint8 (size 32) -> 
   result: lbuffer uint8 (size 64) -> Stack bool
   (requires fun h -> live h privKey /\ live h k /\ live h result /\ live h m)
-  (ensures fun h0 _ h1 -> True)
+  (ensures fun h0 _ h1 -> 
+  True
+  
+  )
 
 
 let ecdsa_signature_nist_compliant m privKey k result = 

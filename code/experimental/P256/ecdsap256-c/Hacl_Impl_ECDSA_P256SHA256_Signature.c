@@ -72,34 +72,6 @@ void Hacl_Impl_ECDSA_P256SHA256_Signature_toUint64(uint8_t *i, uint64_t *o)
   }
 }
 
-
-void print_u(uint64_t a)
-{
-   printf("%" PRIu64 " ", a);
-   printf("%u ", (uint32_t) a);
-   printf("%u\n", (uint32_t) (a >> 32));
-}
-
-void print_uu(uint64_t* a)
-{
-   print_u(a[0]);
-   print_u(a[1]);
-   print_u(a[2]);
-   print_u(a[3]);
-   printf("\n");
-}
-
-void print8(uint8_t* a)
-{
-  int i = 0;
-  for (i = 0; i < 32; i++)
-  {
-    printf("%hhX ", a[i]);
-  }
-  printf("%s\n", "");
-}
-
-
 bool
 Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_core_nist_compliant(
   uint8_t *m,
@@ -115,16 +87,9 @@ Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_core_nist_compliant(
   uint64_t hashAsFelem1[4U] = { 0U };
   bool step5Flag;
   bool ite;
-
-  print8(m);
-
   Hacl_Impl_ECDSA_P256SHA256_Signature_toUint64(m, hashAsFelem1);
   Hacl_Impl_ECDSA_MontgomeryMultiplication_reduction_prime_2prime_order(hashAsFelem1,
     hashAsFelem1);
-
-  print_uu(hashAsFelem1);
-
-
   Hacl_Impl_ECDSA_P256SHA256_Common_toUint8(kAsFelem, k8);
   step5Flag = Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_step45(k8, tempBuffer, r);
   if (!step5Flag)
