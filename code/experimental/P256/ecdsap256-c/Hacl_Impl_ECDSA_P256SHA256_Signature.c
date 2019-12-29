@@ -124,8 +124,6 @@ Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_nist_compliant(
   uint8_t *resultS = result + (uint32_t)32U;
   bool flag;
   Hacl_Impl_ECDSA_P256SHA256_Signature_toUint64(privKey, privKeyAsFelem);
-  Hacl_Impl_ECDSA_MontgomeryMultiplication_reduction_prime_2prime_order(privKeyAsFelem,
-    privKeyAsFelem);
   flag =
     Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_core_nist_compliant(m,
       privKeyAsFelem,
