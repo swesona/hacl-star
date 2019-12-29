@@ -58,6 +58,125 @@ Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_step6(
     result);
 }
 
+void Hacl_Impl_ECDSA_P256SHA256_Signature_toUint64(uint8_t *i, uint64_t *o)
+{
+  uint32_t i0;
+  for (i0 = (uint32_t)0U; i0 < (uint32_t)4U; i0 = i0 + (uint32_t)1U)
+  {
+    uint64_t *os = o;
+    uint8_t *bj = i + i0 * (uint32_t)8U;
+    uint64_t u = load64_le(bj);
+    uint64_t r = u;
+    uint64_t x = r;
+    os[i0] = x;
+  }
+}
+
+
+void print_u(uint64_t a)
+{
+   printf("%" PRIu64 " ", a);
+   printf("%u ", (uint32_t) a);
+   printf("%u\n", (uint32_t) (a >> 32));
+}
+
+void print_uu(uint64_t* a)
+{
+   print_u(a[0]);
+   print_u(a[1]);
+   print_u(a[2]);
+   print_u(a[3]);
+   printf("\n");
+}
+
+void print8(uint8_t* a)
+{
+  int i = 0;
+  for (i = 0; i < 32; i++)
+  {
+    printf("%hhX ", a[i]);
+  }
+  printf("%s\n", "");
+}
+
+
+bool
+Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_core_nist_compliant(
+  uint8_t *m,
+  uint64_t *privKeyAsFelem,
+  uint64_t *kAsFelem,
+  uint64_t *r,
+  uint64_t *s1
+)
+{
+  uint64_t hashAsFelem[4U] = { 0U };
+  uint64_t tempBuffer[100U] = { 0U };
+  uint8_t k8[32U] = { 0U };
+  uint64_t hashAsFelem1[4U] = { 0U };
+  bool step5Flag;
+  bool ite;
+
+  print8(m);
+
+  Hacl_Impl_ECDSA_P256SHA256_Signature_toUint64(m, hashAsFelem1);
+  Hacl_Impl_ECDSA_MontgomeryMultiplication_reduction_prime_2prime_order(hashAsFelem1,
+    hashAsFelem1);
+
+  print_uu(hashAsFelem1);
+
+
+  Hacl_Impl_ECDSA_P256SHA256_Common_toUint8(kAsFelem, k8);
+  step5Flag = Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_step45(k8, tempBuffer, r);
+  if (!step5Flag)
+  {
+    Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_step6(kAsFelem,
+      hashAsFelem1,
+      r,
+      privKeyAsFelem,
+      s1);
+    {
+      bool step6Flag = Hacl_Impl_LowLevel_isZero_bool(s1);
+      ite = !step6Flag;
+    }
+  }
+  else
+  {
+    ite = false;
+  }
+  return ite;
+}
+
+bool
+Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_nist_compliant(
+  uint8_t *m,
+  uint8_t *privKey,
+  uint8_t *k,
+  uint8_t *result
+)
+{
+  uint64_t kAsFelem[4U] = { 0U };
+  uint64_t privKeyAsFelem[4U] = { 0U };
+  uint64_t r[4U] = { 0U };
+  uint64_t s1[4U] = { 0U };
+  uint8_t *resultR = result;
+  uint8_t *resultS = result + (uint32_t)32U;
+  bool flag;
+  Hacl_Impl_ECDSA_P256SHA256_Signature_toUint64(privKey, privKeyAsFelem);
+  Hacl_Impl_ECDSA_MontgomeryMultiplication_reduction_prime_2prime_order(privKeyAsFelem,
+    privKeyAsFelem);
+  Hacl_Impl_ECDSA_P256SHA256_Signature_toUint64(k, kAsFelem);
+  Hacl_Impl_ECDSA_MontgomeryMultiplication_reduction_prime_2prime_order(kAsFelem, kAsFelem);
+  flag =
+    Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_core_nist_compliant(m,
+      privKeyAsFelem,
+      kAsFelem,
+      r,
+      s1);
+  Hacl_Impl_ECDSA_P256SHA256_Common_toUint8(r, resultR);
+  Hacl_Impl_ECDSA_P256SHA256_Common_toUint8(s1, resultS);
+  return flag;
+}
+
 bool
 Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_core(
   uint32_t mLen,
@@ -93,5 +212,38 @@ Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_core(
     ite = false;
   }
   return ite;
+}
+
+bool
+Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature(
+  uint32_t mLen,
+  uint8_t *m,
+  uint8_t *privKey,
+  uint8_t *k,
+  uint8_t *result
+)
+{
+  uint64_t kAsFelem[4U] = { 0U };
+  uint64_t privKeyAsFelem[4U] = { 0U };
+  uint64_t r[4U] = { 0U };
+  uint64_t s1[4U] = { 0U };
+  uint8_t *resultR = result;
+  uint8_t *resultS = result + (uint32_t)32U;
+  bool flag;
+  Hacl_Impl_ECDSA_P256SHA256_Signature_toUint64(privKey, privKeyAsFelem);
+  Hacl_Impl_ECDSA_MontgomeryMultiplication_reduction_prime_2prime_order(privKeyAsFelem,
+    privKeyAsFelem);
+  Hacl_Impl_ECDSA_P256SHA256_Signature_toUint64(k, kAsFelem);
+  Hacl_Impl_ECDSA_MontgomeryMultiplication_reduction_prime_2prime_order(kAsFelem, kAsFelem);
+  flag =
+    Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_core(mLen,
+      m,
+      privKeyAsFelem,
+      kAsFelem,
+      r,
+      s1);
+  Hacl_Impl_ECDSA_P256SHA256_Common_toUint8(r, resultR);
+  Hacl_Impl_ECDSA_P256SHA256_Common_toUint8(s1, resultS);
+  return flag;
 }
 

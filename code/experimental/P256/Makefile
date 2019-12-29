@@ -43,8 +43,8 @@ FSTAR = $(FSTAR_HOME)/bin/fstar.exe $(FSTAR_FLAGS)
 ENABLE_HINTS = --use_hints --use_hint_hashes --record_hints --query_stats
 
 #ROOTS = Hacl.Impl.P256.fst
-#ROOTS = Hacl.Impl.ECDSA.P256SHA256.Signature.fst
-ROOTS = Hacl.Impl.ECDSA.P256SHA256.Verification.fst
+ROOTS = Hacl.Impl.ECDSA.P256SHA256.Signature.fst
+#ROOTS = Hacl.Impl.ECDSA.P256SHA256.Verification.fst
 #ROOTS = Hacl.Impl.MM.Exponent.fst
 #ROOTS = Hacl.Test.CSHAKE.fst
 
@@ -125,7 +125,7 @@ ALL_GENERATED_FILES = $(addprefix $(GENERATED_DIR)/,$(ALL_OUR_FILES))
 ALL_SOURCES = \
   $(ALL_GENERATED_FILES) \
   $(HACL_HOME)/lib/c/Lib_PrintBuffer.c \
-  testECDSAVerification.c
+  testECDSASignature.c
 
 ALL_OBJS = $(patsubst %.c,%.o,$(ALL_SOURCES))
 
