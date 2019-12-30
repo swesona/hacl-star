@@ -67,7 +67,7 @@ Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_core(
   uint32_t mLen,
   uint8_t *m,
   uint64_t *privKeyAsFelem,
-  uint64_t *kAsFelem,
+  uint8_t *k,
   uint64_t *r,
   uint64_t *s1
 );

@@ -140,19 +140,19 @@ Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_core(
   uint32_t mLen,
   uint8_t *m,
   uint64_t *privKeyAsFelem,
-  uint64_t *kAsFelem,
+  uint8_t *k,
   uint64_t *r,
   uint64_t *s1
 )
 {
   uint64_t hashAsFelem[4U] = { 0U };
   uint64_t tempBuffer[100U] = { 0U };
-  uint8_t k8[32U] = { 0U };
+  uint64_t kAsFelem[4U] = { 0U };
   bool step5Flag;
   bool ite;
-  Hacl_Impl_ECDSA_P256SHA256_Common_toUint8(kAsFelem, k8);
+  Hacl_Impl_ECDSA_P256SHA256_Signature_toUint64(k, kAsFelem);
   Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_step12(mLen, m, hashAsFelem);
-  step5Flag = Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_step45(k8, tempBuffer, r);
+  step5Flag = Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_step45(k, tempBuffer, r);
   if (!step5Flag)
   {
     Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_step6(kAsFelem,
@@ -181,7 +181,6 @@ Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature(
   uint8_t *result
 )
 {
-  uint64_t kAsFelem[4U] = { 0U };
   uint64_t privKeyAsFelem[4U] = { 0U };
   uint64_t r[4U] = { 0U };
   uint64_t s1[4U] = { 0U };
@@ -189,15 +188,11 @@ Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature(
   uint8_t *resultS = result + (uint32_t)32U;
   bool flag;
   Hacl_Impl_ECDSA_P256SHA256_Signature_toUint64(privKey, privKeyAsFelem);
-  Hacl_Impl_ECDSA_MontgomeryMultiplication_reduction_prime_2prime_order(privKeyAsFelem,
-    privKeyAsFelem);
-  Hacl_Impl_ECDSA_P256SHA256_Signature_toUint64(k, kAsFelem);
-  Hacl_Impl_ECDSA_MontgomeryMultiplication_reduction_prime_2prime_order(kAsFelem, kAsFelem);
   flag =
     Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_core(mLen,
       m,
       privKeyAsFelem,
-      kAsFelem,
+      k,
       r,
       s1);
   Hacl_Impl_ECDSA_P256SHA256_Common_toUint8(r, resultR);
