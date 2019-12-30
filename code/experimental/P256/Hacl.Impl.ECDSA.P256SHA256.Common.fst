@@ -57,6 +57,16 @@ let toUint64ChangeEndian i o =
   changeEndian o
 
 
+val toUint64: i: lbuffer uint8 (32ul) -> o: felem -> Stack unit
+  (requires fun h -> live h i /\ live h o /\ disjoint i o)
+  (ensures 
+    fun h0 _ h1 -> modifies (loc o) h0 h1 /\ 
+      as_seq h1 o == Lib.ByteSequence.uints_from_bytes_le (as_seq h0 i))
+
+let toUint64 i o = 
+    Lib.ByteBuffer.uints_from_bytes_le o i
+
+
 val toUint8: i: felem ->  o: lbuffer uint8 (32ul) -> Stack unit
   (requires fun h -> live h i /\ live h o /\ disjoint i o)
   (ensures fun h0 _ h1 -> modifies (loc o) h0 h1 /\ 
@@ -117,3 +127,40 @@ let isMoreThanZeroLessThanOrderMinusOne f =
       assert(less && not more ==> as_nat h0 f > 0 && as_nat h0 f < prime_p256_order);
   pop_frame();  
     result
+
+
+val lemma_core_0: a: lbuffer uint64 (size 4) -> h: mem -> 
+  Lemma (Lib.ByteSequence.nat_from_intseq_le (as_seq h a) == as_nat h a)
+
+let lemma_core_0 a h = 
+  let open Lib.ByteSequence in 
+  
+    let k = as_seq h a in 
+    let z = nat_from_intseq_le k in 
+    
+    nat_from_intseq_le_slice_lemma k 1;
+    nat_from_intseq_le_lemma0 (Seq.slice k 0 1);
+
+    let k1 = Seq.slice k 1 4 in 
+      nat_from_intseq_le_slice_lemma #_ #_ #3 k1 1;
+      nat_from_intseq_le_lemma0 (Seq.slice k1 0 1);
+      
+    let k2 = Seq.slice k1 1 3 in 
+      nat_from_intseq_le_slice_lemma #_ #_ #2 k2 1;
+      nat_from_intseq_le_lemma0 (Seq.slice k2 0 1);
+      nat_from_intseq_le_lemma0 (Seq.slice k2 1 2)
+
+
+val lemma_core_1: a: lbuffer uint64 (size 4) -> h: mem -> 
+  Lemma (Lib.ByteSequence.nat_from_bytes_le (Lib.ByteSequence.uints_to_bytes_le (as_seq h a)) == as_nat h a)
+
+let lemma_core_1 a h= 
+  let open Lib.ByteSequence in 
+  let k = as_seq h a in 
+  let z = Lib.ByteSequence.uints_to_bytes_le (as_seq h a) in 
+  let maint = Lib.ByteSequence.nat_from_bytes_le (Lib.ByteSequence.uints_to_bytes_le (as_seq h a)) in 
+  lemma_core_0 a h;
+  lemma_nat_from_to_intseq_le_preserves_value #U64 #SEC 4 (as_seq h a);
+  let n = nat_from_intseq_le k in 
+  uints_to_bytes_le_nat_lemma #U64 #SEC 4 n;
+  lemma_nat_to_from_bytes_le_preserves_value #SEC (uints_to_bytes_le #U64 #SEC #4 (as_seq h a)) 32 (as_nat h a)

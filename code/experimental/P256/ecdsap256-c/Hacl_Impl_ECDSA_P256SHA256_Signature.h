@@ -12,7 +12,6 @@
 #include "Hacl_Impl_ECDSA_MM_Exponent.h"
 #include "Hacl_Impl_P256.h"
 #include "Hacl_Hash_SHA2.h"
-#include "C.h"
 #include "Hacl_Impl_ECDSA_P256SHA256_Common.h"
 #include "Hacl_Impl_ECDSA_MontgomeryMultiplication.h"
 #include "kremlib.h"
@@ -22,44 +21,42 @@
 
 void
 Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_step12(
+  uint64_t *hashAsFelem,
   uint32_t mLen,
-  uint8_t *m,
-  uint64_t *hashAsFelem
+  uint8_t *m
 );
 
 bool
 Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_step45(
+  uint64_t *x,
   uint8_t *k,
-  uint64_t *tempBuffer,
-  uint64_t *x
+  uint64_t *tempBuffer
 );
 
 void
 Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_step6(
+  uint64_t *result,
   uint64_t *kFelem,
   uint64_t *z,
   uint64_t *r,
-  uint64_t *da,
-  uint64_t *result
+  uint64_t *da
 );
-
-void Hacl_Impl_ECDSA_P256SHA256_Signature_toUint64(uint8_t *i, uint64_t *o);
 
 bool
 Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_core_nist_compliant(
+  uint64_t *r,
+  uint64_t *s1,
   uint8_t *m,
   uint64_t *privKeyAsFelem,
-  uint8_t *k,
-  uint64_t *r,
-  uint64_t *s1
+  uint8_t *k
 );
 
 bool
 Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_nist_compliant(
+  uint8_t *result,
   uint8_t *m,
   uint8_t *privKey,
-  uint8_t *k,
-  uint8_t *result
+  uint8_t *k
 );
 
 bool
