@@ -249,19 +249,16 @@ let ecdsa_verification publicKey r s mLen input =
   let step1 = checkCoordinates r s in if step1 = false then false else begin
 
   let hashResult = Spec.Hash.hash Spec.Hash.Definitions.SHA2_256 input in 
-  let hashNat = felem_seq_as_nat (changeEndian(Lib.ByteSequence.uints_from_bytes_be hashResult)) % prime_p256_order in 
+  let hashNat = Lib.ByteSequence.nat_from_intseq_le (changeEndian(Lib.ByteSequence.uints_from_bytes_be hashResult)) % prime_p256_order in 
 
-  let u1 = (pow s (prime_p256_order - 2) * hashNat) % prime_p256_order in 
-  let u2 = (pow s (prime_p256_order - 2) * r) % prime_p256_order in 
+  let u1 = Lib.ByteSequence.nat_to_bytes_le 32 (pow s (prime_p256_order - 2) * hashNat % prime_p256_order) in 
+  let u2 = Lib.ByteSequence.nat_to_bytes_le 32 (pow s (prime_p256_order - 2) * r % prime_p256_order) in 
 
-  let u1Buffer = Lib.ByteSequence.uints_to_bytes_le (Hacl.Spec.ECDSAP256.Definition.nat_as_seq u1) in
-  let u2Buffer = Lib.ByteSequence.uints_to_bytes_le (Hacl.Spec.ECDSAP256.Definition.nat_as_seq u2) in 
-  
   let basePoint = (0x6B17D1F2E12C4247F8BCE6E563A440F277037D812DEB33A0F4A13945D898C296, 0x4FE342E2FE1A7F9B8EE7EB4A7C0F9E162BCE33576B315ECECBB6406837BF51F5, 1) in 
   let pointAtInfinity = (0, 0, 0) in 
 
-   let u1D, _ = montgomery_ladder_spec u1Buffer (pointAtInfinity, basePoint) in 
-   let u2D, _ = montgomery_ladder_spec u2Buffer (pointAtInfinity, publicJacobian) in 
+   let u1D, _ = montgomery_ladder_spec u1 (pointAtInfinity, basePoint) in 
+   let u2D, _ = montgomery_ladder_spec u2 (pointAtInfinity, publicJacobian) in 
    let sumPoints = _point_add u1D u2D in 
    let pointNorm = _norm sumPoints in 
    let (xResult, yResult, zResult) = pointNorm in 

@@ -26,6 +26,7 @@ open Hacl.Impl.P256.LowLevel
 open Hacl.Hash.SHA2
 
 open Hacl.Impl.ECDSA.P256SHA256.Common
+open Lib.ByteSequence
 
 open FStar.Mul 
 
@@ -92,11 +93,12 @@ val multByOrder: result: point ->  p: point -> tempBuffer: lbuffer uint64 (size 
   (requires fun h -> 
     live h result /\ live h p /\ live h tempBuffer /\
     LowStar.Monotonic.Buffer.all_disjoint [loc result; loc p; loc tempBuffer] /\
-    as_nat h (gsub p (size 0) (size 4)) < prime256 /\ 
-    as_nat h (gsub p (size 4) (size 4)) < prime256 /\
-    as_nat h (gsub p (size 8) (size 4)) < prime256
+    point_x_as_nat h p < prime256 /\ 
+    point_y_as_nat h p < prime256 /\
+    point_z_as_nat h p < prime256
   )
-  (ensures fun h0 _ h1 -> modifies (loc result |+| loc p |+| loc tempBuffer) h0 h1 /\
+  (ensures fun h0 _ h1 ->
+    modifies (loc result |+| loc p |+| loc tempBuffer) h0 h1 /\
     (
       let xN, yN, zN = scalar_multiplication prime_p256_order_seq (point_prime_to_coordinates (as_seq h0 p)) in 
       let x3, y3, z3 = point_x_as_nat h1 result, point_y_as_nat h1 result, point_z_as_nat h1 result in 
@@ -115,17 +117,18 @@ inline_for_extraction noextract
 val multByOrder2: result: point ->  p: point -> tempBuffer: lbuffer uint64 (size 100) -> Stack unit 
   (requires fun h -> 
     live h result /\ live h p /\ live h tempBuffer /\
-    LowStar.Monotonic.Buffer.all_disjoint [loc p; loc tempBuffer;loc result] /\
-    as_nat h (gsub p (size 0) (size 4)) < prime256 /\ 
-    as_nat h (gsub p (size 4) (size 4)) < prime256 /\
-    as_nat h (gsub p (size 8) (size 4)) < prime256 
+    LowStar.Monotonic.Buffer.all_disjoint [loc result; loc p; loc tempBuffer] /\
+    point_x_as_nat h p < prime256 /\ 
+    point_y_as_nat h p < prime256 /\
+    point_z_as_nat h p < prime256
   )
   (ensures fun h0 _ h1  -> modifies (loc result |+| loc tempBuffer) h0 h1 /\
     (
       let xN, yN, zN = scalar_multiplication prime_p256_order_seq (point_prime_to_coordinates (as_seq h0 p)) in 
       let x3, y3, z3 = point_x_as_nat h1 result, point_y_as_nat h1 result, point_z_as_nat h1 result in 
       x3 == xN /\ y3 == yN /\ z3 == zN 
-))
+    )
+  )
 
 let multByOrder2 result p tempBuffer = 
   push_frame();
@@ -135,20 +138,22 @@ let multByOrder2 result p tempBuffer =
   pop_frame()  
     
 
-#reset-options "--z3refresh --z3rlimit 100"
 (*checks whether the base point * order is point at infinity *)
-val isOrderCorrect: p: point -> tempBuffer: lbuffer uint64 (size 100) ->  Stack bool
-  (requires fun h -> live h p /\ live h tempBuffer /\ 
-    as_nat h (gsub p (size 0) (size 4)) < prime256 /\ 
-    as_nat h (gsub p (size 4) (size 4)) < prime256 /\
-    as_nat h (gsub p (size 8) (size 4)) < prime256 /\
-    disjoint p tempBuffer)
-  (ensures fun h0 r h1 -> modifies(loc tempBuffer) h0 h1 /\ (
-      let (xN, yN, zN) = scalar_multiplication prime_p256_order_seq (point_prime_to_coordinates (as_seq h0 p)) in 
-      if Hacl.Spec.P256.isPointAtInfinity (xN, yN, zN) then 
-	r == true else r == false
+val isOrderCorrect: p: point -> tempBuffer: lbuffer uint64 (size 100) -> Stack bool
+  (requires fun h -> 
+    live h p /\ live h tempBuffer /\ 
+    disjoint p tempBuffer /\
+    point_x_as_nat h p < prime256 /\ 
+    point_y_as_nat h p < prime256 /\
+    point_z_as_nat h p < prime256
   )
-)
+  (ensures fun h0 r h1 -> 
+    modifies(loc tempBuffer) h0 h1 /\ 
+    (
+      let (xN, yN, zN) = scalar_multiplication prime_p256_order_seq (point_prime_to_coordinates (as_seq h0 p)) in 
+      if Hacl.Spec.P256.isPointAtInfinity (xN, yN, zN) then r == true else r == false
+    )
+  )
 
 let isOrderCorrect p tempBuffer = 
   push_frame(); 
@@ -156,8 +161,7 @@ let isOrderCorrect p tempBuffer =
     multByOrder2 multResult p tempBuffer;
     let result = Hacl.Impl.P256.isPointAtInfinity multResult in  
    pop_frame();
-   result
-
+     result
 
 
 (*
@@ -167,14 +171,17 @@ Check that {\displaystyle Q_{A}} Q_{A} is not equal to the identity element {\di
 Check that {\displaystyle Q_{A}} Q_{A} lies on the curve
 Check that {\displaystyle n\times Q_{A}=O} n\times Q_{A}=O
  *)
+ 
 val verifyQValidCurvePoint: pubKeyAsPoint: point -> tempBuffer: lbuffer uint64 (size 100) ->  Stack bool
-  (requires fun h -> live h tempBuffer /\ live h pubKeyAsPoint /\
-    LowStar.Monotonic.Buffer.all_disjoint [loc tempBuffer; loc pubKeyAsPoint] /\
-    as_nat h (gsub pubKeyAsPoint (size 8) (size 4)) == 1
+  (requires fun h -> 
+    live h pubKeyAsPoint /\ live h tempBuffer /\
+    LowStar.Monotonic.Buffer.all_disjoint [loc pubKeyAsPoint; loc tempBuffer] /\
+    point_z_as_nat h pubKeyAsPoint == 1
   )
-  (ensures fun h0 r h1 -> modifies (loc tempBuffer) h0 h1 /\  
+  (ensures fun h0 r h1 -> 
+    modifies (loc tempBuffer) h0 h1 /\ 
     r == verifyQValidCurvePointSpec (point_prime_to_coordinates (as_seq h0 pubKeyAsPoint))
-) 
+  ) 
 
 let verifyQValidCurvePoint pubKeyAsPoint tempBuffer = 
     let coordinatesValid = isCoordinateValid pubKeyAsPoint in 
@@ -186,19 +193,17 @@ let verifyQValidCurvePoint pubKeyAsPoint tempBuffer =
     else false  
 
 
-
-#reset-options "--z3refresh --z3rlimit 100"
 (* Verify that {\displaystyle r} r and {\displaystyle s} s are integers in {\displaystyle [1,n-1]} [1,n-1]. If not, the signature is invalid. *)
+
 inline_for_extraction noextract
 val ecdsa_verification_step1: r: lbuffer uint64 (size 4) -> s: lbuffer uint64 (size 4) -> Stack bool
-  (requires fun h -> live h r /\ live h s /\ disjoint r s )
-  (ensures fun h0 result h1 -> modifies0 h0 h1 
-   /\ 
-     (
-       if  as_nat h0 r > 0 && as_nat h0 r < prime_p256_order && as_nat h0 s > 0 && as_nat h0 s < prime_p256_order 
-	 then result == true else result == false /\
-	 result == checkCoordinates (as_nat h0 r) (as_nat h0 s)
-      
+  (requires fun h -> live h r /\ live h s /\ disjoint r s)
+  (ensures fun h0 result h1 -> 
+    modifies0 h0 h1 /\ 
+    (
+      if as_nat h0 r > 0 && as_nat h0 r < prime_p256_order && as_nat h0 s > 0 && as_nat h0 s < prime_p256_order 
+	then result == true else result == false /\
+      result == checkCoordinates (as_nat h0 r) (as_nat h0 s)    
      )
   )
 
@@ -209,77 +214,68 @@ let ecdsa_verification_step1 r s =
 
 
 inline_for_extraction noextract
-val ecdsa_verification_step23: mLen: size_t -> m: lbuffer uint8 mLen{uint_v mLen < pow2 61} -> hashAsFelem : felem ->  Stack unit
-  (requires fun h -> live h m /\ live h hashAsFelem)
-  (ensures fun h0 _ h1 -> modifies (loc hashAsFelem) h0 h1 /\ as_nat h1 hashAsFelem < prime_p256_order /\
+val ecdsa_verification_step23: hashAsFelem : felem -> mLen: size_t -> m: lbuffer uint8 mLen{uint_v mLen < pow2 61} -> Stack unit
+  (requires fun h -> live h hashAsFelem /\ live h m)
+  (ensures fun h0 _ h1 -> modifies (loc hashAsFelem) h0 h1 /\
     (
-      as_nat h1 hashAsFelem = (felem_seq_as_nat (Hacl.Spec.ECDSA.changeEndian(Lib.ByteSequence.uints_from_bytes_be (Spec.Hash.hash Spec.Hash.Definitions.SHA2_256 (as_seq h0 m))))) % prime_p256_order
- ) 
-)
+      let hashM = Spec.Hash.hash Spec.Hash.Definitions.SHA2_256 (as_seq h0 m) in 
+      let hashChanged = Hacl.Spec.ECDSA.changeEndian (Lib.ByteSequence.uints_from_bytes_be hashM) in
+      as_nat h1 hashAsFelem == nat_from_intseq_le hashChanged % prime_p256_order
+    ) 
+  )
 
-let ecdsa_verification_step23 mLen m hashAsFelem = 
+let ecdsa_verification_step23 hashAsFelem mLen m = 
   push_frame(); 
-    let mHash = create (size 32) (u8 0) in  
-      let h0 = ST.get() in 
+  let h0 = ST.get() in
+    let mHash = create (size 32) (u8 0) in   
     hash_256 m mLen mHash;
-      let h1 = ST.get() in 
-      assert(Seq.equal (as_seq h1 mHash) (Spec.Hash.hash Spec.Hash.Definitions.SHA2_256 (as_seq h0 m)));
     toUint64ChangeEndian mHash hashAsFelem;
-    reduction_prime_2prime_order hashAsFelem hashAsFelem;
+  let h1 = ST.get() in 
+      lemma_core_0 hashAsFelem h1;
+  reduction_prime_2prime_order hashAsFelem hashAsFelem;
   pop_frame()
 
 
-#reset-options "--z3refresh --z3rlimit 300"
 inline_for_extraction noextract
-val ecdsa_verification_step4: r: felem -> s: felem -> hash: felem -> bufferU1: lbuffer uint8 (size 32) -> 
-  bufferU2: lbuffer uint8 (size 32) ->
+val ecdsa_verification_step4: bufferU1: lbuffer uint8 (size 32) -> bufferU2: lbuffer uint8 (size 32) -> 
+  r: felem -> 
+  s: felem -> 
+  hash: felem -> 
   Stack unit 
-  (requires fun h -> live h r /\ live h s /\ live h hash /\ live h bufferU1 /\ live h bufferU2 /\
-    as_nat h s < prime_p256_order /\ as_nat h hash < prime_p256_order /\ as_nat h r < prime_p256_order /\
-    LowStar.Monotonic.Buffer.all_disjoint [loc r; loc s; loc hash; loc bufferU1; loc bufferU2] 
+  (requires fun h -> 
+    live h r /\ live h s /\ live h hash /\ live h bufferU1 /\ live h bufferU2 /\ 
+    LowStar.Monotonic.Buffer.all_disjoint [loc r; loc s; loc hash; loc bufferU1; loc bufferU2] /\
+    as_nat h s < prime_p256_order /\ as_nat h hash < prime_p256_order /\ as_nat h r < prime_p256_order 
   )
-  (ensures fun h0 _ h1 -> modifies (loc bufferU1 |+| loc  bufferU2) h0 h1 /\
-    prime_p256_order < pow2 256 /\ 
-    as_seq h1 bufferU1 == Lib.ByteSequence.uints_to_bytes_le (nat_as_seq((pow (as_nat h0 s) (prime_p256_order - 2)  * (as_nat h0 hash)) % prime_p256_order)) /\ 
-    as_seq h1 bufferU2 == Lib.ByteSequence.uints_to_bytes_le (nat_as_seq((pow (as_nat h0 s) (prime_p256_order - 2)  * (as_nat h0 r)) % prime_p256_order))  
+  (ensures fun h0 _ h1 -> 
+    modifies (loc bufferU1 |+| loc bufferU2) h0 h1 /\
+    as_seq h1 bufferU1 == nat_to_bytes_le 32 (pow (as_nat h0 s) (prime_p256_order - 2) * (as_nat h0 hash) % prime_p256_order) /\ 
+    as_seq h1 bufferU2 == nat_to_bytes_le 32 (pow (as_nat h0 s) (prime_p256_order - 2) * (as_nat h0 r) % prime_p256_order)  
   )
 
-let ecdsa_verification_step4 r s hash bufferU1 bufferU2 = 
+let ecdsa_verification_step4 bufferU1 bufferU2 r s hash = 
   push_frame();
-    assert_norm(prime_p256_order < pow2 256);
+  let h0 = ST.get() in 
     let tempBuffer = create (size 12) (u64 0) in 
-      let inverseS = sub tempBuffer (size 0) (size 4) in 
-      let u1 = sub tempBuffer (size 4) (size 4) in 
-      let u2 = sub tempBuffer (size 8) (size 4) in 
-    let h0 = ST.get() in 
-  fromDomainImpl s inverseS;
-  montgomery_ladder_exponent inverseS; 
-    let h2 = ST.get() in 
-    assert(
-      let a_ = fromDomain_  (fromDomain_ (as_nat h0 s)) in 
-      let r0D = exponent_spec a_ in 
-      fromDomain_ (as_nat h2 inverseS) == r0D);
-      
-  multPowerPartial s inverseS hash u1; 
-  multPowerPartial s inverseS r u2; 
+    let inverseS = sub tempBuffer (size 0) (size 4) in 
+    let u1 = sub tempBuffer (size 4) (size 4) in 
+    let u2 = sub tempBuffer (size 8) (size 4) in
     
-    let h3 = ST.get() in 
-    assert(as_nat h3 u1 = (pow (as_nat h0 s) (prime_p256_order - 2)  * (as_nat h0 hash)) % prime_p256_order);
-    lemmaSeq2Nat (as_seq h3 u1);
-    lemmaSeq2Nat (as_seq h3 u2);
-
-    assert(as_seq h3 u1 == nat_as_seq((pow (as_nat h0 s) (prime_p256_order - 2)  * (as_nat h0 hash)) % prime_p256_order));
-    assert(as_seq h3 u2 == nat_as_seq((pow (as_nat h0 s) (prime_p256_order - 2)  * (as_nat h0 r)) % prime_p256_order));
-
-  toUint8 u1 bufferU1;
-  toUint8 u2 bufferU2;
-    let h4 = ST.get() in 
-    assert(as_seq h4 bufferU1 == Lib.ByteSequence.uints_to_bytes_le (nat_as_seq((pow (as_nat h0 s) (prime_p256_order - 2)  * (as_nat h0 hash)) % prime_p256_order)));
-    assert(as_seq h4 bufferU2 == Lib.ByteSequence.uints_to_bytes_le (nat_as_seq((pow (as_nat h0 s) (prime_p256_order - 2)  * (as_nat h0 r)) % prime_p256_order)));
+    fromDomainImpl s inverseS;
+    montgomery_ladder_exponent inverseS;     
+    multPowerPartial s inverseS hash u1; 
+    multPowerPartial s inverseS r u2;     
+  let h1 = ST.get() in 
+      lemma_core_0 u1 h1;
+      lemma_nat_from_to_intseq_le_preserves_value 4 (as_seq h1 u1);
+      lemma_core_0 u2 h1;
+      lemma_nat_from_to_intseq_le_preserves_value 4 (as_seq h1 u2);
+    toUint8 u1 bufferU1;
+    toUint8 u2 bufferU2;
+      uints_to_bytes_le_nat_lemma #U64 #SEC 4 (pow (as_nat h0 s) (prime_p256_order - 2)  * (as_nat h0 hash) % prime_p256_order);
+      uints_to_bytes_le_nat_lemma #U64 #SEC 4 (pow (as_nat h0 s) (prime_p256_order - 2)  * (as_nat h0 r) % prime_p256_order);
   pop_frame()
 
-
-#reset-options "--z3refresh --z3rlimit 300" 
 
 inline_for_extraction noextract
 val ecdsa_verification_step5_0: pubKeyAsPoint: point -> u1: lbuffer uint8 (size 32) -> u2: lbuffer uint8 (size 32) -> 
@@ -491,8 +487,8 @@ let ecdsa_verification_core publicKeyBuffer hashAsFelem r s mLen m xBuffer tempB
       let bufferU1 =  sub tempBufferU8 (size 0) (size 32) in 
       let bufferU2 = sub tempBufferU8 (size 32) (size 32) in 
 
-   ecdsa_verification_step23 mLen m hashAsFelem;
-   ecdsa_verification_step4 r s hashAsFelem bufferU1 bufferU2;
+   ecdsa_verification_step23 hashAsFelem mLen m;
+   ecdsa_verification_step4  bufferU1 bufferU2 r s hashAsFelem;
    let r = ecdsa_verification_step5 publicKeyBuffer bufferU1 bufferU2 tempBuffer xBuffer in 
    pop_frame();
    r

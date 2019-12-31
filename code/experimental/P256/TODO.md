@@ -60,3 +60,5 @@ _____________________________________________
 Constant time equalities!
 
 (changeEndian(Lib.ByteSequence.uints_from_bytes_be)) ??
+
+Replace felem_seq_to_nat to built-in
