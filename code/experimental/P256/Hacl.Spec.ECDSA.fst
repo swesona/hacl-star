@@ -290,3 +290,33 @@ let ecdsa_signature_nist_compliant  input privateKey k =
 	resultR, resultS, false
       else 
 	resultR, resultS, true
+
+
+val ecdsa_signature: 
+  mLen: size_nat{mLen < Spec.Hash.Definitions.max_input_length Spec.Hash.Definitions.SHA2_256} -> 
+  input: lseq uint8 mLen -> 
+  privateKey: lseq uint8 32 -> 
+  k: lseq uint8 32 -> 
+  Tot (tuple3 nat nat bool)
+
+let ecdsa_signature mLen input privateKey k = 
+  let basePoint = (0x6B17D1F2E12C4247F8BCE6E563A440F277037D812DEB33A0F4A13945D898C296, 0x4FE342E2FE1A7F9B8EE7EB4A7C0F9E162BCE33576B315ECECBB6406837BF51F5, 1) in
+  let (rxN, ryN, rzN), _ = montgomery_ladder_spec k ((0,0,0), basePoint) in 
+  let (xN, _, _) = _norm (rxN, ryN, rzN) in 
+  
+  let hashM = Spec.Hash.hash Spec.Hash.Definitions.SHA2_256 input in 
+  let hashChanged = changeEndian (uints_from_bytes_be hashM) in
+  let z = nat_from_intseq_le hashChanged % prime_p256_order in 
+  
+  let kFelem = nat_from_bytes_le k in 
+  let privateKey = nat_from_bytes_le privateKey in 
+  let resultR = xN % prime_p256_order in
+  let resultS = 0 in 
+    if resultR = 0 then 
+      resultR, resultS, false
+    else 
+      let resultS = (z + resultR * privateKey) * pow kFelem (prime_p256_order - 2) % prime_p256_order in 
+      if (resultS = 0) then 
+	resultR, resultS, false
+      else 
+	resultR, resultS, true
