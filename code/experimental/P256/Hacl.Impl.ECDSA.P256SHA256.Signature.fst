@@ -169,6 +169,7 @@ val ecdsa_signature_core_nist_compliant: r: felem -> s: felem -> m: lbuffer uint
     disjoint privKeyAsFelem r /\ disjoint k r /\ disjoint r s /\
     nat_from_bytes_le (as_seq h m) < prime_p256_order /\
     as_nat h privKeyAsFelem < prime_p256_order /\
+    as_nat h s == 0 /\
     nat_from_bytes_le (as_seq h k) < prime_p256_order
   )
   (ensures fun h0 flag h1 -> 
@@ -179,9 +180,9 @@ val ecdsa_signature_core_nist_compliant: r: felem -> s: felem -> m: lbuffer uint
       let (xN, _, _) = _norm (rxN, ryN, rzN) in 
       let z = nat_from_bytes_le (as_seq h0 m) in 
       let kFelem = nat_from_bytes_le (as_seq h0 k) in 
-      as_nat h1 r == xN % prime_p256_order /\
+      as_nat h1 r == xN % prime_p256_order /\ 
       (
-	if as_nat h1 r = 0 then flag = false else
+	if as_nat h1 r = 0 then begin flag = false /\ as_nat h1 s == 0 end  else
 	  as_nat h1 s == (z + (as_nat h1 r) * as_nat h0 privKeyAsFelem) * pow kFelem (prime_p256_order - 2) % prime_p256_order /\
 	(
 	  if (as_nat h1 s = 0) then flag = false else flag = true
@@ -209,7 +210,7 @@ let ecdsa_signature_core_nist_compliant r s m privKeyAsFelem k =
     if not step5Flag then 
       begin
 	ecdsa_signature_step6 s kAsFelem hashAsFelem r privKeyAsFelem;
-	pop_frame();
+	pop_frame(); 
 	let step6Flag = isZero_bool s in 
 	not step6Flag
       end 
@@ -231,29 +232,15 @@ val ecdsa_signature_nist_compliant: result: lbuffer uint8 (size 64) -> m: lbuffe
     nat_from_bytes_le (as_seq h k) < prime_p256_order
   )
   (ensures fun h0 flag h1 -> 
-    modifies (loc result) h0 h1 /\
+    modifies (loc result) h0 h1 /\ 
     (
       let resultR = gsub result (size 0) (size 32) in 
       let resultS = gsub result (size 32) (size 32) in 
-
-      let basePoint = (0x6B17D1F2E12C4247F8BCE6E563A440F277037D812DEB33A0F4A13945D898C296, 0x4FE342E2FE1A7F9B8EE7EB4A7C0F9E162BCE33576B315ECECBB6406837BF51F5, 1) in
-      let (rxN, ryN, rzN), _ = montgomery_ladder_spec (as_seq h0 k) ((0,0,0), basePoint) in 
-      let (xN, _, _) = _norm (rxN, ryN, rzN) in 
-      
-      let z = nat_from_bytes_le (as_seq h0 m) in 
-      
-      let kFelem = nat_from_bytes_le (as_seq h0 k) in 
-      let privateKey = nat_from_bytes_le (as_seq h0 privKey) in 
+      let r, s, flagSpec = Hacl.Spec.ECDSA.ecdsa_signature_nist_compliant (as_seq h0 m) (as_seq h0 privKey) (as_seq h0 k) in 
       let resultR = nat_from_bytes_le (as_seq h1 resultR) in 
       let resultS = nat_from_bytes_le (as_seq h1 resultS) in 
-      resultR == xN % prime_p256_order /\
-      (
-	if resultR = 0 then flag = false else
-	   resultS == (z + resultR * privateKey) * pow kFelem (prime_p256_order - 2) % prime_p256_order /\
-	(
-	  if (resultS = 0) then flag = false else flag = true
-	)
-      )
+      flag == flagSpec /\ r == resultR /\ s == resultS
+   
     )
   )
 
