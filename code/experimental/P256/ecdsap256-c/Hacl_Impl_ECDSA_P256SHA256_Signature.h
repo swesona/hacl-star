@@ -12,7 +12,6 @@
 #include "Hacl_Impl_ECDSA_MM_Exponent.h"
 #include "Hacl_Impl_P256.h"
 #include "Hacl_Hash_SHA2.h"
-#include "C.h"
 #include "Hacl_Impl_ECDSA_P256SHA256_Common.h"
 #include "Hacl_Impl_ECDSA_MontgomeryMultiplication.h"
 #include "kremlib.h"

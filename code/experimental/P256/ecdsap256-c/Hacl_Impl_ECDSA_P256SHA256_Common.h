@@ -21,6 +21,10 @@ void Hacl_Impl_ECDSA_P256SHA256_Common_changeEndian(uint64_t *i);
 
 void Hacl_Impl_ECDSA_P256SHA256_Common_toUint64ChangeEndian(uint8_t *i, uint64_t *o);
 
+void Hacl_Impl_ECDSA_P256SHA256_Common_toUint64(uint8_t *i, uint64_t *o);
+
+void Hacl_Impl_ECDSA_P256SHA256_Common_toUint8(uint64_t *i, uint8_t *o);
+
 bool Hacl_Impl_ECDSA_P256SHA256_Common_isMoreThanZeroLessThanOrderMinusOne(uint64_t *f);
 
 #define __Hacl_Impl_ECDSA_P256SHA256_Common_H_DEFINED

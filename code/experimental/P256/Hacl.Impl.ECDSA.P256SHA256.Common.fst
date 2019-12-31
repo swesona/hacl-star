@@ -47,7 +47,6 @@ let toUint64ChangeEndian i o =
   changeEndian o
 
 
-inline_for_extraction noextract
 val toUint64: i: lbuffer uint8 (32ul) -> o: felem -> Stack unit
   (requires fun h -> live h i /\ live h o /\ disjoint i o)
   (ensures fun h0 _ h1 -> 
@@ -59,7 +58,6 @@ let toUint64 i o =
   Lib.ByteBuffer.uints_from_bytes_le o i
 
 
-inline_for_extraction noextract
 val toUint8: i: felem ->  o: lbuffer uint8 (32ul) -> Stack unit
   (requires fun h -> live h i /\ live h o /\ disjoint i o)
   (ensures fun h0 _ h1 -> 

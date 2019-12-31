@@ -73,70 +73,8 @@ Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_core_nist_compliant(
   uint64_t hashAsFelem1[4U] = { 0U };
   bool step5Flag;
   bool ite;
-  {
-    uint64_t *os = hashAsFelem1;
-    uint8_t *bj = m + (uint32_t)0U * (uint32_t)8U;
-    uint64_t u = load64_le(bj);
-    uint64_t r1 = u;
-    uint64_t x = r1;
-    os[0U] = x;
-  }
-  {
-    uint64_t *os = hashAsFelem1;
-    uint8_t *bj = m + (uint32_t)1U * (uint32_t)8U;
-    uint64_t u = load64_le(bj);
-    uint64_t r1 = u;
-    uint64_t x = r1;
-    os[1U] = x;
-  }
-  {
-    uint64_t *os = hashAsFelem1;
-    uint8_t *bj = m + (uint32_t)2U * (uint32_t)8U;
-    uint64_t u = load64_le(bj);
-    uint64_t r1 = u;
-    uint64_t x = r1;
-    os[2U] = x;
-  }
-  {
-    uint64_t *os = hashAsFelem1;
-    uint8_t *bj = m + (uint32_t)3U * (uint32_t)8U;
-    uint64_t u = load64_le(bj);
-    uint64_t r1 = u;
-    uint64_t x = r1;
-    os[3U] = x;
-  }
-  {
-    uint64_t *os = kAsFelem;
-    uint8_t *bj = k + (uint32_t)0U * (uint32_t)8U;
-    uint64_t u = load64_le(bj);
-    uint64_t r1 = u;
-    uint64_t x = r1;
-    os[0U] = x;
-  }
-  {
-    uint64_t *os = kAsFelem;
-    uint8_t *bj = k + (uint32_t)1U * (uint32_t)8U;
-    uint64_t u = load64_le(bj);
-    uint64_t r1 = u;
-    uint64_t x = r1;
-    os[1U] = x;
-  }
-  {
-    uint64_t *os = kAsFelem;
-    uint8_t *bj = k + (uint32_t)2U * (uint32_t)8U;
-    uint64_t u = load64_le(bj);
-    uint64_t r1 = u;
-    uint64_t x = r1;
-    os[2U] = x;
-  }
-  {
-    uint64_t *os = kAsFelem;
-    uint8_t *bj = k + (uint32_t)3U * (uint32_t)8U;
-    uint64_t u = load64_le(bj);
-    uint64_t r1 = u;
-    uint64_t x = r1;
-    os[3U] = x;
-  }
+  Hacl_Impl_ECDSA_P256SHA256_Common_toUint64(m, hashAsFelem1);
+  Hacl_Impl_ECDSA_P256SHA256_Common_toUint64(k, kAsFelem);
   step5Flag = Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_step45(r, k, tempBuffer);
   if (!step5Flag)
   {
@@ -171,68 +109,15 @@ Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_nist_compliant(
   uint8_t *resultR = result;
   uint8_t *resultS = result + (uint32_t)32U;
   bool flag;
-  {
-    uint64_t *os = privKeyAsFelem;
-    uint8_t *bj = privKey + (uint32_t)0U * (uint32_t)8U;
-    uint64_t u = load64_le(bj);
-    uint64_t r1 = u;
-    uint64_t x = r1;
-    os[0U] = x;
-  }
-  {
-    uint64_t *os = privKeyAsFelem;
-    uint8_t *bj = privKey + (uint32_t)1U * (uint32_t)8U;
-    uint64_t u = load64_le(bj);
-    uint64_t r1 = u;
-    uint64_t x = r1;
-    os[1U] = x;
-  }
-  {
-    uint64_t *os = privKeyAsFelem;
-    uint8_t *bj = privKey + (uint32_t)2U * (uint32_t)8U;
-    uint64_t u = load64_le(bj);
-    uint64_t r1 = u;
-    uint64_t x = r1;
-    os[2U] = x;
-  }
-  {
-    uint64_t *os = privKeyAsFelem;
-    uint8_t *bj = privKey + (uint32_t)3U * (uint32_t)8U;
-    uint64_t u = load64_le(bj);
-    uint64_t r1 = u;
-    uint64_t x = r1;
-    os[3U] = x;
-  }
+  Hacl_Impl_ECDSA_P256SHA256_Common_toUint64(privKey, privKeyAsFelem);
   flag =
     Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_core_nist_compliant(r,
       s1,
       m,
       privKeyAsFelem,
       k);
-  {
-    store64_le(resultR + (uint32_t)0U * (uint32_t)8U, r[0U]);
-  }
-  {
-    store64_le(resultR + (uint32_t)1U * (uint32_t)8U, r[1U]);
-  }
-  {
-    store64_le(resultR + (uint32_t)2U * (uint32_t)8U, r[2U]);
-  }
-  {
-    store64_le(resultR + (uint32_t)3U * (uint32_t)8U, r[3U]);
-  }
-  {
-    store64_le(resultS + (uint32_t)0U * (uint32_t)8U, s1[0U]);
-  }
-  {
-    store64_le(resultS + (uint32_t)1U * (uint32_t)8U, s1[1U]);
-  }
-  {
-    store64_le(resultS + (uint32_t)2U * (uint32_t)8U, s1[2U]);
-  }
-  {
-    store64_le(resultS + (uint32_t)3U * (uint32_t)8U, s1[3U]);
-  }
+  Hacl_Impl_ECDSA_P256SHA256_Common_toUint8(r, resultR);
+  Hacl_Impl_ECDSA_P256SHA256_Common_toUint8(s1, resultS);
   return flag;
 }
 
@@ -251,38 +136,7 @@ Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_core(
   uint64_t kAsFelem[4U] = { 0U };
   bool step5Flag;
   bool ite;
-  {
-    uint64_t *os = kAsFelem;
-    uint8_t *bj = k + (uint32_t)0U * (uint32_t)8U;
-    uint64_t u = load64_le(bj);
-    uint64_t r1 = u;
-    uint64_t x = r1;
-    os[0U] = x;
-  }
-  {
-    uint64_t *os = kAsFelem;
-    uint8_t *bj = k + (uint32_t)1U * (uint32_t)8U;
-    uint64_t u = load64_le(bj);
-    uint64_t r1 = u;
-    uint64_t x = r1;
-    os[1U] = x;
-  }
-  {
-    uint64_t *os = kAsFelem;
-    uint8_t *bj = k + (uint32_t)2U * (uint32_t)8U;
-    uint64_t u = load64_le(bj);
-    uint64_t r1 = u;
-    uint64_t x = r1;
-    os[2U] = x;
-  }
-  {
-    uint64_t *os = kAsFelem;
-    uint8_t *bj = k + (uint32_t)3U * (uint32_t)8U;
-    uint64_t u = load64_le(bj);
-    uint64_t r1 = u;
-    uint64_t x = r1;
-    os[3U] = x;
-  }
+  Hacl_Impl_ECDSA_P256SHA256_Common_toUint64(k, kAsFelem);
   Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_step12(hashAsFelem, mLen, m);
   step5Flag = Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_step45(r, k, tempBuffer);
   if (!step5Flag)
@@ -319,38 +173,7 @@ Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature(
   uint8_t *resultR = result;
   uint8_t *resultS = result + (uint32_t)32U;
   bool flag;
-  {
-    uint64_t *os = privKeyAsFelem;
-    uint8_t *bj = privKey + (uint32_t)0U * (uint32_t)8U;
-    uint64_t u = load64_le(bj);
-    uint64_t r1 = u;
-    uint64_t x = r1;
-    os[0U] = x;
-  }
-  {
-    uint64_t *os = privKeyAsFelem;
-    uint8_t *bj = privKey + (uint32_t)1U * (uint32_t)8U;
-    uint64_t u = load64_le(bj);
-    uint64_t r1 = u;
-    uint64_t x = r1;
-    os[1U] = x;
-  }
-  {
-    uint64_t *os = privKeyAsFelem;
-    uint8_t *bj = privKey + (uint32_t)2U * (uint32_t)8U;
-    uint64_t u = load64_le(bj);
-    uint64_t r1 = u;
-    uint64_t x = r1;
-    os[2U] = x;
-  }
-  {
-    uint64_t *os = privKeyAsFelem;
-    uint8_t *bj = privKey + (uint32_t)3U * (uint32_t)8U;
-    uint64_t u = load64_le(bj);
-    uint64_t r1 = u;
-    uint64_t x = r1;
-    os[3U] = x;
-  }
+  Hacl_Impl_ECDSA_P256SHA256_Common_toUint64(privKey, privKeyAsFelem);
   flag =
     Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_core(r,
       s1,
@@ -358,30 +181,8 @@ Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature(
       m,
       privKeyAsFelem,
       k);
-  {
-    store64_le(resultR + (uint32_t)0U * (uint32_t)8U, r[0U]);
-  }
-  {
-    store64_le(resultR + (uint32_t)1U * (uint32_t)8U, r[1U]);
-  }
-  {
-    store64_le(resultR + (uint32_t)2U * (uint32_t)8U, r[2U]);
-  }
-  {
-    store64_le(resultR + (uint32_t)3U * (uint32_t)8U, r[3U]);
-  }
-  {
-    store64_le(resultS + (uint32_t)0U * (uint32_t)8U, s1[0U]);
-  }
-  {
-    store64_le(resultS + (uint32_t)1U * (uint32_t)8U, s1[1U]);
-  }
-  {
-    store64_le(resultS + (uint32_t)2U * (uint32_t)8U, s1[2U]);
-  }
-  {
-    store64_le(resultS + (uint32_t)3U * (uint32_t)8U, s1[3U]);
-  }
+  Hacl_Impl_ECDSA_P256SHA256_Common_toUint8(r, resultR);
+  Hacl_Impl_ECDSA_P256SHA256_Common_toUint8(s1, resultS);
   return flag;
 }
 

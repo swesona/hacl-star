@@ -56,6 +56,29 @@ void Hacl_Impl_ECDSA_P256SHA256_Common_toUint64ChangeEndian(uint8_t *i, uint64_t
   Hacl_Impl_ECDSA_P256SHA256_Common_changeEndian(o);
 }
 
+void Hacl_Impl_ECDSA_P256SHA256_Common_toUint64(uint8_t *i, uint64_t *o)
+{
+  uint32_t i0;
+  for (i0 = (uint32_t)0U; i0 < (uint32_t)4U; i0 = i0 + (uint32_t)1U)
+  {
+    uint64_t *os = o;
+    uint8_t *bj = i + i0 * (uint32_t)8U;
+    uint64_t u = load64_le(bj);
+    uint64_t r = u;
+    uint64_t x = r;
+    os[i0] = x;
+  }
+}
+
+void Hacl_Impl_ECDSA_P256SHA256_Common_toUint8(uint64_t *i, uint8_t *o)
+{
+  uint32_t i0;
+  for (i0 = (uint32_t)0U; i0 < (uint32_t)4U; i0 = i0 + (uint32_t)1U)
+  {
+    store64_le(o + i0 * (uint32_t)8U, i[i0]);
+  }
+}
+
 bool Hacl_Impl_ECDSA_P256SHA256_Common_isMoreThanZeroLessThanOrderMinusOne(uint64_t *f)
 {
   uint64_t tempBuffer[4U] = { 0U };
