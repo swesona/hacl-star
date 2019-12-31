@@ -22,17 +22,13 @@ bool Hacl_Impl_ECDSA_P256SHA256_Verification_isCoordinateValid(uint64_t *p)
   uint64_t tempBuffer[4U] = { 0U };
   uint64_t *x = p;
   uint64_t *y = p + (uint32_t)4U;
-  uint64_t *z = p + (uint32_t)8U;
   uint64_t
   carryX = Hacl_Impl_LowLevel_sub4_il(x, Hacl_Impl_P256_LowLevel_prime256_buffer, tempBuffer);
   uint64_t
   carryY = Hacl_Impl_LowLevel_sub4_il(y, Hacl_Impl_P256_LowLevel_prime256_buffer, tempBuffer);
-  uint64_t
-  carryZ = Hacl_Impl_LowLevel_sub4_il(z, Hacl_Impl_P256_LowLevel_prime256_buffer, tempBuffer);
   bool lessX = carryX == (uint64_t)1U;
   bool lessY = carryY == (uint64_t)1U;
-  bool lessZ = carryZ == (uint64_t)1U;
-  bool r = lessX && lessY && lessZ;
+  bool r = lessX && lessY;
   return r;
 }
 

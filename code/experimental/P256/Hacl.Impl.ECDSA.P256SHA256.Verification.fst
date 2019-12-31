@@ -30,20 +30,20 @@ open Hacl.Impl.ECDSA.P256SHA256.Common
 open FStar.Mul 
 
 
-#reset-options "--z3refresh --z3rlimit 300"
-
+#set-options "--z3rlimit 300"
 
 val bufferToJac: p: lbuffer uint64 (size 8) -> result: point -> Stack unit 
   (requires fun h -> live h p /\ live h result /\ disjoint p result)
-  (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\ as_nat h1 (gsub result (size 8) (size 4)) == 1 /\ 
+  (ensures fun h0 _ h1 -> 
+    modifies (loc result) h0 h1 /\ as_nat h1 (gsub result (size 8) (size 4)) == 1 /\ 
     (
       let x = as_nat h0 (gsub p (size 0) (size 4)) in 
       let y = as_nat h0 (gsub p (size 4) (size 4)) in 
-
-      let pointJac = toJacobianCoordinates (x, y) in 
-      pointJac == point_prime_to_coordinates (as_seq h1 result)
+      let x3, y3, z3 = point_x_as_nat h1 result,  point_y_as_nat h1 result, point_z_as_nat h1 result in 
+      let pointJacX, pointJacY, pointJacZ = toJacobianCoordinates (x, y) in 
+      x3 == pointJacX /\ y3 == pointJacY /\ z3 == pointJacZ
     )
-)    
+  )    
     
 let bufferToJac p result = 
   let partPoint = sub result (size 0) (size 8) in 
@@ -54,95 +54,71 @@ let bufferToJac p result =
   upd result (size 11) (u64 0)
 
 
-(* checks whether the coordinates are valid = 
-   all of them are less than prime 
+(* 
+  checks whether the coordinates are valid = 
+  all of them are less than prime 
 *) 
 
 (* we require the coordinate to be in affine representation of jac coordinate *)
-val isCoordinateValid: p: lbuffer uint64 (size 12) -> Stack bool 
-  (requires fun h -> live h p /\
+val isCoordinateValid: p: point -> Stack bool 
+  (requires fun h -> live h p /\ point_z_as_nat h p == 1)
+  (ensures fun h0 r h1 -> 
+    modifies0 h0 h1  /\ 
     (
-      let z = gsub p (size 8) (size 4) in 
-      as_nat h z == 1
-    )
+      if (point_x_as_nat h0 p < prime256 && point_y_as_nat h0 p < prime256 && point_z_as_nat h0 p < prime256) then r == true else r == false
+    )  
   )
-  (ensures fun h0 r h1 -> modifies0 h0 h1  /\ 
-    (
-      let x = gsub p (size 0) (size 4) in 
-      let y = gsub p (size 4) (size 4) in 
-      let z = gsub p (size 8) (size 4) in 
-      if (as_nat h0 x < prime256 &&  as_nat h0 y < prime256 && as_nat h0 z < prime256) then r == true else r == false
-  )  
-)
 
 let isCoordinateValid p = 
   push_frame();
     let tempBuffer = create (size 4) (u64 0) in 
-    recall_contents prime256_buffer (Lib.Sequence.of_list p256_prime_list);
+      recall_contents prime256_buffer (Lib.Sequence.of_list p256_prime_list);
     let x = sub p (size 0) (size 4) in 
     let y = sub p (size 4) (size 4) in 
-    let z = sub p (size 8) (size 4) in 
-      let h0 = ST.get() in 
-      assert(felem_seq_as_nat (as_seq h0 prime256_buffer) == prime256);
+    
     let carryX = sub4_il x prime256_buffer tempBuffer in
     let carryY = sub4_il y prime256_buffer tempBuffer in 
-    let carryZ = sub4_il z prime256_buffer tempBuffer in 
-      
-      let h1 = ST.get() in 
-      assert(modifies1 tempBuffer h0 h1);
-      assert(if uint_v carryX = 1 then as_nat h0 x < prime256 else True); 
-      assert(if uint_v carryY = 1 then as_nat h0 y < prime256 else True); 
-      assert(if uint_v carryZ = 1 then as_nat h0 z < prime256 else True);
-
+    
     let lessX = eq_u64 carryX (u64 1) in   
     let lessY = eq_u64 carryY (u64 1) in 
-    let lessZ = eq_u64 carryZ (u64 1) in 
 
-    let r = lessX && lessY && lessZ in 
-      assert(r = true ==> as_nat h0 x < prime256 /\ as_nat h0 y < prime256 /\ as_nat h0 z < prime256);
-    pop_frame();
+    let r = lessX && lessY in 
+  pop_frame();
     r  
 
 
-
 inline_for_extraction noextract
-val multByOrder: p: point -> result: point ->  tempBuffer: lbuffer uint64 (size 100) -> Stack unit 
-  (requires fun h -> live h p /\ live h result /\ live h tempBuffer /\
-     as_nat h (gsub p (size 0) (size 4)) < prime256 /\ 
+val multByOrder: result: point ->  p: point -> tempBuffer: lbuffer uint64 (size 100) -> Stack unit 
+  (requires fun h -> 
+    live h result /\ live h p /\ live h tempBuffer /\
+    LowStar.Monotonic.Buffer.all_disjoint [loc result; loc p; loc tempBuffer] /\
+    as_nat h (gsub p (size 0) (size 4)) < prime256 /\ 
     as_nat h (gsub p (size 4) (size 4)) < prime256 /\
-    as_nat h (gsub p (size 8) (size 4)) < prime256 /\
-   LowStar.Monotonic.Buffer.all_disjoint [loc p; loc tempBuffer;loc result]
+    as_nat h (gsub p (size 8) (size 4)) < prime256
   )
-  (ensures fun h0 _ h1 -> modifies (loc p |+| loc result |+| loc tempBuffer) h0 h1 /\
+  (ensures fun h0 _ h1 -> modifies (loc result |+| loc p |+| loc tempBuffer) h0 h1 /\
     (
       let xN, yN, zN = scalar_multiplication prime_p256_order_seq (point_prime_to_coordinates (as_seq h0 p)) in 
       let x3, y3, z3 = point_x_as_nat h1 result, point_y_as_nat h1 result, point_z_as_nat h1 result in 
       x3 == xN /\ y3 == yN /\ z3 == zN 
-) 
-)
+    ) 
+  )
 
-
-let multByOrder p result tempBuffer =
+let multByOrder result p tempBuffer =
   push_frame();
-    let h0 = ST.get() in 
-    recall_contents order_buffer prime_p256_order_seq;
-  scalarMultiplication #IMMUT p result order_buffer tempBuffer;
-    let h2 = ST.get() in 
-    assert(
-    let xN, yN, zN = scalar_multiplication  prime_p256_order_seq (point_prime_to_coordinates (as_seq h0 p)) in 
-    let x3, y3, z3 = point_x_as_nat h2 result, point_y_as_nat h2 result, point_z_as_nat h2 result in 
-    x3 == xN /\ y3 == yN /\ z3 == zN);
+      recall_contents order_buffer prime_p256_order_seq;
+    scalarMultiplication p result order_buffer tempBuffer;
   pop_frame()
 
 
 inline_for_extraction noextract
-val multByOrder2: p: point -> result: point -> tempBuffer: lbuffer uint64 (size 100) -> Stack unit 
+val multByOrder2: result: point ->  p: point -> tempBuffer: lbuffer uint64 (size 100) -> Stack unit 
   (requires fun h -> 
-    live h p /\ live h result /\ live h tempBuffer /\
+    live h result /\ live h p /\ live h tempBuffer /\
+    LowStar.Monotonic.Buffer.all_disjoint [loc p; loc tempBuffer;loc result] /\
     as_nat h (gsub p (size 0) (size 4)) < prime256 /\ 
     as_nat h (gsub p (size 4) (size 4)) < prime256 /\
-    as_nat h (gsub p (size 8) (size 4)) < prime256 /\
-   LowStar.Monotonic.Buffer.all_disjoint [loc p; loc tempBuffer;loc result]
+    as_nat h (gsub p (size 8) (size 4)) < prime256 
   )
   (ensures fun h0 _ h1  -> modifies (loc result |+| loc tempBuffer) h0 h1 /\
     (
@@ -151,11 +127,11 @@ val multByOrder2: p: point -> result: point -> tempBuffer: lbuffer uint64 (size 
       x3 == xN /\ y3 == yN /\ z3 == zN 
 ))
 
-let multByOrder2 p result tempBuffer = 
+let multByOrder2 result p tempBuffer = 
   push_frame();
     let pBuffer = create (size 12) (u64 0) in 
     copy pBuffer p;
-    multByOrder pBuffer result tempBuffer;
+    multByOrder result pBuffer tempBuffer;
   pop_frame()  
     
 
@@ -177,7 +153,7 @@ val isOrderCorrect: p: point -> tempBuffer: lbuffer uint64 (size 100) ->  Stack 
 let isOrderCorrect p tempBuffer = 
   push_frame(); 
     let multResult = create (size 12) (u64 0) in 
-    multByOrder2 p multResult tempBuffer;
+    multByOrder2 multResult p tempBuffer;
     let result = Hacl.Impl.P256.isPointAtInfinity multResult in  
    pop_frame();
    result
