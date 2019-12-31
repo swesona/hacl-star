@@ -31,6 +31,8 @@ Hacl_Impl_ECDSA_P256SHA256_Verification_verifyQValidCurvePoint(
   uint64_t *tempBuffer
 );
 
+bool Hacl_Impl_ECDSA_P256SHA256_Verification_compare_felem_bool(uint64_t *a, uint64_t *b);
+
 bool
 Hacl_Impl_ECDSA_P256SHA256_Verification_ecdsa_verification_core(
   uint64_t *publicKeyBuffer,

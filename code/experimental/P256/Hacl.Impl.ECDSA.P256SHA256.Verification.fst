@@ -172,7 +172,7 @@ Check that {\displaystyle Q_{A}} Q_{A} lies on the curve
 Check that {\displaystyle n\times Q_{A}=O} n\times Q_{A}=O
  *)
  
-val verifyQValidCurvePoint: pubKeyAsPoint: point -> tempBuffer: lbuffer uint64 (size 100) ->  Stack bool
+val verifyQValidCurvePoint: pubKeyAsPoint: point -> tempBuffer: lbuffer uint64 (size 100) -> Stack bool
   (requires fun h -> 
     live h pubKeyAsPoint /\ live h tempBuffer /\
     LowStar.Monotonic.Buffer.all_disjoint [loc pubKeyAsPoint; loc tempBuffer] /\
@@ -242,16 +242,16 @@ val ecdsa_verification_step4: bufferU1: lbuffer uint8 (size 32) -> bufferU2: lbu
   s: felem -> 
   hash: felem -> 
   Stack unit 
-  (requires fun h -> 
-    live h r /\ live h s /\ live h hash /\ live h bufferU1 /\ live h bufferU2 /\ 
-    LowStar.Monotonic.Buffer.all_disjoint [loc r; loc s; loc hash; loc bufferU1; loc bufferU2] /\
-    as_nat h s < prime_p256_order /\ as_nat h hash < prime_p256_order /\ as_nat h r < prime_p256_order 
-  )
-  (ensures fun h0 _ h1 -> 
-    modifies (loc bufferU1 |+| loc bufferU2) h0 h1 /\
-    as_seq h1 bufferU1 == nat_to_bytes_le 32 (pow (as_nat h0 s) (prime_p256_order - 2) * (as_nat h0 hash) % prime_p256_order) /\ 
-    as_seq h1 bufferU2 == nat_to_bytes_le 32 (pow (as_nat h0 s) (prime_p256_order - 2) * (as_nat h0 r) % prime_p256_order)  
-  )
+    (requires fun h -> 
+      live h r /\ live h s /\ live h hash /\ live h bufferU1 /\ live h bufferU2 /\ 
+      LowStar.Monotonic.Buffer.all_disjoint [loc bufferU1; loc bufferU2; loc r; loc s; loc hash] /\
+      as_nat h s < prime_p256_order /\ as_nat h hash < prime_p256_order /\ as_nat h r < prime_p256_order 
+    )
+    (ensures fun h0 _ h1 -> 
+      modifies (loc bufferU1 |+| loc bufferU2) h0 h1 /\
+      as_seq h1 bufferU1 == nat_to_bytes_le 32 (pow (as_nat h0 s) (prime_p256_order - 2) * (as_nat h0 hash) % prime_p256_order) /\ 
+      as_seq h1 bufferU2 == nat_to_bytes_le 32 (pow (as_nat h0 s) (prime_p256_order - 2) * (as_nat h0 r) % prime_p256_order)  
+    )
 
 let ecdsa_verification_step4 bufferU1 bufferU2 r s hash = 
   push_frame();
@@ -278,40 +278,41 @@ let ecdsa_verification_step4 bufferU1 bufferU2 r s hash =
 
 
 inline_for_extraction noextract
-val ecdsa_verification_step5_0: pubKeyAsPoint: point -> u1: lbuffer uint8 (size 32) -> u2: lbuffer uint8 (size 32) -> 
-  tempBuffer: lbuffer uint64 (size 100) -> points: lbuffer uint64 (size 24) ->
-    Stack unit 
-      (requires fun h -> live h pubKeyAsPoint /\ live h u1 /\ live h u2 /\ live h tempBuffer /\ live h points /\
-	LowStar.Monotonic.Buffer.all_disjoint [loc pubKeyAsPoint; loc u1; loc u2; loc points; loc tempBuffer] /\
-	as_nat h (gsub pubKeyAsPoint (size 0) (size 4)) < prime256 /\
-	as_nat h (gsub pubKeyAsPoint (size 4) (size 4)) < prime256 /\
-	as_nat h (gsub pubKeyAsPoint (size 8) (size 4)) < prime256 
-)
-  (ensures fun h0 _ h1 -> modifies (loc pubKeyAsPoint |+| loc  tempBuffer |+| loc points) h0 h1 /\ 
+val ecdsa_verification_step5_0: points: lbuffer uint64 (size 24) -> pubKeyAsPoint: point -> u1: lbuffer uint8 (size 32) -> 
+  u2: lbuffer uint8 (size 32) -> 
+  tempBuffer: lbuffer uint64 (size 100) -> 
+  Stack unit 
+    (requires fun h -> 
+      live h points /\ live h pubKeyAsPoint /\ live h u1 /\ live h u2 /\ live h tempBuffer /\
+      LowStar.Monotonic.Buffer.all_disjoint [loc points; loc pubKeyAsPoint; loc u1; loc u2; loc tempBuffer] /\
+      point_x_as_nat h pubKeyAsPoint < prime256 /\
+      point_y_as_nat h pubKeyAsPoint < prime256 /\
+      point_z_as_nat h pubKeyAsPoint < prime256 
+    )
+  (ensures fun h0 _ h1 ->
+    modifies (loc pubKeyAsPoint |+| loc tempBuffer |+| loc points) h0 h1 /\ 
+    as_nat h1 (gsub points (size 0) (size 4)) < prime256 /\
+    as_nat h1 (gsub points (size 4) (size 4)) < prime256 /\
+    as_nat h1 (gsub points (size 8) (size 4)) < prime256 /\
+    as_nat h1 (gsub points (size 12) (size 4)) < prime256 /\
+    as_nat h1 (gsub points (size 16) (size 4)) < prime256 /\
+    as_nat h1 (gsub points (size 20) (size 4)) < prime256 /\ 
+    (
+      let pointU1 = gsub points (size 0) (size 12) in 
+      let pointU2 = gsub points (size 12) (size 12) in  
   
-    	as_nat h1 (gsub points (size 0) (size 4)) < prime256 /\
-	as_nat h1 (gsub points (size 4) (size 4)) < prime256 /\
-	as_nat h1 (gsub points (size 8) (size 4)) < prime256 /\
-	as_nat h1 (gsub points (size 12) (size 4)) < prime256 /\
-	as_nat h1 (gsub points (size 16) (size 4)) < prime256 /\
-	as_nat h1 (gsub points (size 20) (size 4)) < prime256 /\ 
-  (
-    let pointU1 = gsub points (size 0) (size 12) in 
-    let pointU2 = gsub points (size 12) (size 12) in  
-  
-    let fromDomainPointU1 = fromDomainPoint (point_prime_to_coordinates (as_seq h1 pointU1)) in 
-    let fromDomainPointU2 = fromDomainPoint (point_prime_to_coordinates (as_seq h1 pointU2)) in 
+      let fromDomainPointU1 = fromDomainPoint (point_prime_to_coordinates (as_seq h1 pointU1)) in 
+      let fromDomainPointU2 = fromDomainPoint (point_prime_to_coordinates (as_seq h1 pointU2)) in 
     
-    let basePoint = (0x6B17D1F2E12C4247F8BCE6E563A440F277037D812DEB33A0F4A13945D898C296, 0x4FE342E2FE1A7F9B8EE7EB4A7C0F9E162BCE33576B315ECECBB6406837BF51F5, 1) in 
-    let pointAtInfinity = (0, 0, 0) in 
-    let u1D, _ = montgomery_ladder_spec (as_seq h0 u1) (pointAtInfinity, basePoint) in 
-    let u2D, _ = montgomery_ladder_spec (as_seq h0 u2) (pointAtInfinity, point_prime_to_coordinates (as_seq h0 pubKeyAsPoint)) in 
-    fromDomainPointU1 == u1D /\ fromDomainPointU2 == u2D
+      let basePoint = (0x6B17D1F2E12C4247F8BCE6E563A440F277037D812DEB33A0F4A13945D898C296, 0x4FE342E2FE1A7F9B8EE7EB4A7C0F9E162BCE33576B315ECECBB6406837BF51F5, 1) in 
+      let pointAtInfinity = (0, 0, 0) in 
+      let u1D, _ = montgomery_ladder_spec (as_seq h0 u1) (pointAtInfinity, basePoint) in 
+      let u2D, _ = montgomery_ladder_spec (as_seq h0 u2) (pointAtInfinity, point_prime_to_coordinates (as_seq h0 pubKeyAsPoint)) in 
+      fromDomainPointU1 == u1D /\ fromDomainPointU2 == u2D
+    )
   )
-)
 
-
-let ecdsa_verification_step5_0 pubKeyAsPoint u1 u2 tempBuffer points  = 
+let ecdsa_verification_step5_0 points pubKeyAsPoint u1 u2 tempBuffer = 
     let pointU1G = sub points (size 0) (size 12) in  
     let pointU2Q = sub points (size 12) (size 12) in
     secretToPublicWithoutNorm pointU1G u1 tempBuffer; 
@@ -319,114 +320,83 @@ let ecdsa_verification_step5_0 pubKeyAsPoint u1 u2 tempBuffer points  =
 
 
 inline_for_extraction noextract
-val ecdsa_verification_step5_1: pubKeyAsPoint: point ->  
-  u1: lbuffer uint8 (size 32) ->  
+val ecdsa_verification_step5_1: pointSum: point -> pubKeyAsPoint: point -> u1: lbuffer uint8 (size 32) ->  
   u2: lbuffer uint8 (size 32) -> 
-  pointSum: point -> 
   tempBuffer: lbuffer uint64 (size 100) ->
   Stack unit
-    (requires fun h -> live h pubKeyAsPoint /\ live h u1 /\ live h u2 /\ live h pointSum /\ live h tempBuffer /\
-    LowStar.Monotonic.Buffer.all_disjoint [loc pubKeyAsPoint; loc u1; loc u2; loc pointSum; loc tempBuffer] /\
-    as_nat h (gsub pubKeyAsPoint (size 0) (size 4)) < prime256 /\
-    as_nat h (gsub pubKeyAsPoint (size 4) (size 4)) < prime256 /\
-    as_nat h (gsub pubKeyAsPoint (size 8) (size 4)) < prime256 )
-    (ensures fun h0 _ h1 -> modifies (loc pointSum |+| loc tempBuffer |+| loc pubKeyAsPoint) h0 h1 /\ 
+    (requires fun h -> 
+      live h pointSum /\ live h pubKeyAsPoint /\ live h u1 /\ live h u2 /\ live h tempBuffer /\
+      LowStar.Monotonic.Buffer.all_disjoint [loc pubKeyAsPoint; loc u1; loc u2; loc pointSum; loc tempBuffer] /\
+      point_x_as_nat h pubKeyAsPoint < prime256 /\
+      point_y_as_nat h pubKeyAsPoint < prime256 /\
+      point_z_as_nat h pubKeyAsPoint < prime256
+    )
+    (ensures fun h0 _ h1 -> 
+      modifies (loc pointSum |+| loc tempBuffer |+| loc pubKeyAsPoint) h0 h1 /\ 
       as_nat h1 (gsub pointSum (size 0) (size 4)) < prime256 /\
-      	(
-	  let basePoint = (0x6B17D1F2E12C4247F8BCE6E563A440F277037D812DEB33A0F4A13945D898C296, 0x4FE342E2FE1A7F9B8EE7EB4A7C0F9E162BCE33576B315ECECBB6406837BF51F5, 1) in 
-	  let pointAtInfinity = (0, 0, 0) in 
-	
-	  let u1D, _ = montgomery_ladder_spec (as_seq h0 u1) (pointAtInfinity, basePoint) in 
-	  let u2D, _ = montgomery_ladder_spec (as_seq h0 u2) (pointAtInfinity, point_prime_to_coordinates (as_seq h0 pubKeyAsPoint)) in 
-
-	  let sumD = _point_add u1D u2D in 
-	
-	  let pointNorm = _norm sumD in 
-	  let resultPoint =  point_prime_to_coordinates (as_seq h1 pointSum) in 
-	  pointNorm == resultPoint    
+      (
+	let basePoint = (0x6B17D1F2E12C4247F8BCE6E563A440F277037D812DEB33A0F4A13945D898C296, 0x4FE342E2FE1A7F9B8EE7EB4A7C0F9E162BCE33576B315ECECBB6406837BF51F5, 1) in 
+	let pointAtInfinity = (0, 0, 0) in 
+	let u1D, _ = montgomery_ladder_spec (as_seq h0 u1) (pointAtInfinity, basePoint) in 
+	let u2D, _ = montgomery_ladder_spec (as_seq h0 u2) (pointAtInfinity, point_prime_to_coordinates (as_seq h0 pubKeyAsPoint)) in 
+	let sumD = _point_add u1D u2D in 
+	let pointNorm = _norm sumD in 
+	let resultPoint =  point_prime_to_coordinates (as_seq h1 pointSum) in 
+	pointNorm == resultPoint    
       )
    )   
 
-
-let ecdsa_verification_step5_1 pubKeyAsPoint u1 u2 pointSum tempBuffer = 
+let ecdsa_verification_step5_1 pointSum pubKeyAsPoint u1 u2 tempBuffer = 
   push_frame();
     let points = create (size 24) (u64 0) in
     let buff = sub tempBuffer (size 12) (size 88) in 
-	let h0 = ST.get() in 
-    ecdsa_verification_step5_0 pubKeyAsPoint u1 u2 tempBuffer points; 
-      let h1 = ST.get() in 
-      assert(modifies3 pubKeyAsPoint tempBuffer points h0 h1);
-      modifies3_is_modifies4 pointSum pubKeyAsPoint tempBuffer points h0 h1;
-      assert(modifies4 pointSum pubKeyAsPoint tempBuffer points h0 h1); 
-  
+    ecdsa_verification_step5_0 points pubKeyAsPoint u1 u2 tempBuffer; 
     let pointU1G = sub points (size 0) (size 12) in 
     let pointU2Q = sub points (size 12) (size 12) in 
     point_add pointU1G pointU2Q pointSum buff; 
     norm pointSum pointSum buff;
-      let h2 = ST.get() in 
-      assert(      
-	let basePoint = (0x6B17D1F2E12C4247F8BCE6E563A440F277037D812DEB33A0F4A13945D898C296, 0x4FE342E2FE1A7F9B8EE7EB4A7C0F9E162BCE33576B315ECECBB6406837BF51F5, 1) in 
-	let pointAtInfinity = (0, 0, 0) in 
-	
-	let u1D, _ = montgomery_ladder_spec (as_seq h0 u1) (pointAtInfinity, basePoint) in 
-	let u2D, _ = montgomery_ladder_spec (as_seq h0 u2) (pointAtInfinity, point_prime_to_coordinates (as_seq h0 pubKeyAsPoint)) in 
-
-	let sumD = _point_add u1D u2D in 
-	
-	let pointNorm = _norm sumD in 
-	let resultPoint =  point_prime_to_coordinates (as_seq h2 pointSum) in 
-	pointNorm == resultPoint);
-
-      assert(modifies2 pointSum tempBuffer h1 h2);
-      modifies2_is_modifies4 pubKeyAsPoint points pointSum tempBuffer h1 h2;
-      assert(modifies4 pubKeyAsPoint points pointSum tempBuffer h1 h2);
-      assert(modifies4 pubKeyAsPoint points pointSum tempBuffer h0 h2); 
   pop_frame()
 
 
-
 inline_for_extraction noextract
-val ecdsa_verification_step5: pubKeyAsPoint: point -> 
-  u1: lbuffer uint8 (size 32) ->  
-  u2: lbuffer uint8 (size 32) -> 
+val ecdsa_verification_step5: x: felem -> pubKeyAsPoint: point -> u1: lbuffer uint8 (size 32) -> u2: lbuffer uint8 (size 32) -> 
   tempBuffer: lbuffer uint64 (size 100) -> 
-  x: felem ->  Stack bool
-  (requires fun h -> live h pubKeyAsPoint /\ live h u1 /\ live h u2 /\ live h tempBuffer /\ live h x
-    /\ LowStar.Monotonic.Buffer.all_disjoint [loc pubKeyAsPoint; loc u1; loc u2; loc tempBuffer; loc x] /\
-    as_nat h (gsub pubKeyAsPoint (size 0) (size 4)) < prime256 /\
-    as_nat h (gsub pubKeyAsPoint (size 4) (size 4)) < prime256 /\
-    as_nat h (gsub pubKeyAsPoint (size 8) (size 4)) < prime256 
+  Stack bool
+    (requires fun h -> 
+      live h x /\ live h pubKeyAsPoint /\ live h u1 /\ live h u2 /\ live h tempBuffer /\ 
+      LowStar.Monotonic.Buffer.all_disjoint [loc pubKeyAsPoint; loc u1; loc u2; loc tempBuffer; loc x] /\
+      point_x_as_nat h pubKeyAsPoint < prime256 /\
+      point_y_as_nat h pubKeyAsPoint < prime256 /\
+      point_z_as_nat h pubKeyAsPoint < prime256
+    )
+    (ensures fun h0 state h1 -> 
+      modifies (loc x |+| loc pubKeyAsPoint |+| loc tempBuffer) h0 h1 /\ as_nat h1 x < prime256 /\
+      (
+	let basePoint = (0x6B17D1F2E12C4247F8BCE6E563A440F277037D812DEB33A0F4A13945D898C296, 0x4FE342E2FE1A7F9B8EE7EB4A7C0F9E162BCE33576B315ECECBB6406837BF51F5, 1) in 
+	let pointAtInfinity = (0, 0, 0) in 
+	let u1D, _ = montgomery_ladder_spec (as_seq h0 u1) (pointAtInfinity, basePoint) in 
+	let u2D, _ = montgomery_ladder_spec (as_seq h0 u2) (pointAtInfinity, point_prime_to_coordinates (as_seq h0 pubKeyAsPoint)) in 
+	let sumD = _point_add u1D u2D in 
+	let pointNorm = _norm sumD in 
+	let (xResult, yResult, zResult) = pointNorm in 
+	state == not (Hacl.Spec.P256.isPointAtInfinity pointNorm) /\
+	as_nat h1 x == xResult
+    )
   )
-  (ensures fun h0 state h1 -> modifies (loc x |+| loc pubKeyAsPoint |+| loc tempBuffer) h0 h1 /\ as_nat h1 x < prime256 /\
-    (
-      let basePoint = (0x6B17D1F2E12C4247F8BCE6E563A440F277037D812DEB33A0F4A13945D898C296, 0x4FE342E2FE1A7F9B8EE7EB4A7C0F9E162BCE33576B315ECECBB6406837BF51F5, 1) in 
-      let pointAtInfinity = (0, 0, 0) in 
-	
-      let u1D, _ = montgomery_ladder_spec (as_seq h0 u1) (pointAtInfinity, basePoint) in 
-      let u2D, _ = montgomery_ladder_spec (as_seq h0 u2) (pointAtInfinity, point_prime_to_coordinates (as_seq h0 pubKeyAsPoint)) in 
-      let sumD = _point_add u1D u2D in 
-      let pointNorm = _norm sumD in 
-      let (xResult, yResult, zResult) = pointNorm in 
-      state == not (Hacl.Spec.P256.isPointAtInfinity pointNorm) /\
-      as_nat h1 x == xResult
-  )
-)
 
-let ecdsa_verification_step5 pubKeyAsPoint u1 u2 tempBuffer x = 
+let ecdsa_verification_step5 x pubKeyAsPoint u1 u2 tempBuffer = 
   push_frame();
     let pointSum = create (size 12) (u64 0) in
-      let h0 = ST.get() in 
-    ecdsa_verification_step5_1 pubKeyAsPoint u1 u2 pointSum tempBuffer;
+    ecdsa_verification_step5_1 pointSum pubKeyAsPoint u1 u2 tempBuffer;
     let resultIsPAI = Hacl.Impl.P256.isPointAtInfinity pointSum in 
     let xCoordinateSum = sub pointSum (size 0) (size 4) in 
     copy x xCoordinateSum;
-    pop_frame(); 
+  pop_frame(); 
     not resultIsPAI
 
-
-inline_for_extraction noextract
-val compare_felem_bool:  a: felem -> b: felem -> Stack bool
-  (requires fun h -> live h a /\ live h b ) 
+(* to use with care - not SCA resistant, so used only in verification *)
+val compare_felem_bool: a: felem -> b: felem -> Stack bool
+  (requires fun h -> live h a /\ live h b) 
   (ensures fun h0 r h1 -> modifies0 h0 h1 /\ r == (as_nat h0 a = as_nat h0 b))
 
 let compare_felem_bool a b   = 
@@ -443,120 +413,102 @@ let compare_felem_bool a b   =
   eq_u64 a_0 b_0 && eq_u64 a_1 b_1 && eq_u64 a_2 b_2 && eq_u64 a_3 b_3
 
 
-val ecdsa_verification_core: publicKeyBuffer: point ->   
-  hashAsFelem: felem -> 
-  r: lbuffer uint64 (size 4) ->
+val ecdsa_verification_core: publicKeyPoint: point -> hashAsFelem: felem -> r: lbuffer uint64 (size 4) -> 
   s: lbuffer uint64 (size 4) ->
   mLen: size_t{uint_v mLen < Spec.Hash.Definitions.max_input_length Spec.Hash.Definitions.SHA2_256} ->
   m: lbuffer uint8 mLen -> 
   xBuffer: felem -> 
   tempBuffer: lbuffer uint64 (size 100) -> 
   Stack bool 
-    (requires fun h -> live h publicKeyBuffer /\ live h r /\ live h s /\ live h m /\  live h hashAsFelem /\   
-	       live h xBuffer /\ live h tempBuffer /\ 
-	      as_nat h s < prime_p256_order /\ as_nat h r < prime_p256_order /\
-	          as_nat h (gsub publicKeyBuffer (size 0) (size 4)) < prime256 /\
-		  as_nat h (gsub publicKeyBuffer (size 4) (size 4)) < prime256 /\
-		  as_nat h (gsub publicKeyBuffer (size 8) (size 4)) < prime256 /\
-      LowStar.Monotonic.Buffer.all_disjoint [loc publicKeyBuffer; loc r; loc s; loc m; loc hashAsFelem;  loc xBuffer; loc tempBuffer] )
-    (ensures fun h0 state h1 -> modifies (loc hashAsFelem |+| loc publicKeyBuffer |+| loc tempBuffer |+| loc xBuffer) h0 h1 /\
+    (requires fun h -> 
+      live h publicKeyPoint /\ live h hashAsFelem /\ live h r /\ live h s /\ live h m /\ live h xBuffer /\ live h tempBuffer /\ 
+      LowStar.Monotonic.Buffer.all_disjoint [loc publicKeyPoint; loc r; loc s; loc m; loc hashAsFelem; loc xBuffer; loc tempBuffer] /\
+      as_nat h s < prime_p256_order /\ as_nat h r < prime_p256_order /\
+      point_x_as_nat h publicKeyPoint < prime256 /\
+      point_y_as_nat h publicKeyPoint < prime256 /\
+      point_z_as_nat h publicKeyPoint < prime256
+    )
+    (ensures fun h0 state h1 -> 
+      modifies (loc publicKeyPoint |+| loc hashAsFelem |+| loc xBuffer |+| loc tempBuffer) h0 h1 /\
        (
 	 let hash = Spec.Hash.hash Spec.Hash.Definitions.SHA2_256 (as_seq h0 m) in 
-	 let hashNat = felem_seq_as_nat (Hacl.Spec.ECDSA.changeEndian(Lib.ByteSequence.uints_from_bytes_be hash)) % prime_p256_order in 
-	   let u1 = (pow (as_nat h0 s) (prime_p256_order - 2)  * hashNat) % prime_p256_order in 
-	   let u2 = (pow (as_nat h0 s) (prime_p256_order - 2)  * (as_nat h0 r)) % prime_p256_order in 
-	   let bufferU1 = Lib.ByteSequence.uints_to_bytes_le (nat_as_seq u1) in 
-	   let bufferU2 = Lib.ByteSequence.uints_to_bytes_le (nat_as_seq u2) in 
-
-	   let basePoint = (0x6B17D1F2E12C4247F8BCE6E563A440F277037D812DEB33A0F4A13945D898C296, 0x4FE342E2FE1A7F9B8EE7EB4A7C0F9E162BCE33576B315ECECBB6406837BF51F5, 1) in 
-	   let pointAtInfinity = (0, 0, 0) in 
-	
-	   let u1D, _ = montgomery_ladder_spec bufferU1 (pointAtInfinity, basePoint) in 
-	   let u2D, _ = montgomery_ladder_spec bufferU2 (pointAtInfinity, point_prime_to_coordinates (as_seq h0 publicKeyBuffer)) in 
-	   let sumD = _point_add u1D u2D in 
-	   let pointNorm = _norm sumD in 
-	   let (xResult, yResult, zResult) = pointNorm in 
-	   state == not(Hacl.Spec.P256.isPointAtInfinity pointNorm) /\
-	   as_nat h1 xBuffer == xResult
-    )
-)
+	 let hashNat = nat_from_intseq_le (Hacl.Spec.ECDSA.changeEndian(Lib.ByteSequence.uints_from_bytes_be hash)) % prime_p256_order in 
+	 let u1 = pow (as_nat h0 s) (prime_p256_order - 2)  * hashNat % prime_p256_order in 
+	 let u2 = pow (as_nat h0 s) (prime_p256_order - 2)  * (as_nat h0 r) % prime_p256_order in 
+	 let bufferU1 = nat_to_bytes_le 32 u1 in 
+	 let bufferU2 = nat_to_bytes_le 32 u2 in
+	 
+	 let basePoint = (0x6B17D1F2E12C4247F8BCE6E563A440F277037D812DEB33A0F4A13945D898C296, 0x4FE342E2FE1A7F9B8EE7EB4A7C0F9E162BCE33576B315ECECBB6406837BF51F5, 1) in 
+	 let pointAtInfinity = (0, 0, 0) in 
+	 let u1D, _ = montgomery_ladder_spec bufferU1 (pointAtInfinity, basePoint) in 
+	 let u2D, _ = montgomery_ladder_spec bufferU2 (pointAtInfinity, point_prime_to_coordinates (as_seq h0 publicKeyPoint)) in 
+	 let sumD = _point_add u1D u2D in 
+	 let (xResult, yResult, zResult) = _norm sumD in 
+	 state == not(Hacl.Spec.P256.isPointAtInfinity (xResult, yResult, zResult)) /\
+	 as_nat h1 xBuffer == xResult
+      )
+  )
 
 let ecdsa_verification_core publicKeyBuffer hashAsFelem r s mLen m xBuffer tempBuffer = 
-    push_frame();
-      let tempBufferU8 = create (size 64) (u8 0) in 
-      let bufferU1 =  sub tempBufferU8 (size 0) (size 32) in 
-      let bufferU2 = sub tempBufferU8 (size 32) (size 32) in 
+  push_frame();
+    let tempBufferU8 = create (size 64) (u8 0) in 
+    let bufferU1 =  sub tempBufferU8 (size 0) (size 32) in 
+    let bufferU2 = sub tempBufferU8 (size 32) (size 32) in 
+    ecdsa_verification_step23 hashAsFelem mLen m;
+    ecdsa_verification_step4  bufferU1 bufferU2 r s hashAsFelem;
+    let r = ecdsa_verification_step5 xBuffer publicKeyBuffer bufferU1 bufferU2 tempBuffer in 
+  pop_frame(); 
+    r
 
-   ecdsa_verification_step23 hashAsFelem mLen m;
-   ecdsa_verification_step4  bufferU1 bufferU2 r s hashAsFelem;
-   let r = ecdsa_verification_step5 publicKeyBuffer bufferU1 bufferU2 tempBuffer xBuffer in 
-   pop_frame();
-   r
 
-
-val ecdsa_verification: 
-  pubKey: lbuffer uint64 (size 8)-> 
-  r: lbuffer uint64 (size 4) ->
-  s: lbuffer uint64 (size 4) ->
+val ecdsa_verification: pubKey: lbuffer uint64 (size 8) -> r: lbuffer uint64 (size 4) -> s: lbuffer uint64 (size 4) ->
   mLen: size_t{uint_v mLen < pow2 61} ->
   m: lbuffer uint8 mLen -> 
   Stack bool
-    (requires fun h -> live h pubKey /\ live h r /\ live h s /\ live h m /\
-      LowStar.Monotonic.Buffer.all_disjoint [loc pubKey; loc r; loc s; loc m] )  
-    (ensures fun h0 result h1 -> modifies0 h0 h1 /\
-  (
-    let pubKeyX = as_nat h0 (gsub pubKey (size 0) (size 4)) in 
-    let pubKeyY = as_nat h0 (gsub pubKey (size 4) (size 4)) in 
-    result == ecdsa_verification (pubKeyX, pubKeyY) (as_nat h0 r) (as_nat h0 s) (v mLen) (as_seq h0 m)
+    (requires fun h -> 
+      live h pubKey /\ live h r /\ live h s /\ live h m /\
+      LowStar.Monotonic.Buffer.all_disjoint [loc pubKey; loc r; loc s; loc m]
+    )  
+    (ensures fun h0 result h1 -> 
+      modifies0 h0 h1 /\
+      (
+	let pubKeyX = as_nat h0 (gsub pubKey (size 0) (size 4)) in 
+	let pubKeyY = as_nat h0 (gsub pubKey (size 4) (size 4)) in 
+	result == ecdsa_verification (pubKeyX, pubKeyY) (as_nat h0 r) (as_nat h0 s) (v mLen) (as_seq h0 m)
+      )
     )
-)
-
-#reset-options "--z3refresh --z3rlimit 500"
 
 let ecdsa_verification pubKey r s mLen m = 
   push_frame();
     let tempBufferU64 = create (size 120) (u64 0) in 
-    
     let publicKeyBuffer = sub tempBufferU64 (size 0) (size 12) in 
     let hashAsFelem = sub tempBufferU64 (size 12) (size 4) in 
-    let tempBuffer = sub tempBufferU64 (size 16) (size 100) in 
-
+    let tempBuffer = sub tempBufferU64 (size 16) (size 100) in
     let xBuffer =  sub tempBufferU64 (size 116) (size 4) in 
-      let h0 = ST.get() in 
-
+    
     bufferToJac pubKey publicKeyBuffer;
     let publicKeyCorrect = verifyQValidCurvePoint publicKeyBuffer tempBuffer in
-    if publicKeyCorrect = false then   begin  pop_frame(); false end else 
-    let step1 = ecdsa_verification_step1 r s in  if step1 = false then begin pop_frame(); false  end 
+    if publicKeyCorrect = false then   
+      begin  
+	pop_frame(); false 
+      end 
     else 
-      let state = ecdsa_verification_core publicKeyBuffer hashAsFelem r s mLen m xBuffer tempBuffer in 
-      let h2 = ST.get() in 
-      assert( 
-	  let pubKeyX = as_nat h0 (gsub pubKey (size 0) (size 4)) in 
-	  let pubKeyY = as_nat h0 (gsub pubKey (size 4) (size 4)) in 
-	  let pointJac = toJacobianCoordinates (pubKeyX, pubKeyY) in 
-	 let hash = Spec.Hash.hash Spec.Hash.Definitions.SHA2_256 (as_seq h0 m) in 
-	 let hashNat = felem_seq_as_nat (Hacl.Spec.ECDSA.changeEndian(Lib.ByteSequence.uints_from_bytes_be hash)) % prime_p256_order in 
-	   let u1 = (pow (as_nat h0 s) (prime_p256_order - 2)  * hashNat) % prime_p256_order in 
-	   let u2 = (pow (as_nat h0 s) (prime_p256_order - 2)  * (as_nat h0 r)) % prime_p256_order in 
-	   let bufferU1 = Lib.ByteSequence.uints_to_bytes_le (nat_as_seq u1) in 
-	   let bufferU2 = Lib.ByteSequence.uints_to_bytes_le (nat_as_seq u2) in 
-
-	   let basePoint = (0x6B17D1F2E12C4247F8BCE6E563A440F277037D812DEB33A0F4A13945D898C296, 0x4FE342E2FE1A7F9B8EE7EB4A7C0F9E162BCE33576B315ECECBB6406837BF51F5, 1) in 
-	   let pointAtInfinity = (0, 0, 0) in 
-	
-	   let u1D, _ = montgomery_ladder_spec bufferU1 (pointAtInfinity, basePoint) in 
-	   let u2D, _ = montgomery_ladder_spec bufferU2 (pointAtInfinity, pointJac) in 
-	   let sumD = _point_add u1D u2D in 
-	   let pointNorm = _norm sumD in 
-	   let (xResult, yResult, zResult) = pointNorm in 
-	   state == not(Hacl.Spec.P256.isPointAtInfinity pointNorm) /\
-	   as_nat h2 xBuffer == xResult); 
-      if state = false then begin pop_frame(); false end else
-      begin 
-      let result = compare_felem_bool xBuffer r in 
-      pop_frame();
-      result
-      end
+      let step1 = ecdsa_verification_step1 r s in  
+      if step1 = false then 
+	begin 
+	  pop_frame(); false 
+	end 
+      else 
+	let state = ecdsa_verification_core publicKeyBuffer hashAsFelem r s mLen m xBuffer tempBuffer in 
+	if state = false then 
+	  begin 
+	    pop_frame(); false 
+	  end 
+	else
+	  begin 
+	    let result = compare_felem_bool xBuffer r in 
+	    pop_frame();
+	    result
+	  end
     
    

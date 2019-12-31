@@ -78,6 +78,19 @@ Hacl_Impl_ECDSA_P256SHA256_Verification_verifyQValidCurvePoint(
   }
 }
 
+bool Hacl_Impl_ECDSA_P256SHA256_Verification_compare_felem_bool(uint64_t *a, uint64_t *b)
+{
+  uint64_t a_0 = a[0U];
+  uint64_t a_1 = a[1U];
+  uint64_t a_2 = a[2U];
+  uint64_t a_3 = a[3U];
+  uint64_t b_0 = b[0U];
+  uint64_t b_1 = b[1U];
+  uint64_t b_2 = b[2U];
+  uint64_t b_3 = b[3U];
+  return a_0 == b_0 && a_1 == b_1 && a_2 == b_2 && a_3 == b_3;
+}
+
 bool
 Hacl_Impl_ECDSA_P256SHA256_Verification_ecdsa_verification_core(
   uint64_t *publicKeyBuffer,
@@ -186,15 +199,7 @@ Hacl_Impl_ECDSA_P256SHA256_Verification_ecdsa_verification(
       }
       else
       {
-        uint64_t a_0 = xBuffer[0U];
-        uint64_t a_1 = xBuffer[1U];
-        uint64_t a_2 = xBuffer[2U];
-        uint64_t a_3 = xBuffer[3U];
-        uint64_t b_0 = r[0U];
-        uint64_t b_1 = r[1U];
-        uint64_t b_2 = r[2U];
-        uint64_t b_3 = r[3U];
-        bool result = a_0 == b_0 && a_1 == b_1 && a_2 == b_2 && a_3 == b_3;
+        bool result = Hacl_Impl_ECDSA_P256SHA256_Verification_compare_felem_bool(xBuffer, r);
         ite = result;
       }
     }
