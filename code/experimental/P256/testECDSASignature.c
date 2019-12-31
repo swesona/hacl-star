@@ -246,7 +246,7 @@ void test0()
         expectedS[0] = 0x03;
           
 
-    bool flag = Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_nist_compliant(m, privateKey, k, result);
+    bool flag = Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_nist_compliant(result, m, privateKey, k);
     
     bool flagCorrectR = true;
     for (int i = 0; i < 32; i++)
@@ -444,7 +444,7 @@ void test1()
         expectedS[0] = 0x32;
 
 
-    bool flag = Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_nist_compliant(m, privateKey, k, result);
+    bool flag = Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_nist_compliant(result, m, privateKey, k);
     
     bool flagCorrectR = true;
     for (int i = 0; i < 32; i++)
@@ -641,7 +641,7 @@ void test2()
         expectedS[0] = 0x96;
 
 
-    bool flag = Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_nist_compliant(m, privateKey, k, result);
+    bool flag = Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_nist_compliant(result, m, privateKey, k);
     
     bool flagCorrectR = true;
     for (int i = 0; i < 32; i++)
@@ -833,7 +833,7 @@ void test3()
         expectedS[0] = 0x89;
 
 
-    bool flag = Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_nist_compliant(m, privateKey, k, result);
+    bool flag = Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_nist_compliant(result, m, privateKey, k);
     
     bool flagCorrectR = true;
     for (int i = 0; i < 32; i++)
@@ -1028,7 +1028,7 @@ void test4()
         expectedS[1] = 0xd2;
         expectedS[0] = 0x9c;
 
-    bool flag = Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_nist_compliant(m, privateKey, k, result);
+    bool flag = Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_nist_compliant(result, m, privateKey, k);
     
     bool flagCorrectR = true;
     for (int i = 0; i < 32; i++)
@@ -1224,7 +1224,7 @@ void test5()
         expectedS[0] = 0xcb;
 
 
-    bool flag = Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_nist_compliant(m, privateKey, k, result);
+    bool flag = Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_nist_compliant(result, m, privateKey, k);
     
     bool flagCorrectR = true;
     for (int i = 0; i < 32; i++)
@@ -1419,7 +1419,7 @@ void test6()
 
 
 
-    bool flag = Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_nist_compliant(m, privateKey, k, result);
+    bool flag = Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_nist_compliant(result, m, privateKey, k);
     
     bool flagCorrectR = true;
     for (int i = 0; i < 32; i++)
@@ -1616,7 +1616,7 @@ void test7()
         expectedS[0] = 0x9f;
 
 
-    bool flag = Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_nist_compliant(m, privateKey, k, result);
+    bool flag = Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_nist_compliant(result, m, privateKey, k);
     
     bool flagCorrectR = true;
     for (int i = 0; i < 32; i++)
@@ -1812,7 +1812,7 @@ void test8()
         expectedS[1] = 0x31;
         expectedS[0] = 0x99;
 
-    bool flag = Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_nist_compliant(m, privateKey, k, result);
+    bool flag = Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_nist_compliant(result, m, privateKey, k);
     
     bool flagCorrectR = true;
     for (int i = 0; i < 32; i++)
@@ -2009,7 +2009,7 @@ void test9()
         expectedS[0] = 0x30;
 
 
-    bool flag = Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_nist_compliant(m, privateKey, k, result);
+    bool flag = Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_nist_compliant(result, m, privateKey, k);
     
     bool flagCorrectR = true;
     for (int i = 0; i < 32; i++)

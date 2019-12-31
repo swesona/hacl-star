@@ -123,12 +123,12 @@ Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_nist_compliant(
 
 bool
 Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_core(
+  uint64_t *r,
+  uint64_t *s1,
   uint32_t mLen,
   uint8_t *m,
   uint64_t *privKeyAsFelem,
-  uint8_t *k,
-  uint64_t *r,
-  uint64_t *s1
+  uint8_t *k
 )
 {
   uint64_t hashAsFelem[4U] = { 0U };
@@ -160,11 +160,11 @@ Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_core(
 
 bool
 Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature(
+  uint8_t *result,
   uint32_t mLen,
   uint8_t *m,
   uint8_t *privKey,
-  uint8_t *k,
-  uint8_t *result
+  uint8_t *k
 )
 {
   uint64_t privKeyAsFelem[4U] = { 0U };
@@ -175,12 +175,12 @@ Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature(
   bool flag;
   Hacl_Impl_ECDSA_P256SHA256_Common_toUint64(privKey, privKeyAsFelem);
   flag =
-    Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_core(mLen,
+    Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_core(r,
+      s1,
+      mLen,
       m,
       privKeyAsFelem,
-      k,
-      r,
-      s1);
+      k);
   Hacl_Impl_ECDSA_P256SHA256_Common_toUint8(r, resultR);
   Hacl_Impl_ECDSA_P256SHA256_Common_toUint8(s1, resultS);
   return flag;

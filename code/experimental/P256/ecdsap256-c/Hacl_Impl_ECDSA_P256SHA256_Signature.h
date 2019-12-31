@@ -61,21 +61,21 @@ Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_nist_compliant(
 
 bool
 Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_core(
+  uint64_t *r,
+  uint64_t *s1,
   uint32_t mLen,
   uint8_t *m,
   uint64_t *privKeyAsFelem,
-  uint8_t *k,
-  uint64_t *r,
-  uint64_t *s1
+  uint8_t *k
 );
 
 bool
 Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature(
+  uint8_t *result,
   uint32_t mLen,
   uint8_t *m,
   uint8_t *privKey,
-  uint8_t *k,
-  uint8_t *result
+  uint8_t *k
 );
 
 #define __Hacl_Impl_ECDSA_P256SHA256_Signature_H_DEFINED
