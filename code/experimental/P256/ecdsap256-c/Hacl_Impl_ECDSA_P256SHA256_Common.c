@@ -7,7 +7,7 @@
 
 #include "Hacl_Impl_ECDSA_P256SHA256_Common.h"
 
-static uint64_t
+uint64_t
 Hacl_Impl_ECDSA_MontgomeryMultiplication_prime256order_buffer[4U] =
   {
     (uint64_t)17562291160714782033U,
@@ -242,27 +242,5 @@ void Hacl_Impl_ECDSA_P256SHA256_Common_toUint8(uint64_t *i, uint8_t *o)
   {
     store64_le(o + i0 * (uint32_t)8U, i[i0]);
   }
-}
-
-bool Hacl_Impl_ECDSA_P256SHA256_Common_isMoreThanZeroLessThanOrderMinusOne(uint64_t *f)
-{
-  uint64_t tempBuffer[4U] = { 0U };
-  uint64_t
-  carry =
-    Hacl_Impl_LowLevel_sub4_il(f,
-      Hacl_Impl_ECDSA_MontgomeryMultiplication_prime256order_buffer,
-      tempBuffer);
-  bool less = carry == (uint64_t)1U;
-  uint64_t f0 = f[0U];
-  uint64_t f1 = f[1U];
-  uint64_t f2 = f[2U];
-  uint64_t f3 = f[3U];
-  bool z0_zero = f0 == (uint64_t)0U;
-  bool z1_zero = f1 == (uint64_t)0U;
-  bool z2_zero = f2 == (uint64_t)0U;
-  bool z3_zero = f3 == (uint64_t)0U;
-  bool more = z0_zero && z1_zero && z2_zero && z3_zero;
-  bool result = less && !more;
-  return result;
 }
 

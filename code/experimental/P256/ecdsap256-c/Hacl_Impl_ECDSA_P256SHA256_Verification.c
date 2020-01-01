@@ -17,6 +17,28 @@ void Hacl_Impl_ECDSA_P256SHA256_Verification_bufferToJac(uint64_t *p, uint64_t *
   result[11U] = (uint64_t)0U;
 }
 
+bool Hacl_Impl_ECDSA_P256SHA256_Verification_isMoreThanZeroLessThanOrderMinusOne(uint64_t *f)
+{
+  uint64_t tempBuffer[4U] = { 0U };
+  uint64_t
+  carry =
+    Hacl_Impl_LowLevel_sub4_il(f,
+      Hacl_Impl_ECDSA_MontgomeryMultiplication_prime256order_buffer,
+      tempBuffer);
+  bool less = carry == (uint64_t)1U;
+  uint64_t f0 = f[0U];
+  uint64_t f1 = f[1U];
+  uint64_t f2 = f[2U];
+  uint64_t f3 = f[3U];
+  bool z0_zero = f0 == (uint64_t)0U;
+  bool z1_zero = f1 == (uint64_t)0U;
+  bool z2_zero = f2 == (uint64_t)0U;
+  bool z3_zero = f3 == (uint64_t)0U;
+  bool more = z0_zero && z1_zero && z2_zero && z3_zero;
+  bool result = less && !more;
+  return result;
+}
+
 bool Hacl_Impl_ECDSA_P256SHA256_Verification_isCoordinateValid(uint64_t *p)
 {
   uint64_t tempBuffer[4U] = { 0U };
@@ -174,8 +196,10 @@ Hacl_Impl_ECDSA_P256SHA256_Verification_ecdsa_verification(
   }
   else
   {
-    bool isRCorrect = Hacl_Impl_ECDSA_P256SHA256_Common_isMoreThanZeroLessThanOrderMinusOne(r);
-    bool isSCorrect = Hacl_Impl_ECDSA_P256SHA256_Common_isMoreThanZeroLessThanOrderMinusOne(s1);
+    bool
+    isRCorrect = Hacl_Impl_ECDSA_P256SHA256_Verification_isMoreThanZeroLessThanOrderMinusOne(r);
+    bool
+    isSCorrect = Hacl_Impl_ECDSA_P256SHA256_Verification_isMoreThanZeroLessThanOrderMinusOne(s1);
     bool step1 = isRCorrect && isSCorrect;
     if (step1 == false)
     {
@@ -205,5 +229,35 @@ Hacl_Impl_ECDSA_P256SHA256_Verification_ecdsa_verification(
     }
   }
   return ite;
+}
+
+bool
+Hacl_Impl_ECDSA_P256SHA256_Verification_ecdsa_verification_u8(
+  uint8_t *pubKey,
+  uint8_t *r,
+  uint8_t *s1,
+  uint32_t mLen,
+  uint8_t *m
+)
+{
+  uint64_t publicKeyAsFelem[8U] = { 0U };
+  uint64_t *publicKeyFelemX = publicKeyAsFelem;
+  uint64_t *publicKeyFelemY = publicKeyAsFelem + (uint32_t)4U;
+  uint64_t rAsFelem[4U] = { 0U };
+  uint64_t sAsFelem[4U] = { 0U };
+  uint8_t *pubKeyX = pubKey;
+  uint8_t *pubKeyY = pubKey + (uint32_t)32U;
+  bool result;
+  Hacl_Impl_ECDSA_P256SHA256_Common_toUint64(pubKeyX, publicKeyFelemX);
+  Hacl_Impl_ECDSA_P256SHA256_Common_toUint64(pubKeyY, publicKeyFelemY);
+  Hacl_Impl_ECDSA_P256SHA256_Common_toUint64(r, rAsFelem);
+  Hacl_Impl_ECDSA_P256SHA256_Common_toUint64(s1, sAsFelem);
+  result =
+    Hacl_Impl_ECDSA_P256SHA256_Verification_ecdsa_verification(publicKeyAsFelem,
+      rAsFelem,
+      sAsFelem,
+      mLen,
+      m);
+  return result;
 }
 

@@ -42,5 +42,14 @@ Hacl_Impl_ECDSA_ecdsa_p256_sha2_verify(
   uint64_t *s1
 );
 
+bool
+Hacl_Impl_ECDSA_ecdsa_p256_sha2_verify_u8(
+  uint8_t *pubKey,
+  uint8_t *r,
+  uint8_t *s1,
+  uint32_t mLen,
+  uint8_t *m
+);
+
 #define __Hacl_Impl_ECDSA_H_DEFINED
 #endif

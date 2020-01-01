@@ -16,6 +16,8 @@
 #include "c/Lib_PrintBuffer.h"
 #include "FStar_UInt_8_16_32_64.h"
 
+extern uint64_t Hacl_Impl_ECDSA_MontgomeryMultiplication_prime256order_buffer[4U];
+
 extern uint8_t Hacl_Impl_ECDSA_MontgomeryMultiplication_order_inverse_buffer[32U];
 
 extern uint8_t Hacl_Impl_ECDSA_MontgomeryMultiplication_order_buffer[32U];
@@ -47,8 +49,6 @@ void Hacl_Impl_ECDSA_P256SHA256_Common_toUint64ChangeEndian(uint8_t *i, uint64_t
 void Hacl_Impl_ECDSA_P256SHA256_Common_toUint64(uint8_t *i, uint64_t *o);
 
 void Hacl_Impl_ECDSA_P256SHA256_Common_toUint8(uint64_t *i, uint8_t *o);
-
-bool Hacl_Impl_ECDSA_P256SHA256_Common_isMoreThanZeroLessThanOrderMinusOne(uint64_t *f);
 
 #define __Hacl_Impl_ECDSA_P256SHA256_Common_H_DEFINED
 #endif

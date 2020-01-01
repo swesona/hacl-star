@@ -103,3 +103,23 @@ val ecdsa_p256_sha2_verify: mLen: size_t{uint_v mLen < pow2 61} ->  m: lbuffer u
     )
 
 let ecdsa_p256_sha2_verify mLen m pubKey r s = ecdsa_verification pubKey r s mLen m
+
+val ecdsa_p256_sha2_verify_u8: pubKey: lbuffer uint8 (size 64) -> r: lbuffer uint8 (size 32) -> s: lbuffer uint8 (size 32) -> 
+  mLen: size_t{uint_v mLen < pow2 61} ->
+  m: lbuffer uint8 mLen -> 
+  Stack bool
+      (requires fun h -> 
+	live h pubKey /\ live h r /\ live h s /\ live h m /\
+	LowStar.Monotonic.Buffer.all_disjoint [loc pubKey; loc r; loc s; loc m]
+      )  
+    (ensures fun h0 result h1 -> modifies0 h0 h1 /\ 
+      (
+	let publicKeyX =  nat_from_bytes_le (as_seq h1 (gsub pubKey (size 0) (size 32))) in 
+	let publicKeyY =  nat_from_bytes_le (as_seq h1 (gsub pubKey (size 32) (size 32))) in 
+	let r = nat_from_bytes_le (as_seq h1 r) in 
+	let s = nat_from_bytes_le (as_seq h1 s) in 
+	result == Hacl.Spec.ECDSA.ecdsa_verification (publicKeyX, publicKeyY) r s (v mLen) (as_seq h0 m)
+    )
+  )
+
+let ecdsa_p256_sha2_verify_u8 pubKey r s mLen m = ecdsa_verification_u8 pubKey r s mLen m

@@ -46,3 +46,15 @@ Hacl_Impl_ECDSA_ecdsa_p256_sha2_verify(
   return Hacl_Impl_ECDSA_P256SHA256_Verification_ecdsa_verification(pubKey, r, s1, mLen, m);
 }
 
+bool
+Hacl_Impl_ECDSA_ecdsa_p256_sha2_verify_u8(
+  uint8_t *pubKey,
+  uint8_t *r,
+  uint8_t *s1,
+  uint32_t mLen,
+  uint8_t *m
+)
+{
+  return Hacl_Impl_ECDSA_P256SHA256_Verification_ecdsa_verification_u8(pubKey, r, s1, mLen, m);
+}
+

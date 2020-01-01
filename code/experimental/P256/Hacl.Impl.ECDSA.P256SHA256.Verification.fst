@@ -60,6 +60,30 @@ let bufferToJac p result =
   all of them are less than prime 
 *) 
 
+
+(* checks whether the intefer f is between 1 and (n- 1) (incl).  *)
+(* [1, n - 1] <==> a > 0 /\ a < n) *)
+
+val isMoreThanZeroLessThanOrderMinusOne: f: felem -> Stack bool
+  (requires fun h -> live h f)
+  (ensures fun h0 result h1 -> modifies0 h0 h1 /\
+    (
+      if as_nat h0 f > 0 && as_nat h0 f < prime_p256_order then result == true else result == false
+    )  
+  )
+
+let isMoreThanZeroLessThanOrderMinusOne f = 
+  push_frame();
+    let tempBuffer = create (size 4) (u64 0) in 
+        recall_contents prime256order_buffer (Lib.Sequence.of_list p256_order_prime_list);
+    let carry = sub4_il f prime256order_buffer tempBuffer in  
+    let less = eq_u64 carry (u64 1) in
+    let more = equalZeroBuffer f in 
+    let result = less && not more in 
+  pop_frame();  
+    result
+
+
 (* we require the coordinate to be in affine representation of jac coordinate *)
 val isCoordinateValid: p: point -> Stack bool 
   (requires fun h -> live h p /\ point_z_as_nat h p == 1)
@@ -474,7 +498,7 @@ val ecdsa_verification: pubKey: lbuffer uint64 (size 8) -> r: lbuffer uint64 (si
       (
 	let pubKeyX = as_nat h0 (gsub pubKey (size 0) (size 4)) in 
 	let pubKeyY = as_nat h0 (gsub pubKey (size 4) (size 4)) in 
-	result == ecdsa_verification (pubKeyX, pubKeyY) (as_nat h0 r) (as_nat h0 s) (v mLen) (as_seq h0 m)
+	result == Hacl.Spec.ECDSA.ecdsa_verification (pubKeyX, pubKeyY) (as_nat h0 r) (as_nat h0 s) (v mLen) (as_seq h0 m)
       )
     )
 
@@ -512,3 +536,52 @@ let ecdsa_verification pubKey r s mLen m =
 	  end
     
    
+val ecdsa_verification_u8: pubKey: lbuffer uint8 (size 64) -> r: lbuffer uint8 (size 32) -> s: lbuffer uint8 (size 32) -> 
+  mLen: size_t{uint_v mLen < pow2 61} ->
+  m: lbuffer uint8 mLen -> 
+  Stack bool
+      (requires fun h -> 
+	live h pubKey /\ live h r /\ live h s /\ live h m /\
+	LowStar.Monotonic.Buffer.all_disjoint [loc pubKey; loc r; loc s; loc m]
+      )  
+    (ensures fun h0 result h1 -> modifies0 h0 h1 /\ 
+      (
+	let publicKeyX =  nat_from_bytes_le (as_seq h1 (gsub pubKey (size 0) (size 32))) in 
+	let publicKeyY =  nat_from_bytes_le (as_seq h1 (gsub pubKey (size 32) (size 32))) in 
+	let r = nat_from_bytes_le (as_seq h1 r) in 
+	let s = nat_from_bytes_le (as_seq h1 s) in 
+	result == Hacl.Spec.ECDSA.ecdsa_verification (publicKeyX, publicKeyY) r s (v mLen) (as_seq h0 m)
+    )
+  )
+
+let ecdsa_verification_u8 pubKey r s mLen m = 
+  push_frame();
+  let h0 = ST.get() in 
+    let publicKeyAsFelem = create (size 8) (u64 0) in
+      let publicKeyFelemX = sub publicKeyAsFelem (size 0) (size 4) in 
+      let publicKeyFelemY = sub publicKeyAsFelem (size 4) (size 4) in 
+    let rAsFelem = create (size 4) (u64 0) in 
+    let sAsFelem = create (size 4) (u64 0) in 
+      let pubKeyX = sub pubKey (size 0) (size 32) in
+      let pubKeyY = sub pubKey (size 32) (size 32) in 
+      
+    toUint64 pubKeyX publicKeyFelemX;
+    toUint64 pubKeyY publicKeyFelemY;
+   
+    toUint64 r rAsFelem;
+    toUint64 s sAsFelem;
+
+  let h1 = ST.get() in 
+      lemma_core_0 publicKeyFelemX h1;
+      uints_from_bytes_le_nat_lemma #U64 #SEC #4 (as_seq h1 pubKeyX);  
+      lemma_core_0 publicKeyFelemY h1;
+      uints_from_bytes_le_nat_lemma #U64 #SEC #4 (as_seq h1 pubKeyY);
+
+      lemma_core_0 rAsFelem h1;
+      uints_from_bytes_le_nat_lemma #U64 #SEC #4 (as_seq h1 r);
+      lemma_core_0 sAsFelem h1;
+      uints_from_bytes_le_nat_lemma #U64 #SEC #4 (as_seq h1 s);
+      
+    let result = ecdsa_verification publicKeyAsFelem rAsFelem sAsFelem mLen m in 
+  pop_frame();
+    result

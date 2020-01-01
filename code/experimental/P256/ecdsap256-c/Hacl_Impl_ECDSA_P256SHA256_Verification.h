@@ -20,6 +20,8 @@
 
 void Hacl_Impl_ECDSA_P256SHA256_Verification_bufferToJac(uint64_t *p, uint64_t *result);
 
+bool Hacl_Impl_ECDSA_P256SHA256_Verification_isMoreThanZeroLessThanOrderMinusOne(uint64_t *f);
+
 bool Hacl_Impl_ECDSA_P256SHA256_Verification_isCoordinateValid(uint64_t *p);
 
 bool Hacl_Impl_ECDSA_P256SHA256_Verification_isOrderCorrect(uint64_t *p, uint64_t *tempBuffer);
@@ -49,6 +51,15 @@ Hacl_Impl_ECDSA_P256SHA256_Verification_ecdsa_verification(
   uint64_t *pubKey,
   uint64_t *r,
   uint64_t *s1,
+  uint32_t mLen,
+  uint8_t *m
+);
+
+bool
+Hacl_Impl_ECDSA_P256SHA256_Verification_ecdsa_verification_u8(
+  uint8_t *pubKey,
+  uint8_t *r,
+  uint8_t *s1,
   uint32_t mLen,
   uint8_t *m
 );

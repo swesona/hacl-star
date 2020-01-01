@@ -88,29 +88,6 @@ let equalZeroBuffer f =
     z0_zero && z1_zero && z2_zero && z3_zero
   
 
-(* checks whether the intefer f is between 1 and (n- 1) (incl).  *)
-(* [1, n - 1] <==> a > 0 /\ a < n) *)
-
-val isMoreThanZeroLessThanOrderMinusOne: f: felem -> Stack bool
-  (requires fun h -> live h f)
-  (ensures fun h0 result h1 -> modifies0 h0 h1 /\
-    (
-      if as_nat h0 f > 0 && as_nat h0 f < prime_p256_order then result == true else result == false
-    )  
-  )
-
-let isMoreThanZeroLessThanOrderMinusOne f = 
-  push_frame();
-    let tempBuffer = create (size 4) (u64 0) in 
-        recall_contents prime256order_buffer (Lib.Sequence.of_list p256_order_prime_list);
-    let carry = sub4_il f prime256order_buffer tempBuffer in  
-    let less = eq_u64 carry (u64 1) in
-    let more = equalZeroBuffer f in 
-    let result = less && not more in 
-  pop_frame();  
-    result
-
-
 val lemma_core_0: a: lbuffer uint64 (size 4) -> h: mem -> Lemma (nat_from_intseq_le (as_seq h a) == as_nat h a)
 
 let lemma_core_0 a h = 
