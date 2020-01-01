@@ -42,11 +42,7 @@ FSTAR = $(FSTAR_HOME)/bin/fstar.exe $(FSTAR_FLAGS)
 
 ENABLE_HINTS = --use_hints --use_hint_hashes --record_hints --query_stats
 
-#ROOTS = Hacl.Impl.P256.fst
-#ROOTS = Hacl.Impl.ECDSA.P256SHA256.Signature.fst
-ROOTS = Hacl.Impl.ECDSA.P256SHA256.Verification.fst
-#ROOTS = Hacl.Impl.MM.Exponent.fst
-#ROOTS = Hacl.Test.CSHAKE.fst
+ROOTS = Hacl.Impl.ECDSA.fst
 
 .PRECIOUS: %.krml
 
@@ -92,6 +88,7 @@ $(GENERATED_DIR)/Makefile.include: $(ALL_KRML_FILES) | .depend
 	-bundle 'C=C.Endianness' \
 	-bundle 'Hacl.Hash.SHA2=Hacl.Hash.*,Spec.Hash.*' \
 	-bundle 'Hacl.Impl.P256=Hacl.Impl.P256.Arithmetics,Hacl.Impl.P256.PointDouble,Hacl.Impl.P256.PointAdd,Hacl.Impl.P256,Hacl.Impl.P256.MontgomeryMultiplication,Hacl.Impl.P256.LowLevel,Hacl.Impl.LowLevel,Hacl.Impl.SolinasReduction,Hacl.Spec.P256.*,Hacl.Spec.Curve25519.*,Hacl.Impl.Curve25519.*' \
+	-bundle 'Hacl.Impl.ECDSA.P256SHA256.Common=Hacl.Impl.ECDSA.MontgomeryMultiplication,Hacl.Impl.ECDSA.Exponent,Hacl.Impl.ECDSA.P256SHA256.Common' \
 	-library 'C,FStar' \
 	-drop 'LowStar,Spec,Prims,Lib,C.Loops.*,Hacl.Spec.P256.Lemmas,Hacl.Spec.P256,Hacl.Spec.ECDSA,Hacl.Spec.Ladder' \
 	-add-include '"c/Lib_PrintBuffer.h"' \
@@ -125,7 +122,7 @@ ALL_GENERATED_FILES = $(addprefix $(GENERATED_DIR)/,$(ALL_OUR_FILES))
 ALL_SOURCES = \
   $(ALL_GENERATED_FILES) \
   $(HACL_HOME)/lib/c/Lib_PrintBuffer.c \
-  testECDSAVerification.c
+  testECDSA.c
 
 ALL_OBJS = $(patsubst %.c,%.o,$(ALL_SOURCES))
 

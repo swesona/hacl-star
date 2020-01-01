@@ -54,20 +54,8 @@ void print_uu(uint64_t* a)
    printf("\n");
 }
 
-void printfb(bool result)
-{
-  if (result == 0)
-    printf("%s\n", "false");
-  else if (result == 1)
-    printf("%s\n", "true");
-  else
-    printf("%s\n", "magic");  
-}
 
-
-
-
-void test4()
+void testEcdsaVerification4()
    {
       uint8_t* m = (uint8_t *) malloc (sizeof (uint8_t) * 128);
 m[0] = 0x06;
@@ -234,7 +222,7 @@ m[127] = 0x0e;
         printf("%s\n", "Test4: failed");
 }
 
-void test1()
+void testEcdsaVerification1()
    {
       uint8_t* m = (uint8_t *) malloc (sizeof (uint8_t) * 128);
       m[0] = 0xe1;
@@ -410,7 +398,7 @@ S = a3e81e59311cdfff2d4784949f7a2cb50ba6c3a91fa54710568e61aca3e847c6
 Result = F (3 - S changed)
 */
 
-void test2()
+void testEcdsaVerification2()
    {
       uint8_t* m = (uint8_t *) malloc (sizeof (uint8_t) * 128);
       m[0] = 0xe4;
@@ -577,7 +565,7 @@ void test2()
         printf("%s\n", "Test1: failed");
 }
 
-void test3()
+void testEcdsaVerification3()
    {
       uint8_t* m = (uint8_t *) malloc (sizeof (uint8_t) * 128);
       m[0] = 0x73;
@@ -747,7 +735,7 @@ void test3()
 }
 
 
-void test5()
+void testEcdsaVerification5()
    {
       uint8_t* m = (uint8_t *) malloc (sizeof (uint8_t) * 128);
 m[0] = 0x60;
@@ -915,14 +903,3 @@ m[127] = 0x84;
         printf("%s\n", "Test5: failed");
 }
 
-
-
-
-int main()
-{
-   test1();
-   test2();
-   test3();
-   test4();
-   test5();
-}
