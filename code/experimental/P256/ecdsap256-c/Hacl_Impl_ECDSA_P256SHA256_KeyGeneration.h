@@ -6,63 +6,17 @@
  */
 
 #include "kremlib.h"
-#ifndef __Hacl_Hash_SHA2_H
-#define __Hacl_Hash_SHA2_H
+#ifndef __Hacl_Impl_ECDSA_P256SHA256_KeyGeneration_H
+#define __Hacl_Impl_ECDSA_P256SHA256_KeyGeneration_H
 
-#include "C.h"
-#include "FStar.h"
+#include "Hacl_Impl_P256.h"
+#include "Hacl_Impl_ECDSA_P256SHA256_Common.h"
 #include "kremlib.h"
 #include "FStar_UInt_8_16_32_64.h"
 #include "c/Lib_PrintBuffer.h"
 #include "FStar_UInt_8_16_32_64.h"
 
-void Hacl_Hash_SHA2_update_multi_224(uint32_t *s, uint8_t *blocks, uint32_t n_blocks);
+void Hacl_Impl_ECDSA_P256SHA256_KeyGeneration_key_gen(uint8_t *result, uint8_t *privKey);
 
-void Hacl_Hash_SHA2_update_multi_256(uint32_t *s, uint8_t *blocks, uint32_t n_blocks);
-
-void Hacl_Hash_SHA2_update_multi_384(uint64_t *s, uint8_t *blocks, uint32_t n_blocks);
-
-void Hacl_Hash_SHA2_update_multi_512(uint64_t *s, uint8_t *blocks, uint32_t n_blocks);
-
-void
-Hacl_Hash_SHA2_update_last_224(
-  uint32_t *s,
-  uint64_t prev_len,
-  uint8_t *input,
-  uint32_t input_len
-);
-
-void
-Hacl_Hash_SHA2_update_last_256(
-  uint32_t *s,
-  uint64_t prev_len,
-  uint8_t *input,
-  uint32_t input_len
-);
-
-void
-Hacl_Hash_SHA2_update_last_384(
-  uint64_t *s,
-  uint128_t prev_len,
-  uint8_t *input,
-  uint32_t input_len
-);
-
-void
-Hacl_Hash_SHA2_update_last_512(
-  uint64_t *s,
-  uint128_t prev_len,
-  uint8_t *input,
-  uint32_t input_len
-);
-
-void Hacl_Hash_SHA2_hash_224(uint8_t *input, uint32_t input_len, uint8_t *dst);
-
-void Hacl_Hash_SHA2_hash_256(uint8_t *input, uint32_t input_len, uint8_t *dst);
-
-void Hacl_Hash_SHA2_hash_384(uint8_t *input, uint32_t input_len, uint8_t *dst);
-
-void Hacl_Hash_SHA2_hash_512(uint8_t *input, uint32_t input_len, uint8_t *dst);
-
-#define __Hacl_Hash_SHA2_H_DEFINED
+#define __Hacl_Impl_ECDSA_P256SHA256_KeyGeneration_H_DEFINED
 #endif

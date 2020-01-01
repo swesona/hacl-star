@@ -5,64 +5,18 @@
   KreMLin version: 27ce15c8
  */
 
-#include "kremlib.h"
-#ifndef __Hacl_Hash_SHA2_H
-#define __Hacl_Hash_SHA2_H
+#include "Hacl_Impl_ECDSA_P256SHA256_KeyGeneration.h"
 
-#include "C.h"
-#include "FStar.h"
-#include "kremlib.h"
-#include "FStar_UInt_8_16_32_64.h"
-#include "c/Lib_PrintBuffer.h"
-#include "FStar_UInt_8_16_32_64.h"
+void Hacl_Impl_ECDSA_P256SHA256_KeyGeneration_key_gen(uint8_t *result, uint8_t *privKey)
+{
+  uint64_t resultAsFelem[12U] = { 0U };
+  uint64_t *resultFelemX = resultAsFelem;
+  uint64_t *resultFelemY = resultAsFelem + (uint32_t)4U;
+  uint64_t tempBuffer[100U] = { 0U };
+  uint8_t *resultX = result;
+  uint8_t *resultY = result + (uint32_t)32U;
+  secretToPublic(resultAsFelem, privKey, tempBuffer);
+  Hacl_Impl_ECDSA_P256SHA256_Common_toUint8(resultFelemX, resultX);
+  Hacl_Impl_ECDSA_P256SHA256_Common_toUint8(resultFelemY, resultY);
+}
 
-void Hacl_Hash_SHA2_update_multi_224(uint32_t *s, uint8_t *blocks, uint32_t n_blocks);
-
-void Hacl_Hash_SHA2_update_multi_256(uint32_t *s, uint8_t *blocks, uint32_t n_blocks);
-
-void Hacl_Hash_SHA2_update_multi_384(uint64_t *s, uint8_t *blocks, uint32_t n_blocks);
-
-void Hacl_Hash_SHA2_update_multi_512(uint64_t *s, uint8_t *blocks, uint32_t n_blocks);
-
-void
-Hacl_Hash_SHA2_update_last_224(
-  uint32_t *s,
-  uint64_t prev_len,
-  uint8_t *input,
-  uint32_t input_len
-);
-
-void
-Hacl_Hash_SHA2_update_last_256(
-  uint32_t *s,
-  uint64_t prev_len,
-  uint8_t *input,
-  uint32_t input_len
-);
-
-void
-Hacl_Hash_SHA2_update_last_384(
-  uint64_t *s,
-  uint128_t prev_len,
-  uint8_t *input,
-  uint32_t input_len
-);
-
-void
-Hacl_Hash_SHA2_update_last_512(
-  uint64_t *s,
-  uint128_t prev_len,
-  uint8_t *input,
-  uint32_t input_len
-);
-
-void Hacl_Hash_SHA2_hash_224(uint8_t *input, uint32_t input_len, uint8_t *dst);
-
-void Hacl_Hash_SHA2_hash_256(uint8_t *input, uint32_t input_len, uint8_t *dst);
-
-void Hacl_Hash_SHA2_hash_384(uint8_t *input, uint32_t input_len, uint8_t *dst);
-
-void Hacl_Hash_SHA2_hash_512(uint8_t *input, uint32_t input_len, uint8_t *dst);
-
-#define __Hacl_Hash_SHA2_H_DEFINED
-#endif
