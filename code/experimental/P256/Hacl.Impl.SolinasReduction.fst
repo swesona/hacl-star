@@ -47,13 +47,13 @@ let store_high_low_u high low =
   logxor as_uint64_low as_uint64_high
 
 
-#reset-options "--z3refresh --z3rlimit 200"
+#reset-options "--z3refresh --z3rlimit 300"
 
 inline_for_extraction noextract
 val load_buffer: a0: uint64 -> a1: uint64 -> a2: uint64 -> a3: uint64 -> o: lbuffer uint64 (size 4) -> 
   Stack unit
     (requires fun h -> live h o)
-    (ensures fun h0 _ h1 -> modifies1 o h0 h1 /\ 
+    (ensures fun h0 _ h1 -> modifies (loc o) h0 h1 /\ 
     as_nat h1 o = uint_v a0 + uint_v a1 * pow2 64 + uint_v a2 * pow2 128 + uint_v a3 * pow2 192)
 
 let load_buffer a0 a1 a2 a3 o = 
@@ -70,9 +70,12 @@ val upl_zer_buffer: c0: uint32 -> c1: uint32 -> c2: uint32 -> c3: uint32 -> c4: 
   -> temp: lbuffer uint64 (size 4) 
   -> o: lbuffer uint64 (size 4) -> 
   Stack unit
-    (requires fun h -> live h o /\ live h temp /\ disjoint o temp)
-    (ensures fun h0 _ h1 -> modifies2 o temp h0 h1 /\ (
-    as_nat h1 o == (uint_v c0 + uint_v c1 * pow2 (1 * 32) + uint_v c2 * pow2 (2 * 32) + uint_v c3 * pow2 (3 * 32) + uint_v c4 * pow2 (4 * 32) + uint_v c5 * pow2 (5 * 32) + uint_v  c6 * pow2 (6 * 32) + uint_v c7 * pow2 (7 * 32)) % prime256
+    (requires fun h -> 
+      live h o /\ live h temp /\ disjoint o temp)
+    (ensures fun h0 _ h1 -> 
+      modifies (loc o |+| loc temp) h0 h1 /\ 
+      (
+	as_nat h1 o == (uint_v c0 + uint_v c1 * pow2 (1 * 32) + uint_v c2 * pow2 (2 * 32) + uint_v c3 * pow2 (3 * 32) + uint_v c4 * pow2 (4 * 32) + uint_v c5 * pow2 (5 * 32) + uint_v  c6 * pow2 (6 * 32) + uint_v c7 * pow2 (7 * 32)) % prime256
       )
    )
 
@@ -103,9 +106,10 @@ val upl_fir_buffer: c11: uint32 -> c12: uint32 -> c13: uint32 -> c14: uint32 -> 
   -> o: lbuffer uint64 (size 4) -> 
   Stack unit
     (requires fun h -> live h o /\ live h temp /\ disjoint o temp)
-    (ensures fun h0 _ h1 -> modifies2 o temp h0 h1 /\
-      as_nat h1 o == (uint_v c11 * pow2 (3 * 32) + uint_v c12 * pow2 (4 * 32) + uint_v c13 * pow2 (5 * 32) + uint_v c14 * pow2 (6 * 32) + uint_v c15 * pow2 (7 * 32)) % prime256)
-
+    (ensures fun h0 _ h1 -> 
+      modifies (loc o |+| loc temp) h0 h1 /\
+      as_nat h1 o == (uint_v c11 * pow2 (3 * 32) + uint_v c12 * pow2 (4 * 32) + uint_v c13 * pow2 (5 * 32) + uint_v c14 * pow2 (6 * 32) + uint_v c15 * pow2 (7 * 32)) % prime256
+    )
 
 
 let upl_fir_buffer c11 c12 c13 c14 c15 temp o = 
@@ -126,9 +130,11 @@ val upl_sec_buffer: c12: uint32 -> c13: uint32 -> c14: uint32 -> c15: uint32
   -> temp: lbuffer uint64 (size 4) 
   -> o: lbuffer uint64 (size 4) -> 
   Stack unit
-    (requires fun h -> live h o )
-    (ensures fun h0 _ h1 -> modifies2 o temp h0 h1 /\
-      	as_nat h1 o == (uint_v c12 * pow2 (3 * 32) + uint_v c13 * pow2 (4 * 32) + uint_v c14 * pow2 (5 * 32) + uint_v c15 * pow2 (6 * 32)) % prime /\ as_nat h1 o < prime)
+    (requires fun h -> live h o)
+    (ensures fun h0 _ h1 -> 
+      modifies (loc o |+| loc temp) h0 h1 /\
+      as_nat h1 o == (uint_v c12 * pow2 (3 * 32) + uint_v c13 * pow2 (4 * 32) + uint_v c14 * pow2 (5 * 32) + uint_v c15 * pow2 (6 * 32)) % prime /\ as_nat h1 o < prime
+    )
 
 let upl_sec_buffer c12 c13 c14 c15 temp o = 
       assert_norm (pow2 (1 * 32) * pow2 (2 * 32) = pow2 (3 * 32));
@@ -141,10 +147,9 @@ let upl_sec_buffer c12 c13 c14 c15 temp o =
     let b2 = store_high_low_u c14 c13 in 
     let b3 = store_high_low_u (u32 0) c15 in
     load_buffer b0 b1 b2 b3 o;
-    
+    assert_norm(uint_v c12 * pow2 (3 * 32) + uint_v c13 * pow2 (4 * 32) + uint_v c14 * pow2 (5 * 32) + uint_v c15 * pow2 (6 * 32) < prime);
     let h1 = ST.get() in 
-    let o = as_seq h1 o in 
-    modulo_lemma (felem_seq_as_nat o) prime
+    modulo_lemma (as_nat h1 o) prime
 
 
 val upl_thi_buffer: c8: uint32 -> c9: uint32 -> c10: uint32 -> c14: uint32 -> c15: uint32 

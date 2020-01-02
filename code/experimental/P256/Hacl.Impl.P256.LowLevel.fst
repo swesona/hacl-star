@@ -31,7 +31,10 @@ val reduction_prime256_2prime256_with_carry_impl: cin: uint64 -> x: felem -> res
   Stack unit 
     (requires fun h -> live h x /\ live h result /\  eq_or_disjoint x result /\ 
       (as_nat h x + uint_v cin * pow2 256) < 2 * prime256)
-    (ensures fun h0 _ h1 -> modifies1 result h0 h1 /\ as_nat h1 result = (as_nat h0 x + uint_v cin * pow2 256) % prime256)  
+    (ensures fun h0 _ h1 -> 
+      modifies (loc result) h0 h1 /\ 
+      as_nat h1 result = (as_nat h0 x + uint_v cin * pow2 256) % prime256
+    )  
 
 
 let reduction_prime256_2prime256_with_carry_impl cin x result = 
@@ -116,7 +119,7 @@ let lemma_reduction1 a r =
 val reduction_prime_2prime_impl: x: felem -> result: felem -> 
   Stack unit
     (requires fun h -> live h x /\ live h result /\ eq_or_disjoint x result)
-    (ensures fun h0 _ h1 -> modifies1 result h0 h1 /\ as_nat h1 result == as_nat h0 x % prime256)
+    (ensures fun h0 _ h1 -> modifies (loc result) h0 h1 /\ as_nat h1 result == as_nat h0 x % prime256)
 
 let reduction_prime_2prime_impl x result = 
   assert_norm (pow2 64 * pow2 64 * pow2 64 * pow2 64 = pow2 256);
@@ -178,7 +181,7 @@ val p256_add: arg1: felem -> arg2: felem ->  out: felem -> Stack unit
     as_nat h0 arg1 < prime256 /\ as_nat h0 arg2 < prime256 
    )
   )
-  (ensures (fun h0 _ h1 -> modifies1 out h0 h1 /\ 
+  (ensures (fun h0 _ h1 -> modifies (loc out) h0 h1 /\ 
       as_nat h1 out == (as_nat h0 arg1 + as_nat h0 arg2) % prime256 /\
       as_nat h1 out == toDomain_ ((fromDomain_ (as_nat h0 arg1) + fromDomain_ (as_nat h0 arg2)) % prime256)
     )
@@ -198,7 +201,7 @@ let p256_add arg1 arg2 out =
 
 val p256_double: arg1: felem ->  out: felem -> Stack unit 
   (requires (fun h0 ->  live h0 arg1 /\ live h0 out /\ eq_or_disjoint arg1 out /\ as_nat h0 arg1 < prime256))
-  (ensures (fun h0 _ h1 -> modifies1 out h0 h1 /\ 
+  (ensures (fun h0 _ h1 -> modifies (loc out) h0 h1 /\ 
     as_nat h1 out == (2 * as_nat h0 arg1) % prime256 /\ as_nat h1 out < prime256 /\
     as_nat h1 out == toDomain_ (2 * fromDomain_ (as_nat h0 arg1) % prime256)
   )
@@ -214,14 +217,12 @@ let p256_double arg1 out =
   inDomain_mod_is_not_mod (fromDomain_ (as_nat h0 arg1) + fromDomain_ (as_nat h0 arg1))
 
 
-#reset-options " --z3rlimit 500"
-
 val p256_sub: arg1: felem -> arg2: felem -> out: felem -> Stack unit 
   (requires 
     (fun h0 -> live h0 out /\ live h0 arg1 /\ live h0 arg2 /\ 
       eq_or_disjoint arg1 out /\ eq_or_disjoint arg2 out /\
       as_nat h0 arg1 < prime256 /\ as_nat h0 arg2 < prime256))
-    (ensures (fun h0 _ h1 -> modifies1 out h0 h1 /\ 
+    (ensures (fun h0 _ h1 -> modifies (loc out) h0 h1 /\ 
 	as_nat h1 out == (as_nat h0 arg1 - as_nat h0 arg2) % prime256 /\
 	as_nat h1 out == toDomain_ ((fromDomain_ (as_nat h0 arg1) - fromDomain_ (as_nat h0 arg2)) % prime256)
     )
