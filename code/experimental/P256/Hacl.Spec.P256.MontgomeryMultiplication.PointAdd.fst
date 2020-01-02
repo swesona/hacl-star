@@ -17,7 +17,7 @@ open Hacl.Spec.P256.MontgomeryMultiplication.PointDouble
 
 let prime = prime256
 
-#reset-options "--z3rlimit 300"  
+#reset-options "--z3rlimit 500"  
 
 
 val lemma_xToSpecification: 
@@ -75,13 +75,21 @@ let lemma_xToSpecification x1D y1D z1D x2D y2D z2D u1 u2 s1 s2  x3 y3 z3 =
     assert_by_tactic (y1D * z2D * (z2D * z2D) = y1D * z2D * z2D * z2D) canon;
     assert_by_tactic (y2D * z1D * (z1D * z1D) = y2D * z1D * z1D * z1D) canon;
 
+    assert_by_tactic (z2D * z2D * z2D * y1D = y1D * z2D * z2D * z2D) canon;
+    assert_by_tactic (z1D * z1D * z1D * y2D = y2D * z1D * z1D * z1D) canon;
+
 
      lemmaToDomainAndBackIsTheSame (u1N);
      lemmaToDomainAndBackIsTheSame (u2N);
      lemmaToDomainAndBackIsTheSame (s1N);
-     lemmaToDomainAndBackIsTheSame (s2N)
-     
+     lemmaToDomainAndBackIsTheSame (s2N);
 
+    assert(u1N == u1D);
+    assert(u2N == u2D);
+    assert(s1N == s1D);
+    assert(s2N == s2D)
+
+     
 noextract       
 val lemma_xToSpecification_after_double: 
   pxD: nat -> pyD: nat -> pzD: nat -> 
@@ -171,8 +179,26 @@ let lemma_xToSpecification_after_double x1D y1D z1D x2D y2D z2D x3 y3 z3  u1 u2 
     assert_by_tactic (forall (n: nat). n * hN * hN = n * (hN * hN)) canon; 
     assert_by_tactic (2 * hD * hD * u1D = 2 * u1D * hD * hD) canon
 
-assume val lemma_point_add_0: a: int -> b: int -> c: int -> Lemma 
+
+val lemma_point_add_0: a: int -> b: int -> c: int -> Lemma 
   ((a - b - 2 * (c % prime256)) % prime256 == (a - b - 2 * c) % prime256)
 
-assume val lemma_point_add_1: a: int -> b: int -> c: int -> d: int -> e: int -> Lemma
+let lemma_point_add_0 a b c = 
+  lemma_mod_sub_distr (a - b) (2 * (c % prime256)) prime256;
+  lemma_mod_mul_distr_r 2 c prime256;
+  lemma_mod_sub_distr (a - b) (2 * c) prime256
+
+
+val lemma_point_add_1: a: int -> b: int -> c: int -> d: int -> e: int -> Lemma
   ((((a % prime256) - b) * c - d * (e % prime256)) % prime256 ==((a - b) * c - d * e) % prime256)
+
+let lemma_point_add_1 a b c d e = 
+  lemma_mod_add_distr (- d * (e % prime256)) (((a % prime256) - b) * c) prime256;
+  lemma_mod_mul_distr_l ((a % prime256) - b) c prime256;
+  lemma_mod_add_distr (-b) a prime256;
+  lemma_mod_mul_distr_l (a - b) c prime256;
+  lemma_mod_add_distr (- d * (e % prime256)) ((a - b) * c) prime256;
+  
+  lemma_mod_sub_distr ((a - b) * c) (d * (e % prime256)) prime256;
+  lemma_mod_mul_distr_r d e prime256;
+  lemma_mod_sub_distr ((a - b) * c) (d * e) prime256

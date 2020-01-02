@@ -1,0 +1,45 @@
+[
+  "F\u0002`Ló¶\n„N×¨×LÎÅÞ",
+  [
+    [
+      "Hacl.Impl.ECDSA.MM.Exponent.montgomery_ladder_exponent",
+      1,
+      2,
+      1,
+      [
+        "@query", "equation_Hacl.Impl.ECDSA.MontgomeryMultiplication.prime",
+        "equation_Hacl.Spec.ECDSA.prime",
+        "equation_Hacl.Spec.ECDSAP256.Definition.prime_p256_order",
+        "primitive_Prims.op_Subtraction", "projection_inverse_BoxInt_proj_0"
+      ],
+      0,
+      "049cc6e9f346c98480abeb5567bc5728"
+    ],
+    [
+      "Hacl.Impl.ECDSA.MM.Exponent.multPower",
+      1,
+      2,
+      1,
+      [
+        "@query", "equation_Hacl.Spec.ECDSAP256.Definition.prime_p256_order",
+        "primitive_Prims.op_Subtraction", "projection_inverse_BoxInt_proj_0"
+      ],
+      0,
+      "8a870c2ca59fe6350f0d6b9b419419bb"
+    ],
+    [
+      "Hacl.Impl.ECDSA.MM.Exponent.multPowerPartial",
+      1,
+      2,
+      1,
+      [
+        "@query", "equation_Hacl.Impl.ECDSA.MontgomeryMultiplication.prime",
+        "equation_Hacl.Spec.ECDSA.prime",
+        "equation_Hacl.Spec.ECDSAP256.Definition.prime_p256_order",
+        "primitive_Prims.op_Subtraction", "projection_inverse_BoxInt_proj_0"
+      ],
+      0,
+      "a3fefc5b3f82a59cbb2e3877e3097aae"
+    ]
+  ]
+]
