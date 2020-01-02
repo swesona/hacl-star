@@ -647,10 +647,17 @@ val lemma_ll0: a: int -> b: int -> c: int -> d: int -> Lemma (
 let lemma_ll0 a b c d = 
   assert_norm (pow2 256 == pow2 64 * pow2 64 * pow2 64 * pow2 64)
 
-assume val lemma_pow_signature: a: nat -> prime: pos ->  Lemma 
+val lemma_pow_signature: a: nat -> prime: pos{prime > 3} ->  Lemma 
   (
     let p = a % prime in 
     let p1 = pow p (prime - 2) % prime in 
     let p2 = pow p1 (prime - 2) % prime in 
     p2 == pow (pow a (prime - 2)) (prime - 2) % prime
   )
+
+let lemma_pow_signature a prime = 
+  let p = a % prime in 
+  let p1 = pow p (prime - 2) % prime in 
+    power_distributivity a (prime - 2) prime;
+  let p2 = pow p1 (prime - 2) % prime in 
+    power_distributivity (pow a (prime - 2)) (prime - 2) prime
