@@ -224,6 +224,7 @@ let montgomery_multiplication_round_twice t result k0 =
 
 
 let reduction_prime_2prime_with_carry x result  = 
+  assert_norm (pow2 64 * pow2 64 * pow2 64 * pow2 64 == pow2 256);
   push_frame();
     let h0 = ST.get() in 
     let tempBuffer = create (size 4) (u64 0) in 
@@ -233,7 +234,7 @@ let reduction_prime_2prime_with_carry x result  =
         recall_contents prime256order_buffer (Lib.Sequence.of_list p256_order_prime_list);
     let c = Hacl.Impl.LowLevel.sub4_il x_ prime256order_buffer tempBuffer in
       let h1 = ST.get() in 
-      assert_norm (pow2 64 * pow2 64 * pow2 64 * pow2 64 == pow2 256);
+
       assert(if uint_v c = 0 then as_nat h0 x_ >= prime_p256_order else as_nat h0 x_ < prime_p256_order);
       assert(wide_as_nat h0 x = as_nat h0 x_ + uint_v cin * pow2 256);
     let carry = sub_borrow c cin (u64 0) tempBufferForSubborrow in 
@@ -247,6 +248,7 @@ let reduction_prime_2prime_with_carry x result  =
 
 
 let reduction_prime_2prime_with_carry2 cin x result  = 
+  assert_norm (pow2 64 * pow2 64 * pow2 64 * pow2 64 == pow2 256);
   push_frame();
     let tempBuffer = create (size 4) (u64 0) in 
     let tempBufferForSubborrow = create (size 1) (u64 0) in 
@@ -280,27 +282,6 @@ let reduction_prime_2prime_order x result  =
     lemma_reduction1 (as_nat h0 x) (as_nat h2 result);
   pop_frame()  
   
-(*
-val lemma_montgomery_mult_2: a: nat{a < prime_p256_order} -> b: nat {b < prime_p256_order} -> 
-  Lemma (
-    (
-      let mod = modp_inv2_prime (pow2 64) prime_p256_order in  
-      a * b *  mod * mod * mod * mod) % prime_p256_order == (a * b * modp_inv2_prime (pow2 256) prime_p256_order) % prime_p256_order)
-
-
-let lemma_montgomery_mult_2 a b  =
-  assert_norm(
-      (modp_inv2_prime (pow2 64) prime_p256_order  * 
-      modp_inv2_prime (pow2 64) prime_p256_order  *
-      modp_inv2_prime (pow2 64) prime_p256_order *
-      modp_inv2_prime (pow2 64) prime_p256_order) % prime_p256_order  ==
-  (modp_inv2_prime (pow2 256) prime_p256_order) % prime_p256_order);
-   let k = modp_inv2_prime (pow2 64) prime_p256_order in 
-   assert_by_tactic ((a * b * k * k * k * k)  ==  ((a * b) * (k * k * k * k))) canon;
-   lemma_mod_mul_distr_r (a * b) (k * k * k * k) prime_p256_order; 
-   lemma_mod_mul_distr_r (a * b) (modp_inv2_prime (pow2 256) prime_p256_order) prime_p256_order
-
-*)
 
 val upload_k0: unit ->  Tot (r: uint64 {uint_v r == min_one_prime (pow2 64) (- prime)})
 
