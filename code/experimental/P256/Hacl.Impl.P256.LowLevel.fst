@@ -119,6 +119,7 @@ val reduction_prime_2prime_impl: x: felem -> result: felem ->
     (ensures fun h0 _ h1 -> modifies1 result h0 h1 /\ as_nat h1 result == as_nat h0 x % prime256)
 
 let reduction_prime_2prime_impl x result = 
+  assert_norm (pow2 64 * pow2 64 * pow2 64 * pow2 64 = pow2 256);
   push_frame();
   let tempBuffer = create (size 4) (u64 0) in 
     recall_contents prime256_buffer (Lib.Sequence.of_list p256_prime_list);
@@ -213,6 +214,8 @@ let p256_double arg1 out =
   inDomain_mod_is_not_mod (fromDomain_ (as_nat h0 arg1) + fromDomain_ (as_nat h0 arg1))
 
 
+#reset-options " --z3rlimit 500"
+
 val p256_sub: arg1: felem -> arg2: felem -> out: felem -> Stack unit 
   (requires 
     (fun h0 -> live h0 out /\ live h0 arg1 /\ live h0 arg2 /\ 
@@ -225,8 +228,10 @@ val p256_sub: arg1: felem -> arg2: felem -> out: felem -> Stack unit
 )    
 
 let p256_sub arg1 arg2 out = 
+    assert_norm (pow2 64 * pow2 64 * pow2 64 * pow2 64 = pow2 256);
     let h0 = ST.get() in 
   let t = sub4 arg1 arg2 out in 
+    let h1 = ST.get() in 
     lemma_t_computation2 t;
   let t0 = (u64 0) -. t in 
   let t1 = ((u64 0) -. t) >>. (size 32) in 
