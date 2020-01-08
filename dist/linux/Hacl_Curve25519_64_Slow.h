@@ -31,6 +31,10 @@
 #define __Hacl_Curve25519_64_Slow_H
 
 #include "Hacl_Kremlib.h"
+#include "Vale.h"
+#include "Hacl_Ed25519.h"
+#include "Hacl_Curve25519_64.h"
+#include "Hacl_Curve25519_51.h"
 
 
 void Hacl_Curve25519_64_Slow_scalarmult(u8 *out, u8 *priv, u8 *pub);

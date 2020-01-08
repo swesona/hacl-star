@@ -32,6 +32,7 @@
 #define __Hacl_Chacha20_H
 
 #include "Hacl_Kremlib.h"
+#include "Hacl_Salsa20.h"
 
 
 extern uint32_t Hacl_Impl_Chacha20_Vec_chacha20_constants[4U];

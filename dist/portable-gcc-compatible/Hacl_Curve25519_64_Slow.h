@@ -32,6 +32,9 @@
 #define __Hacl_Curve25519_64_Slow_H
 
 #include "Hacl_Kremlib.h"
+#include "Hacl_Ed25519.h"
+#include "Hacl_Curve25519_64.h"
+#include "Hacl_Curve25519_51.h"
 
 
 /* SNIPPET_START: Hacl_Curve25519_64_Slow_scalarmult */

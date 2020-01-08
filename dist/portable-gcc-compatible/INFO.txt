@@ -1,4 +1,4 @@
 This code was generated with the following toolchain.
 F* version: 27ba978aaeb89d8c7837177cf94245b62d4a43fe
-KreMLin version: 50317a479c3aaef05702ab83c7f993ad7eb5b653
+KreMLin version: b56437351bd8488aeec04da486ff2e7e28a04d86
 Vale version: 0.3.10

@@ -31,6 +31,7 @@
 #define __Hacl_Chacha20_H
 
 #include "Hacl_Kremlib.h"
+#include "Hacl_Salsa20.h"
 
 
 void Hacl_Impl_Chacha20_chacha20_init(uint32_t *ctx, uint8_t *k, uint8_t *n1, uint32_t ctr);

@@ -32,6 +32,7 @@
 #define __Hacl_Curve25519_51_H
 
 #include "Hacl_Kremlib.h"
+#include "Hacl_Ed25519.h"
 
 
 void Hacl_Impl_Curve25519_Field51_fadd(uint64_t *out, uint64_t *f1, uint64_t *f2);

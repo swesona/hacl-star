@@ -34,7 +34,9 @@
 
 #include "Hacl_Kremlib.h"
 #include "Vale.h"
+#include "Hacl_Ed25519.h"
 #include "Vale_Inline.h"
+#include "Hacl_Curve25519_51.h"
 
 
 /* SNIPPET_START: Hacl_Curve25519_64_scalarmult */
