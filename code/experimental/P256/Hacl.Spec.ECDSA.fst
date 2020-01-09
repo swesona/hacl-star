@@ -203,6 +203,7 @@ val exponent_spec: a: nat_prime -> Tot (r: nat_prime {let a0, _ = _exponent_spec
 
 let exponent_spec a = 
     let a0, _ = _exponent_spec prime_p256_order_inverse_seq (1, a) in
+    admit();
     a0
 
 val toJacobianCoordinates: tuple2 nat nat -> Tot (tuple3 nat nat nat)
