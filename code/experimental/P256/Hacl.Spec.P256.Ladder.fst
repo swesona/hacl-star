@@ -20,15 +20,6 @@ open Lib.ByteSequence
 
 #reset-options " --z3rlimit 100"
 
-val point_prime_to_coordinates: p: point_seq -> Tot (r: tuple3 nat nat nat {
-  let x2, y2, z2 = r in 
-  let x1, y1, z1 = felem_seq_as_nat (sub p 0 4), felem_seq_as_nat (sub p 4 4), felem_seq_as_nat (sub p 8 4) in
-  x1 == x2 /\ y1 == y2 /\ z1 == z2})
-
-let point_prime_to_coordinates p  =  
-   felem_seq_as_nat (sub p 0 4), felem_seq_as_nat (sub p 4 4), felem_seq_as_nat (sub p 8 4) 
-
-
 val swap: p: point_prime -> q: point_prime -> Tot (r: tuple2 point_prime point_prime {let pNew, qNew = r in 
   pNew == q /\ qNew == p})
 

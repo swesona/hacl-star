@@ -156,3 +156,13 @@ let isPointOnCurve p =
   if (y * y) % prime = (x * x * x - 3 * x + 41058363725152142129326129780047268409114441015993725554835256314039467401291) % prime then 
   true
   else false
+
+
+val point_prime_to_coordinates: p: point_seq -> Tot (r: tuple3 nat nat nat {
+  let x2, y2, z2 = r in 
+  let x1, y1, z1 = felem_seq_as_nat (Lib.Sequence.sub p 0 4), felem_seq_as_nat (Lib.Sequence.sub p 4 4), felem_seq_as_nat (Lib.Sequence.sub p 8 4) in
+  x1 == x2 /\ y1 == y2 /\ z1 == z2})
+
+let point_prime_to_coordinates p  =  
+   felem_seq_as_nat (Lib.Sequence.sub p 0 4), felem_seq_as_nat (Lib.Sequence.sub p 4 4), felem_seq_as_nat (Lib.Sequence.sub p 8 4) 
+

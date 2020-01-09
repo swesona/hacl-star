@@ -17,7 +17,6 @@ open Hacl.Impl.ECDSA.MM.Exponent
 open Hacl.Spec.ECDSAP256.Definition
 open Hacl.Spec.ECDSA
 open Hacl.Spec.P256 
-open Hacl.Spec.P256.Ladder
 open Hacl.Spec.P256.Lemmas
 
 open Hacl.Impl.P256.PointAdd

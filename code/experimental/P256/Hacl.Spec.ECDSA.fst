@@ -199,10 +199,9 @@ let prime_p256_order_seq: lseq uint8 32 =
 
 open Hacl.Spec.P256.Definitions
 
-val exponent_spec: a: nat_prime -> Tot (r: nat_prime {r = pow a (prime_p256_order - 2) % prime_p256_order})
+val exponent_spec: a: nat_prime -> Tot (r: nat_prime {let a0, _ = _exponent_spec prime_p256_order_inverse_seq (1, a) in r == a0})
 
 let exponent_spec a = 
-    admit();
     let a0, _ = _exponent_spec prime_p256_order_inverse_seq (1, a) in
     a0
 
