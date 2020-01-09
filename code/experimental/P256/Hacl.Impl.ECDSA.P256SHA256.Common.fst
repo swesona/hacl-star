@@ -69,25 +69,6 @@ let toUint8 i o =
   Lib.ByteBuffer.uints_to_bytes_le (size 4) o i
 
 
-inline_for_extraction noextract
-val equalZeroBuffer: f: felem -> Stack bool
-  (requires fun h -> live h f)
-  (ensures fun h0 r h1 -> modifies0 h0 h1 /\ (if as_nat h0 f = 0 then r == true else r == false))
-
-let equalZeroBuffer f =        
-    let f0 = index f (size 0) in  
-    let f1 = index f (size 1) in 
-    let f2 = index f (size 2) in 
-    let f3 = index f (size 3) in 
-
-    let z0_zero = eq_0_u64 f0 in 
-    let z1_zero = eq_0_u64 f1 in 
-    let z2_zero = eq_0_u64 f2 in 
-    let z3_zero = eq_0_u64 f3 in 
-  
-    z0_zero && z1_zero && z2_zero && z3_zero
-  
-
 val lemma_core_0: a: lbuffer uint64 (size 4) -> h: mem -> Lemma (nat_from_intseq_le (as_seq h a) == as_nat h a)
 
 let lemma_core_0 a h = 

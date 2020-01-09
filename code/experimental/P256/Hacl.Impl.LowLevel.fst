@@ -24,10 +24,10 @@ open Hacl.Spec.P256.Lemmas
 
 (* This code is not side channel resistant *)
 inline_for_extraction noextract
-val eq_u64:a:uint64 -> b:uint64 -> Tot (r: bool {if uint_v a = uint_v b then r == true else r == false})
+val eq_u64_nCT:a:uint64 -> b:uint64 -> Tot (r: bool {if uint_v a = uint_v b then r == true else r == false})
 
 (* This code is used only for proving, so the code is NOT side channel resistant *)
-let eq_u64 a b =
+let eq_u64_nCT a b =
   let open Lib.RawIntTypes in
   FStar.UInt64.(u64_to_UInt64 a =^ u64_to_UInt64 b)
 
@@ -36,7 +36,15 @@ let eq_u64 a b =
 inline_for_extraction noextract
 val eq_0_u64: a: uint64 -> Tot (r: bool {if uint_v a = 0 then r == true else r == false})
 
-let eq_0_u64 a = eq_u64 a (u64 0)
+let eq_0_u64 a = eq_u64_nCT a (u64 0)
+
+
+inline_for_extraction noextract
+val eq_u64_CT:a:uint64 -> b:uint64 -> Tot (r: bool {if uint_v a = uint_v b then r == true else r == false})
+
+let eq_u64_CT a b =
+  let r = eq_mask a b in 
+  not (eq_0_u64 r)
 
 
 inline_for_extraction noextract
@@ -259,7 +267,7 @@ val sub_borrow: cin: uint64{uint_v cin <= 1} -> x: uint64 -> y: uint64 -> r: lbu
 let sub_borrow cin x y result1 = 
   let res = x -. y -. cin in
   let c =
-    if eq_u64 cin (u64 1) then
+    if eq_u64_nCT cin (u64 1) then
       (if le_u64 x y then u64 1 else u64 0)
     else
       (if lt_u64 x y then u64 1 else u64 0) in
@@ -683,11 +691,11 @@ let scalar_bit #buf_type s n =
   to_u64 ((s.(n /. 8ul) >>. (n %. 8ul)) &. u8 1)
 
 
-val isZero_uint64:  f: felem -> Stack uint64
+val isZero_uint64_CT:  f: felem -> Stack uint64
   (requires fun h -> live h f)
   (ensures fun h0 r h1 -> modifies0 h0 h1 /\ (if as_nat h0 f = 0 then uint_v r == pow2 64 - 1 else uint_v r == 0))
  
-let isZero_uint64 f = 
+let isZero_uint64_CT f = 
   let a0 = index f (size 0) in 
   let a1 = index f (size 1) in 
   let a2 = index f (size 2) in 
@@ -707,12 +715,32 @@ let isZero_uint64 f =
       r
 
 
+inline_for_extraction noextract
+val isZero_uint64_nCT: f: felem -> Stack bool
+  (requires fun h -> live h f)
+  (ensures fun h0 r h1 -> modifies0 h0 h1 /\ (if as_nat h0 f = 0 then r == true else r == false))
+
+let isZero_uint64_nCT f =        
+    let f0 = index f (size 0) in  
+    let f1 = index f (size 1) in 
+    let f2 = index f (size 2) in 
+    let f3 = index f (size 3) in 
+
+    let z0_zero = eq_0_u64 f0 in 
+    let z1_zero = eq_0_u64 f1 in 
+    let z2_zero = eq_0_u64 f2 in 
+    let z3_zero = eq_0_u64 f3 in 
+  
+    z0_zero && z1_zero && z2_zero && z3_zero
+  
+
+
 val isZero_bool: f: felem -> Stack bool 
   (requires fun h -> live h f) 
   (ensures fun h0 r h1 -> modifies0 h0 h1 /\ (if as_nat h0 f = 0 then r == true else r == false))
   
 let isZero_bool f = 
-  let r = isZero_uint64 f in 
+  let r = isZero_uint64_CT f in 
   not (eq_0_u64 r)
 
 

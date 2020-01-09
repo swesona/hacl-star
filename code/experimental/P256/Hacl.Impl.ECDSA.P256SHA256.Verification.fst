@@ -77,8 +77,8 @@ let isMoreThanZeroLessThanOrderMinusOne f =
     let tempBuffer = create (size 4) (u64 0) in 
         recall_contents prime256order_buffer (Lib.Sequence.of_list p256_order_prime_list);
     let carry = sub4_il f prime256order_buffer tempBuffer in  
-    let less = eq_u64 carry (u64 1) in
-    let more = equalZeroBuffer f in 
+    let less = eq_u64_nCT carry (u64 1) in
+    let more = isZero_uint64_nCT f in 
     let result = less && not more in 
   pop_frame();  
     result
@@ -104,8 +104,8 @@ let isCoordinateValid p =
     let carryX = sub4_il x prime256_buffer tempBuffer in
     let carryY = sub4_il y prime256_buffer tempBuffer in 
     
-    let lessX = eq_u64 carryX (u64 1) in   
-    let lessY = eq_u64 carryY (u64 1) in 
+    let lessX = eq_u64_nCT carryX (u64 1) in   
+    let lessY = eq_u64_nCT carryY (u64 1) in 
 
     let r = lessX && lessY in 
   pop_frame();
@@ -434,7 +434,7 @@ let compare_felem_bool a b   =
   let b_2 = index b (size 2) in 
   let b_3 = index b (size 3) in 
 
-  eq_u64 a_0 b_0 && eq_u64 a_1 b_1 && eq_u64 a_2 b_2 && eq_u64 a_3 b_3
+  eq_u64_nCT a_0 b_0 && eq_u64_nCT a_1 b_1 && eq_u64_nCT a_2 b_2 && eq_u64_nCT a_3 b_3
 
 
 val ecdsa_verification_core: publicKeyPoint: point -> hashAsFelem: felem -> r: lbuffer uint64 (size 4) -> 

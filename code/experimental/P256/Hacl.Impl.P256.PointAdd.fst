@@ -62,7 +62,7 @@ val copy_point_conditional: x3_out: felem -> y3_out: felem -> z3_out: felem -> p
 
 let copy_point_conditional x3_out y3_out z3_out p maskPoint = 
   let z = sub maskPoint (size 8) (size 4) in 
-  let mask = isZero_uint64 z in 
+  let mask = isZero_uint64_CT z in 
 
   let p_x = sub p (size 0) (size 4) in 
   let p_y = sub p (size 4) (size 4) in 
@@ -296,8 +296,8 @@ let point_double_condition u1 u2 s1 s2 z1 z2 =
     let h0 = ST.get() in 
   let one = compare_felem u1 u2 in 
   let two = compare_felem s1 s2 in 
-  let z1NotZero = isZero_uint64 z1 in 
-  let z2NotZero = isZero_uint64 z2 in 
+  let z1NotZero = isZero_uint64_CT z1 in 
+  let z2NotZero = isZero_uint64_CT z2 in 
   let pointsInf = logand (lognot z1NotZero) (lognot z2NotZero) in 
   let onetwo = logand one two in 
   let result = logand onetwo pointsInf in 
@@ -325,7 +325,7 @@ let point_double_condition u1 u2 s1 s2 z1 z2 =
     lemmaFromDomain (as_nat h0 z1);
     lemmaFromDomain (as_nat h0 z2);
 
-  eq_u64 result (u64 0xffffffffffffffff)
+  eq_u64_CT result (u64 0xffffffffffffffff)
 
 inline_for_extraction noextract 
 val point_add_if_second_branch_impl: result: point -> p: point -> q: point -> u1: felem -> u2: felem -> s1: felem -> 
