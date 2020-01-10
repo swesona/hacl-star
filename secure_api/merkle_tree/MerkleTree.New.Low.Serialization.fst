@@ -104,11 +104,11 @@ let serialize_hash
 = if not ok || pos >= sz then (false, 0ul)
   else serialize_hash_i ok x buf sz pos 0ul
 
-private 
-let u64_add_fits (x:uint64_t) (y:uint64_t): Tot bool = uint64_max - x >= y
+private inline_for_extraction
+let u64_add_fits (x:uint64_t) (y:uint64_t): Tot (r:bool{r ==> UInt.size (U64.v x + U64.v y) 64}) = uint64_max - x >= y
 
-#push-options "--z3rlimit 10"
-private inline_for_extraction unfold
+#push-options "--z3rlimit 10 --initial_fuel 1 --max_fuel 1"
+private inline_for_extraction
 let hash_vec_bytes 
   (#hash_size:hash_size_t)
   (v:hash_vec #hash_size)
@@ -150,7 +150,6 @@ let serialize_hash_vec
     else (ok, pos)
   end
 
-#push-options "--z3rlimit 50 --initial_fuel 1 --max_fuel 1"
 private inline_for_extraction
 let rec hash_vv_bytes_i 
   (#hash_size:hash_size_t) 
@@ -164,9 +163,12 @@ let rec hash_vv_bytes_i
     let vvi = V.index vv i in
     let r = hash_vec_bytes vvi in
     let rest = hash_vv_bytes_i vv (i+1ul) in
-    if u64_add_fits r rest then r + rest else uint64_max
+    if u64_add_fits r rest then begin
+      assert (UInt.size (U64.v r + U64.v rest) 64);
+      r + rest
+    end
+    else uint64_max
   end
-#pop-options
 
 private inline_for_extraction
 let hash_vv_bytes 
@@ -177,7 +179,6 @@ let hash_vv_bytes
   (ensures (fun h0 _ h1 -> h0 == h1))
 = hash_vv_bytes_i vv 0ul
 
-#push-options "--z3rlimit 1000 --initial_fuel 2 --max_fuel 2 --initial_ifuel 0 --max_ifuel 0"
 private
 let rec serialize_hash_vv_i 
   (#hash_size:hash_size_t) 
@@ -191,12 +192,12 @@ let rec serialize_hash_vv_i
     let h0 = HST.get() in
     let ok, pos = serialize_hash_vec #hash_size ok vi buf sz pos in
     let h1 = HST.get() in
+    RV.rv_inv_preserved x (B.loc_buffer buf) h0 h1;
     let j = i + 1ul in
     if j < V.size_of x then
       serialize_hash_vv_i #hash_size ok x buf sz pos j
     else (ok, pos)
   end
-#pop-options
 
 private
 let serialize_hash_vv 
