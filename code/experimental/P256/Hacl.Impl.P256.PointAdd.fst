@@ -273,61 +273,6 @@ let computeZ3_point_add z3 z1 z2 h tempBuffer =
 
 
 inline_for_extraction noextract 
-val point_double_condition: u1: felem -> u2: felem -> s1: felem -> s2: felem ->z1: felem -> z2: felem -> Stack bool 
-  (requires fun h -> live h u1 /\ live h u2 /\ live h s1 /\ live h s2 /\ live h z1 /\ live h z2 /\
-    as_nat h u1 < prime /\ as_nat h u2 < prime /\ as_nat h s1 < prime /\ as_nat h s2 < prime /\
-    as_nat h z1 < prime /\ as_nat h z2 < prime /\ 
-    LowStar.Monotonic.Buffer.all_disjoint [loc u1; loc u2; loc s1; loc s2; loc z1; loc z2])
-  (ensures fun h0 r h1 -> modifies0 h0 h1 /\ 
-    (
-      let u1D = fromDomain_ (as_nat h0 u1) in 
-      let u2D = fromDomain_ (as_nat h0 u2) in 
-      let s1D = fromDomain_ (as_nat h0 s1) in 
-      let s2D = fromDomain_ (as_nat h0 s2) in 
-      let z1D = fromDomain_ (as_nat h0 z1) in 
-      let z2D = fromDomain_ (as_nat h0 z2) in 
-
-      if u1D = u2D && s1D = s2D && z1D <> 0 && z2D <> 0 then 
-	r == true else r == false
-    )
-  )
-
-let point_double_condition u1 u2 s1 s2 z1 z2 = 
-    let h0 = ST.get() in 
-  let one = compare_felem u1 u2 in 
-  let two = compare_felem s1 s2 in 
-  let z1NotZero = isZero_uint64_CT z1 in 
-  let z2NotZero = isZero_uint64_CT z2 in 
-  let pointsInf = logand (lognot z1NotZero) (lognot z2NotZero) in 
-  let onetwo = logand one two in 
-  let result = logand onetwo pointsInf in 
-
-    lognot_lemma z1NotZero;
-    lognot_lemma z2NotZero;
-    logand_lemma (lognot z1NotZero) (lognot z2NotZero);
-    logand_lemma (lognot z1NotZero) (lognot z2NotZero);  
-    
-    logand_lemma one two;
-    logand_lemma onetwo pointsInf;
-    lemmaFromDomain (as_nat h0 u1);
-    lemmaFromDomain (as_nat h0 u2);
-    lemmaFromDomain (as_nat h0 s1);
-    lemmaFromDomain (as_nat h0 s2);
-    
-    lemma_modular_multiplication_p256 (as_nat h0 u1) (as_nat h0 u2); 
-    lemma_modular_multiplication_p256 (as_nat h0 s1) (as_nat h0 s2); 
-
-    assert_norm (modp_inv2 (pow2 256) > 0);
-    assert_norm (modp_inv2 (pow2 256) % prime <> 0); 
-
-    lemma_multiplication_not_mod_prime (as_nat h0 z1) (modp_inv2 (pow2 256));
-    lemma_multiplication_not_mod_prime (as_nat h0 z2) (modp_inv2 (pow2 256));
-    lemmaFromDomain (as_nat h0 z1);
-    lemmaFromDomain (as_nat h0 z2);
-
-  eq_u64_CT result (u64 0xffffffffffffffff)
-
-inline_for_extraction noextract 
 val point_add_if_second_branch_impl: result: point -> p: point -> q: point -> u1: felem -> u2: felem -> s1: felem -> 
   s2: felem -> r: felem -> h: felem -> uh: felem -> hCube: felem -> tempBuffer28 : lbuffer uint64 (size 28) -> 
   Stack unit 
@@ -474,18 +419,19 @@ let point_add p q result tempBuffer =
 
   move_from_jacobian_coordinates u1 u2 s1 s2 p q tempBuffer16;
     let h1 = ST.get() in
-  let flag = point_double_condition u1 u2 s1 s2 z1 z2 in 
+  (*let flag = point_double_condition u1 u2 s1 s2 z1 z2 in 
     let h2 = ST.get() in 
   if flag then
     begin
       point_double p result tempBuffer
     end	   
   else
-    begin
+    begin *)
       compute_common_params_point_add h r uh hCube u1 u2 s1 s2 tempBuffer16;
 	let h3 = ST.get() in
       point_add_if_second_branch_impl result p q u1 u2 s1 s2 r h uh hCube tempBuffer28;
-	let h4 = ST.get() in 
+	let h4 = ST.get() in ()
+	(*
       
       let pxD = fromDomain_ (as_nat h0 (gsub p (size 0) (size 4))) in 
       let pyD = fromDomain_ (as_nat h0 (gsub p (size 4) (size 4))) in 
@@ -499,8 +445,7 @@ let point_add p q result tempBuffer =
       let y3 = as_nat h4 (gsub result (size 4) (size 4)) in 
       let z3 = as_nat h4 (gsub result (size 8) (size 4)) in 
 
-      lemma_xToSpecification_after_double pxD pyD pzD qxD qyD qzD x3 y3 z3 (as_nat h2 u1) (as_nat h2 u2) (as_nat h2 s1) (as_nat h2 s2) (as_nat h3 h) (as_nat h3 r)
-    end;
+      lemma_xToSpecification_after_double pxD pyD pzD qxD qyD qzD x3 y3 z3 (as_nat h1 u1) (as_nat h1 u2) (as_nat h1 s1) (as_nat h1 s2) (as_nat h3 h) (as_nat h3 r); 
 
   let h3 = ST.get() in 
       
@@ -516,5 +461,5 @@ let point_add p q result tempBuffer =
       let y3 = as_nat h3 (gsub result (size 4) (size 4)) in 
       let z3 = as_nat h3 (gsub result (size 8) (size 4)) in 
       
-      lemma_xToSpecification pxD pyD pzD qxD qyD qzD (as_nat h2 u1) (as_nat h2 u2) (as_nat h2 s1) (as_nat h2 s2) x3 y3 z3
-
+      lemma_xToSpecification pxD pyD pzD qxD qyD qzD (as_nat h1 u1) (as_nat h1 u2) (as_nat h1 s1) (as_nat h1 s2) x3 y3 z3
+*)

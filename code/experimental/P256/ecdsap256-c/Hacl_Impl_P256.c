@@ -7,6 +7,60 @@
 
 #include "Hacl_Impl_P256.h"
 
+bool Hacl_Impl_LowLevel_eq_u64_nCT(uint64_t a, uint64_t b)
+{
+  return a == b;
+}
+
+bool Hacl_Impl_LowLevel_eq_0_u64(uint64_t a)
+{
+  return Hacl_Impl_LowLevel_eq_u64_nCT(a, (uint64_t)0U);
+}
+
+uint64_t Hacl_Impl_LowLevel_eq0_u64(uint64_t a)
+{
+  return FStar_UInt64_eq_mask(a, (uint64_t)0U);
+}
+
+uint64_t Hacl_Impl_LowLevel_eq1_u64(uint64_t a)
+{
+  return ~FStar_UInt64_eq_mask(a, (uint64_t)0U);
+}
+
+static uint64_t Hacl_Impl_LowLevel_isZero_uint64_CT(uint64_t *f)
+{
+  uint64_t a0 = f[0U];
+  uint64_t a1 = f[1U];
+  uint64_t a2 = f[2U];
+  uint64_t a3 = f[3U];
+  uint64_t r0 = FStar_UInt64_eq_mask(a0, (uint64_t)0U);
+  uint64_t r1 = FStar_UInt64_eq_mask(a1, (uint64_t)0U);
+  uint64_t r2 = FStar_UInt64_eq_mask(a2, (uint64_t)0U);
+  uint64_t r3 = FStar_UInt64_eq_mask(a3, (uint64_t)0U);
+  uint64_t r01 = r0 & r1;
+  uint64_t r23 = r2 & r3;
+  return r01 & r23;
+}
+
+static uint64_t Hacl_Impl_LowLevel_compare_felem(uint64_t *a, uint64_t *b)
+{
+  uint64_t a_0 = a[0U];
+  uint64_t a_1 = a[1U];
+  uint64_t a_2 = a[2U];
+  uint64_t a_3 = a[3U];
+  uint64_t b_0 = b[0U];
+  uint64_t b_1 = b[1U];
+  uint64_t b_2 = b[2U];
+  uint64_t b_3 = b[3U];
+  uint64_t r_0 = FStar_UInt64_eq_mask(a_0, b_0);
+  uint64_t r_1 = FStar_UInt64_eq_mask(a_1, b_1);
+  uint64_t r_2 = FStar_UInt64_eq_mask(a_2, b_2);
+  uint64_t r_3 = FStar_UInt64_eq_mask(a_3, b_3);
+  uint64_t r01 = r_0 & r_1;
+  uint64_t r23 = r_2 & r_3;
+  return r01 & r23;
+}
+
 static uint64_t
 Hacl_Impl_LowLevel_add_carry(uint64_t cin, uint64_t x, uint64_t y, uint64_t *result1)
 {
@@ -102,7 +156,7 @@ uint64_t Hacl_Impl_LowLevel_sub_borrow(uint64_t cin, uint64_t x, uint64_t y, uin
 {
   uint64_t res = x - y - cin;
   uint64_t c;
-  if (cin == (uint64_t)1U)
+  if (Hacl_Impl_LowLevel_eq_u64_nCT(cin, (uint64_t)1U))
   {
     if (x <= y)
     {
@@ -322,27 +376,6 @@ void Hacl_Impl_LowLevel_shift8(uint64_t *t, uint64_t *out)
   out[7U] = (uint64_t)0U;
 }
 
-static uint64_t Hacl_Impl_LowLevel_isZero_uint64_CT(uint64_t *f)
-{
-  uint64_t a0 = f[0U];
-  uint64_t a1 = f[1U];
-  uint64_t a2 = f[2U];
-  uint64_t a3 = f[3U];
-  uint64_t r0 = FStar_UInt64_eq_mask(a0, (uint64_t)0U);
-  uint64_t r1 = FStar_UInt64_eq_mask(a1, (uint64_t)0U);
-  uint64_t r2 = FStar_UInt64_eq_mask(a2, (uint64_t)0U);
-  uint64_t r3 = FStar_UInt64_eq_mask(a3, (uint64_t)0U);
-  uint64_t r01 = r0 & r1;
-  uint64_t r23 = r2 & r3;
-  return r01 & r23;
-}
-
-bool Hacl_Impl_LowLevel_isZero_bool(uint64_t *f)
-{
-  uint64_t r = Hacl_Impl_LowLevel_isZero_uint64_CT(f);
-  return !(r == (uint64_t)0U);
-}
-
 void Hacl_Impl_LowLevel_uploadOneImpl(uint64_t *f)
 {
   f[0U] = (uint64_t)1U;
@@ -369,25 +402,6 @@ static void Hacl_Impl_LowLevel_copy_conditional(uint64_t *out, uint64_t *x, uint
   out[1U] = r_1;
   out[2U] = r_2;
   out[3U] = r_3;
-}
-
-static uint64_t Hacl_Impl_LowLevel_compare_felem(uint64_t *a, uint64_t *b)
-{
-  uint64_t a_0 = a[0U];
-  uint64_t a_1 = a[1U];
-  uint64_t a_2 = a[2U];
-  uint64_t a_3 = a[3U];
-  uint64_t b_0 = b[0U];
-  uint64_t b_1 = b[1U];
-  uint64_t b_2 = b[2U];
-  uint64_t b_3 = b[3U];
-  uint64_t r_0 = FStar_UInt64_eq_mask(a_0, b_0);
-  uint64_t r_1 = FStar_UInt64_eq_mask(a_1, b_1);
-  uint64_t r_2 = FStar_UInt64_eq_mask(a_2, b_2);
-  uint64_t r_3 = FStar_UInt64_eq_mask(a_3, b_3);
-  uint64_t r01 = r_0 & r_1;
-  uint64_t r23 = r_2 & r_3;
-  return r01 & r23;
 }
 
 uint64_t
@@ -1081,8 +1095,6 @@ Hacl_Impl_P256_PointAdd_point_add(
   uint64_t *tempBuffer
 )
 {
-  uint64_t *z1 = p + (uint32_t)8U;
-  uint64_t *z2 = q + (uint32_t)8U;
   uint64_t *tempBuffer16 = tempBuffer;
   uint64_t *u11 = tempBuffer + (uint32_t)16U;
   uint64_t *u2 = tempBuffer + (uint32_t)20U;
@@ -1103,15 +1115,20 @@ Hacl_Impl_P256_PointAdd_point_add(
   uint64_t *z1Square = tempBuffer16 + (uint32_t)4U;
   uint64_t *z2Cube = tempBuffer16 + (uint32_t)8U;
   uint64_t *z1Cube = tempBuffer16 + (uint32_t)12U;
-  uint64_t one1;
-  uint64_t two;
-  uint64_t z1NotZero;
-  uint64_t z2NotZero;
-  uint64_t pointsInf;
-  uint64_t onetwo;
-  uint64_t result1;
-  uint64_t r1;
-  bool flag;
+  uint64_t *temp;
+  uint64_t *pZ;
+  uint64_t *qZ;
+  uint64_t *tempBuffer161;
+  uint64_t *x3_out1;
+  uint64_t *y3_out1;
+  uint64_t *z3_out1;
+  uint64_t *rSquare;
+  uint64_t *rH;
+  uint64_t *twoUh;
+  uint64_t *s1hCube;
+  uint64_t *u1hx3;
+  uint64_t *ru1hx3;
+  uint64_t *z1z2;
   Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_buffer(qZ0, qZ0, z2Square);
   Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_buffer(pZ0, pZ0, z1Square);
   Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_buffer(z2Square,
@@ -1124,69 +1141,40 @@ Hacl_Impl_P256_PointAdd_point_add(
   Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_buffer(z1Square, qX, u2);
   Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_buffer(z2Cube, pY, s1);
   Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_buffer(z1Cube, qY, s2);
-  one1 = Hacl_Impl_LowLevel_compare_felem(u11, u2);
-  two = Hacl_Impl_LowLevel_compare_felem(s1, s2);
-  z1NotZero = Hacl_Impl_LowLevel_isZero_uint64_CT(z1);
-  z2NotZero = Hacl_Impl_LowLevel_isZero_uint64_CT(z2);
-  pointsInf = ~z1NotZero & ~z2NotZero;
-  onetwo = one1 & two;
-  result1 = onetwo & pointsInf;
-  r1 = FStar_UInt64_eq_mask(result1, (uint64_t)0xffffffffffffffffU);
-  flag = !(r1 == (uint64_t)0U);
-  if (flag)
-  {
-    Hacl_Impl_P256_PointDouble_point_double(p, result, tempBuffer);
-  }
-  else
-  {
-    uint64_t *temp = tempBuffer16;
-    uint64_t *pZ;
-    uint64_t *qZ;
-    uint64_t *tempBuffer161;
-    uint64_t *x3_out1;
-    uint64_t *y3_out1;
-    uint64_t *z3_out1;
-    uint64_t *rSquare;
-    uint64_t *rH;
-    uint64_t *twoUh;
-    uint64_t *s1hCube;
-    uint64_t *u1hx3;
-    uint64_t *ru1hx3;
-    uint64_t *z1z2;
-    Hacl_Impl_P256_LowLevel_p256_sub(u2, u11, h);
-    Hacl_Impl_P256_LowLevel_p256_sub(s2, s1, r);
-    Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_buffer(h, h, temp);
-    Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_buffer(temp, u11, uh);
-    Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_buffer(temp, h, hCube);
-    pZ = p + (uint32_t)8U;
-    qZ = q + (uint32_t)8U;
-    tempBuffer161 = tempBuffer28;
-    x3_out1 = tempBuffer28 + (uint32_t)16U;
-    y3_out1 = tempBuffer28 + (uint32_t)20U;
-    z3_out1 = tempBuffer28 + (uint32_t)24U;
-    rSquare = tempBuffer161;
-    rH = tempBuffer161 + (uint32_t)4U;
-    twoUh = tempBuffer161 + (uint32_t)8U;
-    Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_buffer(r, r, rSquare);
-    Hacl_Impl_P256_LowLevel_p256_sub(rSquare, hCube, rH);
-    Hacl_Impl_P256_Arithmetics_multByTwo(uh, twoUh);
-    Hacl_Impl_P256_LowLevel_p256_sub(rH, twoUh, x3_out1);
-    s1hCube = tempBuffer161;
-    u1hx3 = tempBuffer161 + (uint32_t)4U;
-    ru1hx3 = tempBuffer161 + (uint32_t)8U;
-    Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_buffer(s1, hCube, s1hCube);
-    Hacl_Impl_P256_LowLevel_p256_sub(uh, x3_out1, u1hx3);
-    Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_buffer(u1hx3, r, ru1hx3);
-    Hacl_Impl_P256_LowLevel_p256_sub(ru1hx3, s1hCube, y3_out1);
-    z1z2 = tempBuffer161;
-    Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_buffer(pZ, qZ, z1z2);
-    Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_buffer(z1z2, h, z3_out1);
-    Hacl_Impl_P256_PointAdd_copy_point_conditional(x3_out1, y3_out1, z3_out1, q, p);
-    Hacl_Impl_P256_PointAdd_copy_point_conditional(x3_out1, y3_out1, z3_out1, p, q);
-    memcpy(result, x3_out1, (uint32_t)4U * sizeof x3_out1[0U]);
-    memcpy(result + (uint32_t)4U, y3_out1, (uint32_t)4U * sizeof y3_out1[0U]);
-    memcpy(result + (uint32_t)8U, z3_out1, (uint32_t)4U * sizeof z3_out1[0U]);
-  }
+  temp = tempBuffer16;
+  Hacl_Impl_P256_LowLevel_p256_sub(u2, u11, h);
+  Hacl_Impl_P256_LowLevel_p256_sub(s2, s1, r);
+  Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_buffer(h, h, temp);
+  Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_buffer(temp, u11, uh);
+  Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_buffer(temp, h, hCube);
+  pZ = p + (uint32_t)8U;
+  qZ = q + (uint32_t)8U;
+  tempBuffer161 = tempBuffer28;
+  x3_out1 = tempBuffer28 + (uint32_t)16U;
+  y3_out1 = tempBuffer28 + (uint32_t)20U;
+  z3_out1 = tempBuffer28 + (uint32_t)24U;
+  rSquare = tempBuffer161;
+  rH = tempBuffer161 + (uint32_t)4U;
+  twoUh = tempBuffer161 + (uint32_t)8U;
+  Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_buffer(r, r, rSquare);
+  Hacl_Impl_P256_LowLevel_p256_sub(rSquare, hCube, rH);
+  Hacl_Impl_P256_Arithmetics_multByTwo(uh, twoUh);
+  Hacl_Impl_P256_LowLevel_p256_sub(rH, twoUh, x3_out1);
+  s1hCube = tempBuffer161;
+  u1hx3 = tempBuffer161 + (uint32_t)4U;
+  ru1hx3 = tempBuffer161 + (uint32_t)8U;
+  Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_buffer(s1, hCube, s1hCube);
+  Hacl_Impl_P256_LowLevel_p256_sub(uh, x3_out1, u1hx3);
+  Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_buffer(u1hx3, r, ru1hx3);
+  Hacl_Impl_P256_LowLevel_p256_sub(ru1hx3, s1hCube, y3_out1);
+  z1z2 = tempBuffer161;
+  Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_buffer(pZ, qZ, z1z2);
+  Hacl_Impl_P256_MontgomeryMultiplication_montgomery_multiplication_buffer(z1z2, h, z3_out1);
+  Hacl_Impl_P256_PointAdd_copy_point_conditional(x3_out1, y3_out1, z3_out1, q, p);
+  Hacl_Impl_P256_PointAdd_copy_point_conditional(x3_out1, y3_out1, z3_out1, p, q);
+  memcpy(result, x3_out1, (uint32_t)4U * sizeof x3_out1[0U]);
+  memcpy(result + (uint32_t)4U, y3_out1, (uint32_t)4U * sizeof y3_out1[0U]);
+  memcpy(result + (uint32_t)8U, z3_out1, (uint32_t)4U * sizeof z3_out1[0U]);
 }
 
 void pointToDomain(uint64_t *p, uint64_t *result)
@@ -1418,20 +1406,20 @@ void secretToPublicWithoutNorm(uint64_t *result, uint8_t *scalar, uint64_t *temp
   copy_point(q, result);
 }
 
-bool isPointAtInfinity(uint64_t *p)
+bool isPointAtInfinityPublic(uint64_t *p)
 {
   uint64_t z0 = p[8U];
   uint64_t z1 = p[9U];
   uint64_t z2 = p[10U];
   uint64_t z3 = p[11U];
-  bool z0_zero = z0 == (uint64_t)0U;
-  bool z1_zero = z1 == (uint64_t)0U;
-  bool z2_zero = z2 == (uint64_t)0U;
-  bool z3_zero = z3 == (uint64_t)0U;
+  bool z0_zero = Hacl_Impl_LowLevel_eq_0_u64(z0);
+  bool z1_zero = Hacl_Impl_LowLevel_eq_0_u64(z1);
+  bool z2_zero = Hacl_Impl_LowLevel_eq_0_u64(z2);
+  bool z3_zero = Hacl_Impl_LowLevel_eq_0_u64(z3);
   return z0_zero && z1_zero && z2_zero && z3_zero;
 }
 
-bool isPointOnCurve(uint64_t *p)
+bool isPointOnCurvePublic(uint64_t *p)
 {
   uint64_t y2Buffer[4U] = { 0U };
   uint64_t xBuffer[4U] = { 0U };
@@ -1449,6 +1437,7 @@ bool isPointOnCurve(uint64_t *p)
     uint64_t p256_constant[4U] = { 0U };
     uint64_t multBuffer[8U] = { 0U };
     uint64_t r;
+    bool z;
     bool z1;
     Hacl_Impl_LowLevel_shift_256_impl(x, multBuffer);
     Hacl_Impl_SolinasReduction_solinas_reduction_impl(multBuffer, xToDomainBuffer);
@@ -1466,7 +1455,8 @@ bool isPointOnCurve(uint64_t *p)
     p256_constant[3U] = (uint64_t)15866188208926050356U;
     Hacl_Impl_P256_LowLevel_p256_add(xBuffer, p256_constant, xBuffer);
     r = Hacl_Impl_LowLevel_compare_felem(y2Buffer, xBuffer);
-    z1 = !(r == (uint64_t)0U);
+    z = Hacl_Impl_LowLevel_eq_0_u64(r);
+    z1 = !Hacl_Impl_LowLevel_eq_0_u64(r);
     return z1;
   }
 }

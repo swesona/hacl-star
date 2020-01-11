@@ -33,7 +33,7 @@ Hacl_Impl_ECDSA_ecdsa_p256_sha2_sign_nist(
 )
 {
   return
-    Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_nist_compliant(result,
+    (bool)Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_nist_compliant(result,
       m,
       privKey,
       k);

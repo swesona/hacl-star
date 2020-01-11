@@ -25,15 +25,15 @@ bool Hacl_Impl_ECDSA_P256SHA256_Verification_isMoreThanZeroLessThanOrderMinusOne
     Hacl_Impl_LowLevel_sub4_il(f,
       Hacl_Impl_ECDSA_MontgomeryMultiplication_prime256order_buffer,
       tempBuffer);
-  bool less = carry == (uint64_t)1U;
+  bool less = Hacl_Impl_LowLevel_eq_u64_nCT(carry, (uint64_t)1U);
   uint64_t f0 = f[0U];
   uint64_t f1 = f[1U];
   uint64_t f2 = f[2U];
   uint64_t f3 = f[3U];
-  bool z0_zero = f0 == (uint64_t)0U;
-  bool z1_zero = f1 == (uint64_t)0U;
-  bool z2_zero = f2 == (uint64_t)0U;
-  bool z3_zero = f3 == (uint64_t)0U;
+  bool z0_zero = Hacl_Impl_LowLevel_eq_0_u64(f0);
+  bool z1_zero = Hacl_Impl_LowLevel_eq_0_u64(f1);
+  bool z2_zero = Hacl_Impl_LowLevel_eq_0_u64(f2);
+  bool z3_zero = Hacl_Impl_LowLevel_eq_0_u64(f3);
   bool more = z0_zero && z1_zero && z2_zero && z3_zero;
   bool result = less && !more;
   return result;
@@ -48,8 +48,8 @@ bool Hacl_Impl_ECDSA_P256SHA256_Verification_isCoordinateValid(uint64_t *p)
   carryX = Hacl_Impl_LowLevel_sub4_il(x, Hacl_Impl_P256_LowLevel_prime256_buffer, tempBuffer);
   uint64_t
   carryY = Hacl_Impl_LowLevel_sub4_il(y, Hacl_Impl_P256_LowLevel_prime256_buffer, tempBuffer);
-  bool lessX = carryX == (uint64_t)1U;
-  bool lessY = carryY == (uint64_t)1U;
+  bool lessX = Hacl_Impl_LowLevel_eq_u64_nCT(carryX, (uint64_t)1U);
+  bool lessY = Hacl_Impl_LowLevel_eq_u64_nCT(carryY, (uint64_t)1U);
   bool r = lessX && lessY;
   return r;
 }
@@ -65,7 +65,7 @@ bool Hacl_Impl_ECDSA_P256SHA256_Verification_isOrderCorrect(uint64_t *p, uint64_
       multResult,
       Hacl_Impl_ECDSA_MontgomeryMultiplication_order_buffer,
       tempBuffer);
-    result = isPointAtInfinity(multResult);
+    result = isPointAtInfinityPublic(multResult);
     return result;
   }
 }
@@ -84,7 +84,7 @@ Hacl_Impl_ECDSA_P256SHA256_Verification_verifyQValidCurvePoint(
   }
   else
   {
-    bool belongsToCurve = isPointOnCurve(pubKeyAsPoint);
+    bool belongsToCurve = isPointOnCurvePublic(pubKeyAsPoint);
     bool
     orderCorrect =
       Hacl_Impl_ECDSA_P256SHA256_Verification_isOrderCorrect(pubKeyAsPoint,
@@ -110,7 +110,12 @@ bool Hacl_Impl_ECDSA_P256SHA256_Verification_compare_felem_bool(uint64_t *a, uin
   uint64_t b_1 = b[1U];
   uint64_t b_2 = b[2U];
   uint64_t b_3 = b[3U];
-  return a_0 == b_0 && a_1 == b_1 && a_2 == b_2 && a_3 == b_3;
+  return
+    Hacl_Impl_LowLevel_eq_u64_nCT(a_0,
+      b_0)
+    && Hacl_Impl_LowLevel_eq_u64_nCT(a_1, b_1)
+    && Hacl_Impl_LowLevel_eq_u64_nCT(a_2, b_2)
+    && Hacl_Impl_LowLevel_eq_u64_nCT(a_3, b_3);
 }
 
 bool
@@ -161,7 +166,7 @@ Hacl_Impl_ECDSA_P256SHA256_Verification_ecdsa_verification_core(
       pointU2Q = points + (uint32_t)12U;
       Hacl_Impl_P256_PointAdd_point_add(pointU1G, pointU2Q, pointSum, buff);
       norm(pointSum, pointSum, buff);
-      resultIsPAI = isPointAtInfinity(pointSum);
+      resultIsPAI = isPointAtInfinityPublic(pointSum);
       xCoordinateSum = pointSum;
       memcpy(xBuffer, xCoordinateSum, (uint32_t)4U * sizeof xCoordinateSum[0U]);
       r1 = !resultIsPAI;

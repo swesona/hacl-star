@@ -25,7 +25,7 @@ Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_step12(
   uint8_t *m
 );
 
-bool
+uint64_t
 Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_step45(
   uint64_t *x,
   uint8_t *k,
@@ -41,7 +41,7 @@ Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_step6(
   uint64_t *da
 );
 
-bool
+uint64_t
 Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_core_nist_compliant(
   uint64_t *r,
   uint64_t *s1,
@@ -50,7 +50,7 @@ Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_core_nist_compliant(
   uint8_t *k
 );
 
-bool
+uint64_t
 Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_nist_compliant(
   uint8_t *result,
   uint8_t *m,
@@ -58,7 +58,7 @@ Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_nist_compliant(
   uint8_t *k
 );
 
-bool
+uint64_t
 Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_core(
   uint64_t *r,
   uint64_t *s1,

@@ -15,6 +15,14 @@
 #include "c/Lib_PrintBuffer.h"
 #include "FStar_UInt_8_16_32_64.h"
 
+bool Hacl_Impl_LowLevel_eq_u64_nCT(uint64_t a, uint64_t b);
+
+bool Hacl_Impl_LowLevel_eq_0_u64(uint64_t a);
+
+uint64_t Hacl_Impl_LowLevel_eq0_u64(uint64_t a);
+
+uint64_t Hacl_Impl_LowLevel_eq1_u64(uint64_t a);
+
 uint64_t Hacl_Impl_LowLevel_add4(uint64_t *x, uint64_t *y, uint64_t *result);
 
 uint64_t Hacl_Impl_LowLevel_add8(uint64_t *x, uint64_t *y, uint64_t *result);
@@ -33,8 +41,6 @@ void Hacl_Impl_LowLevel_cmovznz4(uint64_t cin, uint64_t *x, uint64_t *y, uint64_
 void Hacl_Impl_LowLevel_shortened_mul(uint64_t *a, uint64_t b, uint64_t *result);
 
 void Hacl_Impl_LowLevel_shift8(uint64_t *t, uint64_t *out);
-
-bool Hacl_Impl_LowLevel_isZero_bool(uint64_t *f);
 
 void Hacl_Impl_LowLevel_uploadOneImpl(uint64_t *f);
 
@@ -73,9 +79,9 @@ void secretToPublic(uint64_t *result, uint8_t *scalar, uint64_t *tempBuffer);
 
 void secretToPublicWithoutNorm(uint64_t *result, uint8_t *scalar, uint64_t *tempBuffer);
 
-bool isPointAtInfinity(uint64_t *p);
+bool isPointAtInfinityPublic(uint64_t *p);
 
-bool isPointOnCurve(uint64_t *p);
+bool isPointOnCurvePublic(uint64_t *p);
 
 #define __Hacl_Impl_P256_H_DEFINED
 #endif

@@ -183,7 +183,7 @@ let isOrderCorrect p tempBuffer =
   push_frame(); 
     let multResult = create (size 12) (u64 0) in 
     multByOrder2 multResult p tempBuffer;
-    let result = Hacl.Impl.P256.isPointAtInfinity multResult in  
+    let result = Hacl.Impl.P256.isPointAtInfinityPublic multResult in  
    pop_frame();
      result
 
@@ -210,7 +210,7 @@ val verifyQValidCurvePoint: pubKeyAsPoint: point -> tempBuffer: lbuffer uint64 (
 let verifyQValidCurvePoint pubKeyAsPoint tempBuffer = 
     let coordinatesValid = isCoordinateValid pubKeyAsPoint in 
       if not coordinatesValid then false else
-    let belongsToCurve =  Hacl.Impl.P256.isPointOnCurve pubKeyAsPoint in 
+    let belongsToCurve =  Hacl.Impl.P256.isPointOnCurvePublic pubKeyAsPoint in 
     let orderCorrect = isOrderCorrect pubKeyAsPoint tempBuffer in 
     if coordinatesValid && belongsToCurve && orderCorrect 
       then true 
@@ -412,7 +412,7 @@ let ecdsa_verification_step5 x pubKeyAsPoint u1 u2 tempBuffer =
   push_frame();
     let pointSum = create (size 12) (u64 0) in
     ecdsa_verification_step5_1 pointSum pubKeyAsPoint u1 u2 tempBuffer;
-    let resultIsPAI = Hacl.Impl.P256.isPointAtInfinity pointSum in 
+    let resultIsPAI = Hacl.Impl.P256.isPointAtInfinityPublic pointSum in 
     let xCoordinateSum = sub pointSum (size 0) (size 4) in 
     copy x xCoordinateSum;
   pop_frame(); 

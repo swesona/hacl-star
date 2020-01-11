@@ -222,7 +222,7 @@ val secretToPublicWithoutNorm: result: point -> scalar: lbuffer uint8 (size 32) 
 	rN == p1))  
 
 
-val isPointAtInfinity: p: point -> Stack bool
+val isPointAtInfinityPublic: p: point -> Stack bool
   (requires fun h -> live h p)
   (ensures fun h0 r h1 -> modifies0 h0 h1 /\ 
     (
@@ -234,7 +234,7 @@ val isPointAtInfinity: p: point -> Stack bool
   ) 
 
 
-val isPointOnCurve: p: point -> Stack bool
+val isPointOnCurvePublic: p: point -> Stack bool
   (requires fun h -> live h p /\    
     as_nat h (gsub p (size 0) (size 4)) < prime /\ 
     as_nat h (gsub p (size 4) (size 4)) < prime /\

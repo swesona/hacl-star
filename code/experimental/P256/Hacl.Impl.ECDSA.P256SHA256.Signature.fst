@@ -53,7 +53,8 @@ let ecdsa_signature_step12 hashAsFelem mLen m  =
   pop_frame()
 
 
-val ecdsa_signature_step45: x: felem ->  k: lbuffer uint8 (size 32) -> tempBuffer: lbuffer uint64 (size 100) -> Stack bool 
+(* changed *)
+val ecdsa_signature_step45: x: felem ->  k: lbuffer uint8 (size 32) -> tempBuffer: lbuffer uint64 (size 100) -> Stack uint64
   (requires fun h -> 
     live h x /\ live h k /\ live h tempBuffer /\ 
     LowStar.Monotonic.Buffer.all_disjoint [loc tempBuffer; loc k; loc x]
@@ -80,7 +81,7 @@ let ecdsa_signature_step45 x k tempBuffer=
     normX result x tempForNorm;
     reduction_prime_2prime_order x x;
   pop_frame();
-    isZero_bool x
+    eq0_u64 x
 
 
 val lemma_power_step6: kInv: nat -> Lemma 
@@ -163,7 +164,7 @@ let ecdsa_signature_step6 result kFelem z r da =
 
 val ecdsa_signature_core_nist_compliant: r: felem -> s: felem -> m: lbuffer uint8 (size 32) -> privKeyAsFelem: felem -> 
   k: lbuffer uint8 (size 32) -> 
-  Stack bool  
+  Stack uint64
   (requires fun h -> 
     live h r /\ live h s /\ live h m /\ live h privKeyAsFelem /\ live h k /\ 
     disjoint privKeyAsFelem r /\ disjoint k r /\ disjoint r s /\
@@ -191,6 +192,7 @@ val ecdsa_signature_core_nist_compliant: r: felem -> s: felem -> m: lbuffer uint
     )
   )
 
+
 let ecdsa_signature_core_nist_compliant r s m privKeyAsFelem k = 
   push_frame();
   let h0 = ST.get() in 
@@ -211,19 +213,18 @@ let ecdsa_signature_core_nist_compliant r s m privKeyAsFelem k =
       begin
 	ecdsa_signature_step6 s kAsFelem hashAsFelem r privKeyAsFelem;
 	pop_frame(); 
-	let step6Flag = isZero_bool s in 
-	not step6Flag
+	eq1_u64 s
       end 
     else 
       begin
 	pop_frame();
-	false
+	u64 18446744073709551615
       end   
 
 val ecdsa_signature_nist_compliant: result: lbuffer uint8 (size 64) -> m: lbuffer uint8 (size 32) -> 
   privKey: lbuffer uint8 (size 32) -> 
   k: lbuffer uint8 (size 32) -> 
-  Stack bool
+  Stack uint64
   (requires fun h -> 
     live h result /\ live h m /\ live h privKey /\ live h k /\ 
     LowStar.Monotonic.Buffer.all_disjoint [loc result; loc m; loc privKey; loc k] /\
@@ -268,7 +269,7 @@ let ecdsa_signature_nist_compliant result m privKey k =
 val ecdsa_signature_core: r: felem -> s: felem -> mLen: size_t -> m: lbuffer uint8 mLen {uint_v mLen < pow2 61} ->  
   privKeyAsFelem: felem  -> 
   k: lbuffer uint8 (size 32) -> 
-  Stack bool  
+  Stack uint64
   (requires fun h -> 
     live h r /\ live h s /\ live h m /\ live h privKeyAsFelem /\ live h k /\
     disjoint privKeyAsFelem r /\ disjoint k r /\ disjoint r s /\
@@ -315,13 +316,12 @@ let ecdsa_signature_core r s mLen m privKeyAsFelem k =
 	begin
 	  ecdsa_signature_step6 s kAsFelem hashAsFelem r privKeyAsFelem;
 	  pop_frame(); 
-	  let step6Flag = isZero_bool s in 
-	  not step6Flag
+	  eq1_u64 s
 	end
       else 
 	begin
 	  pop_frame();
-	  false
+	  u64 18446744073709551615
 	end   
 
 

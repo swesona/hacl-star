@@ -782,7 +782,7 @@ let lemma_modular_multiplication_p256_2_d a b =
      assert(toDomain_ a = toDomain_ b ==> a == b)
 
 
-let isPointAtInfinity p =  
+let isPointAtInfinityPublic p =  
   let z0 = index p (size 8) in 
   let z1 = index p (size 9) in 
   let z2 = index p (size 10) in 
@@ -794,7 +794,7 @@ let isPointAtInfinity p =
   z0_zero && z1_zero && z2_zero && z3_zero
 
 
-let isPointOnCurve p = 
+let isPointOnCurvePublic p = 
    push_frame(); 
      let y2Buffer = create (size 4) (u64 0) in 
      let xBuffer = create (size 4) (u64 0) in 
