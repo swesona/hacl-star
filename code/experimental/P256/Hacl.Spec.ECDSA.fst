@@ -271,7 +271,7 @@ val ecdsa_signature_nist_compliant:
   input: lseq uint8 32 -> 
   privateKey: lseq uint8 32 -> 
   k: lseq uint8 32 -> 
-  Tot (tuple3 nat nat bool)
+  Tot (tuple3 nat nat uint64)
 
 let ecdsa_signature_nist_compliant  input privateKey k = 
   let basePoint = (0x6B17D1F2E12C4247F8BCE6E563A440F277037D812DEB33A0F4A13945D898C296, 0x4FE342E2FE1A7F9B8EE7EB4A7C0F9E162BCE33576B315ECECBB6406837BF51F5, 1) in
@@ -293,7 +293,7 @@ val ecdsa_signature:
   input: lseq uint8 mLen -> 
   privateKey: lseq uint8 32 -> 
   k: lseq uint8 32 -> 
-  Tot (tuple3 nat nat bool)
+  Tot (tuple3 nat nat uint64)
 
 let ecdsa_signature mLen input privateKey k = 
   let basePoint = (0x6B17D1F2E12C4247F8BCE6E563A440F277037D812DEB33A0F4A13945D898C296, 0x4FE342E2FE1A7F9B8EE7EB4A7C0F9E162BCE33576B315ECECBB6406837BF51F5, 1) in

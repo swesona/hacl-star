@@ -585,12 +585,6 @@ let lemma_eq_funct a b =
   assert(Lib.Sequence.equal a b)
 
 
-
-val lemma_eq_funct_: a: felem_seq -> b: felem_seq -> Lemma
-   (if felem_seq_as_nat a = felem_seq_as_nat b then a == b else True)
-
-
-
 (* updates *)
 let mul_lemma_1 (a: nat) (c: nat) (b: pos) : Lemma (requires (a < c)) (ensures (a * b < c * b)) = ()
 
