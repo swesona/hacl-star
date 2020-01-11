@@ -246,7 +246,7 @@ void testEcdsaSignature0()
         expectedS[0] = 0x03;
           
 
-    bool flag = Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_nist_compliant(result, m, privateKey, k);
+    uint64_t flag = Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_nist_compliant(result, m, privateKey, k);
     
     bool flagCorrectR = true;
     for (int i = 0; i < 32; i++)
@@ -257,7 +257,7 @@ void testEcdsaSignature0()
         flagCorrectS = flagCorrectS && (result[i + 32] == expectedS[i]);
 
 
-    bool expectedResult = true;
+    uint64_t expectedResult = 0x0;
       if (flag == expectedResult && flagCorrectR && flagCorrectS)
         printf("%s\n", "Test0: passed");
       else
@@ -444,7 +444,7 @@ void testEcdsaSignature1()
         expectedS[0] = 0x32;
 
 
-    bool flag = Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_nist_compliant(result, m, privateKey, k);
+    uint64_t flag = Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_nist_compliant(result, m, privateKey, k);
     
     bool flagCorrectR = true;
     for (int i = 0; i < 32; i++)
@@ -455,7 +455,7 @@ void testEcdsaSignature1()
         flagCorrectS = flagCorrectS && (result[i + 32] == expectedS[i]);
 
 
-    bool expectedResult = true;
+    uint64_t expectedResult = 0x0;
       if (flag == expectedResult && flagCorrectR && flagCorrectS)
         printf("%s\n", "Test1: passed");
       else
@@ -641,7 +641,7 @@ void testEcdsaSignature2()
         expectedS[0] = 0x96;
 
 
-    bool flag = Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_nist_compliant(result, m, privateKey, k);
+    uint64_t flag = Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_nist_compliant(result, m, privateKey, k);
     
     bool flagCorrectR = true;
     for (int i = 0; i < 32; i++)
@@ -652,7 +652,7 @@ void testEcdsaSignature2()
         flagCorrectS = flagCorrectS && (result[i + 32] == expectedS[i]);
 
 
-    bool expectedResult = true;
+    uint64_t expectedResult = 0x0;
       if (flag == expectedResult && flagCorrectR && flagCorrectS)
         printf("%s\n", "Test2: passed");
       else
@@ -833,7 +833,7 @@ void testEcdsaSignature3()
         expectedS[0] = 0x89;
 
 
-    bool flag = Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_nist_compliant(result, m, privateKey, k);
+    uint64_t flag = Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_nist_compliant(result, m, privateKey, k);
     
     bool flagCorrectR = true;
     for (int i = 0; i < 32; i++)
@@ -844,7 +844,7 @@ void testEcdsaSignature3()
         flagCorrectS = flagCorrectS && (result[i + 32] == expectedS[i]);
 
 
-    bool expectedResult = true;
+    uint64_t expectedResult = 0x0;
       if (flag == expectedResult && flagCorrectR && flagCorrectS)
         printf("%s\n", "Test3: passed");
       else
@@ -1028,7 +1028,7 @@ void testEcdsaSignature4()
         expectedS[1] = 0xd2;
         expectedS[0] = 0x9c;
 
-    bool flag = Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_nist_compliant(result, m, privateKey, k);
+    uint64_t flag = Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_nist_compliant(result, m, privateKey, k);
     
     bool flagCorrectR = true;
     for (int i = 0; i < 32; i++)
@@ -1039,7 +1039,7 @@ void testEcdsaSignature4()
         flagCorrectS = flagCorrectS && (result[i + 32] == expectedS[i]);
 
 
-    bool expectedResult = true;
+    uint64_t expectedResult = 0x0;
       if (flag == expectedResult && flagCorrectR && flagCorrectS)
         printf("%s\n", "Test4: passed");
       else
@@ -1224,7 +1224,7 @@ void testEcdsaSignature5()
         expectedS[0] = 0xcb;
 
 
-    bool flag = Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_nist_compliant(result, m, privateKey, k);
+    uint64_t flag = Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_nist_compliant(result, m, privateKey, k);
     
     bool flagCorrectR = true;
     for (int i = 0; i < 32; i++)
@@ -1235,7 +1235,7 @@ void testEcdsaSignature5()
         flagCorrectS = flagCorrectS && (result[i + 32] == expectedS[i]);
 
 
-    bool expectedResult = true;
+    uint64_t expectedResult = 0x0;
       if (flag == expectedResult && flagCorrectR && flagCorrectS)
         printf("%s\n", "Test5: passed");
       else
@@ -1419,7 +1419,7 @@ void testEcdsaSignature6()
 
 
 
-    bool flag = Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_nist_compliant(result, m, privateKey, k);
+    uint64_t flag = Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_nist_compliant(result, m, privateKey, k);
     
     bool flagCorrectR = true;
     for (int i = 0; i < 32; i++)
@@ -1430,7 +1430,7 @@ void testEcdsaSignature6()
         flagCorrectS = flagCorrectS && (result[i + 32] == expectedS[i]);
 
 
-    bool expectedResult = true;
+    uint64_t expectedResult = 0x0;
       if (flag == expectedResult && flagCorrectR && flagCorrectS)
         printf("%s\n", "Test6: passed");
       else
@@ -1616,7 +1616,7 @@ void testEcdsaSignature7()
         expectedS[0] = 0x9f;
 
 
-    bool flag = Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_nist_compliant(result, m, privateKey, k);
+    uint64_t flag = Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_nist_compliant(result, m, privateKey, k);
     
     bool flagCorrectR = true;
     for (int i = 0; i < 32; i++)
@@ -1627,7 +1627,7 @@ void testEcdsaSignature7()
         flagCorrectS = flagCorrectS && (result[i + 32] == expectedS[i]);
 
 
-    bool expectedResult = true;
+    uint64_t expectedResult = 0x0;
       if (flag == expectedResult && flagCorrectR && flagCorrectS)
         printf("%s\n", "Test7: passed");
       else
@@ -1812,7 +1812,7 @@ void testEcdsaSignature8()
         expectedS[1] = 0x31;
         expectedS[0] = 0x99;
 
-    bool flag = Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_nist_compliant(result, m, privateKey, k);
+    uint64_t flag = Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_nist_compliant(result, m, privateKey, k);
     
     bool flagCorrectR = true;
     for (int i = 0; i < 32; i++)
@@ -1823,7 +1823,7 @@ void testEcdsaSignature8()
         flagCorrectS = flagCorrectS && (result[i + 32] == expectedS[i]);
 
 
-    bool expectedResult = true;
+    uint64_t expectedResult = 0x0;
       if (flag == expectedResult && flagCorrectR && flagCorrectS)
         printf("%s\n", "Test8: passed");
       else
@@ -2009,7 +2009,7 @@ void testEcdsaSignature9()
         expectedS[0] = 0x30;
 
 
-    bool flag = Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_nist_compliant(result, m, privateKey, k);
+    uint64_t flag = Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_nist_compliant(result, m, privateKey, k);
     
     bool flagCorrectR = true;
     for (int i = 0; i < 32; i++)
@@ -2020,7 +2020,7 @@ void testEcdsaSignature9()
         flagCorrectS = flagCorrectS && (result[i + 32] == expectedS[i]);
 
 
-    bool expectedResult = true;
+    uint64_t expectedResult = 0x0;
       if (flag == expectedResult && flagCorrectR && flagCorrectS)
         printf("%s\n", "Test9: passed");
       else

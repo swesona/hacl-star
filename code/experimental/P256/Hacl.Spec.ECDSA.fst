@@ -199,7 +199,7 @@ let prime_p256_order_seq: lseq uint8 32 =
 
 open Hacl.Spec.P256.Definitions
 
-val exponent_spec: a: nat_prime -> Tot (r: nat_prime {let a0, _ = _exponent_spec prime_p256_order_inverse_seq (1, a) in r == a0})
+val exponent_spec: a: nat_prime -> Tot (r: nat_prime {r = pow a (prime_p256_order - 2) % prime_p256_order})
 
 let exponent_spec a = 
     let a0, _ = _exponent_spec prime_p256_order_inverse_seq (1, a) in
@@ -281,15 +281,11 @@ let ecdsa_signature_nist_compliant  input privateKey k =
   let kFelem = nat_from_bytes_le k in 
   let privateKey = nat_from_bytes_le privateKey in 
   let resultR = xN % prime_p256_order in
-  let resultS = 0 in 
-    if resultR = 0 then 
-      resultR, resultS, false
+  let resultS = (z + resultR * privateKey) * pow kFelem (prime_p256_order - 2) % prime_p256_order in 
+    if resultR = 0 || resultS = 0 then 
+      resultR, resultS, u64 (pow2 64 - 1)
     else 
-      let resultS = (z + resultR * privateKey) * pow kFelem (prime_p256_order - 2) % prime_p256_order in 
-      if (resultS = 0) then 
-	resultR, resultS, false
-      else 
-	resultR, resultS, true
+      resultR, resultS, u64 0
 
 
 val ecdsa_signature: 
@@ -311,12 +307,8 @@ let ecdsa_signature mLen input privateKey k =
   let kFelem = nat_from_bytes_le k in 
   let privateKey = nat_from_bytes_le privateKey in 
   let resultR = xN % prime_p256_order in
-  let resultS = 0 in 
-    if resultR = 0 then 
-      resultR, resultS, false
+  let resultS = (z + resultR * privateKey) * pow kFelem (prime_p256_order - 2) % prime_p256_order in 
+    if resultR = 0 || resultS = 0 then 
+      resultR, resultS, u64 (pow2 64 - 1)
     else 
-      let resultS = (z + resultR * privateKey) * pow kFelem (prime_p256_order - 2) % prime_p256_order in 
-      if (resultS = 0) then 
-	resultR, resultS, false
-      else 
-	resultR, resultS, true
+      resultR, resultS, u64 0

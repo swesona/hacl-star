@@ -53,7 +53,6 @@ let ecdsa_signature_step12 hashAsFelem mLen m  =
   pop_frame()
 
 
-(* changed *)
 val ecdsa_signature_step45: x: felem ->  k: lbuffer uint8 (size 32) -> tempBuffer: lbuffer uint64 (size 100) -> Stack uint64
   (requires fun h -> 
     live h x /\ live h k /\ live h tempBuffer /\ 
@@ -68,7 +67,7 @@ val ecdsa_signature_step45: x: felem ->  k: lbuffer uint8 (size 32) -> tempBuffe
       let (xN, _, _) = _norm (rxN, ryN, rzN) in 
       as_nat h1 x == xN % prime_p256_order /\ 
       (
-	if as_nat h1 x = 0 then r == true else r == false
+	if as_nat h1 x = 0 then uint_v r == pow2 64 - 1 else uint_v r == 0
       )
     )
   )
@@ -81,7 +80,7 @@ let ecdsa_signature_step45 x k tempBuffer=
     normX result x tempForNorm;
     reduction_prime_2prime_order x x;
   pop_frame();
-    eq0_u64 x
+    isZero_uint64_CT x
 
 
 val lemma_power_step6: kInv: nat -> Lemma 
@@ -182,16 +181,15 @@ val ecdsa_signature_core_nist_compliant: r: felem -> s: felem -> m: lbuffer uint
       let z = nat_from_bytes_le (as_seq h0 m) in 
       let kFelem = nat_from_bytes_le (as_seq h0 k) in 
       as_nat h1 r == xN % prime_p256_order /\ 
+      as_nat h1 s ==  (z + (as_nat h1 r) * as_nat h0 privKeyAsFelem) * pow kFelem (prime_p256_order - 2) % prime_p256_order /\
       (
-	if as_nat h1 r = 0 then begin flag = false /\ as_nat h1 s == 0 end  else
-	  as_nat h1 s == (z + (as_nat h1 r) * as_nat h0 privKeyAsFelem) * pow kFelem (prime_p256_order - 2) % prime_p256_order /\
-	(
-	  if (as_nat h1 s = 0) then flag = false else flag = true
-	)
+	if as_nat h1 r = 0 || as_nat h1 s = 0 then 
+	  uint_v flag == pow2 64 - 1
+	else 
+	  uint_v flag == 0
       )
     )
-  )
-
+)
 
 let ecdsa_signature_core_nist_compliant r s m privKeyAsFelem k = 
   push_frame();
@@ -209,17 +207,12 @@ let ecdsa_signature_core_nist_compliant r s m privKeyAsFelem k =
       lemma_core_0 hashAsFelem h1;
       uints_from_bytes_le_nat_lemma #U64 #_ #4 (as_seq h0 m);
     let step5Flag = ecdsa_signature_step45 r k tempBuffer in 
-    if not step5Flag then 
-      begin
-	ecdsa_signature_step6 s kAsFelem hashAsFelem r privKeyAsFelem;
-	pop_frame(); 
-	eq1_u64 s
-      end 
-    else 
-      begin
-	pop_frame();
-	u64 18446744073709551615
-      end   
+    ecdsa_signature_step6 s kAsFelem hashAsFelem r privKeyAsFelem;
+    let sIsZero = isZero_uint64_CT s in 
+    logor_lemma step5Flag sIsZero;
+    pop_frame(); 
+    logor step5Flag sIsZero
+
 
 val ecdsa_signature_nist_compliant: result: lbuffer uint8 (size 64) -> m: lbuffer uint8 (size 32) -> 
   privKey: lbuffer uint8 (size 32) -> 
@@ -290,12 +283,12 @@ val ecdsa_signature_core: r: felem -> s: felem -> mLen: size_t -> m: lbuffer uin
       
       let kFelem = nat_from_bytes_le (as_seq h0 k) in 
       as_nat h1 r == xN % prime_p256_order /\
+      as_nat h1 s == (z + (as_nat h1 r) * as_nat h0 privKeyAsFelem) * pow kFelem (prime_p256_order - 2) % prime_p256_order /\
       (
-	if as_nat h1 r = 0 then begin flag = false /\ as_nat h1 s == 0 end else
-	  as_nat h1 s == (z + (as_nat h1 r) * as_nat h0 privKeyAsFelem) * pow kFelem (prime_p256_order - 2) % prime_p256_order /\
-	  (
-	    if (as_nat h1 s = 0) then flag = false else flag = true
-	  )
+	if as_nat h1 r = 0 || as_nat h1 s = 0 then 
+	  uint_v flag == pow2 64 - 1
+	else 
+	  uint_v flag == 0
       )
     )    
   )
@@ -312,23 +305,17 @@ let ecdsa_signature_core r s mLen m privKeyAsFelem k =
       lemma_core_0 kAsFelem h1;
       uints_from_bytes_le_nat_lemma #U64 #_ #4 (as_seq h0 k);
     let step5Flag = ecdsa_signature_step45 r k tempBuffer in 
-      if not step5Flag then 
-	begin
-	  ecdsa_signature_step6 s kAsFelem hashAsFelem r privKeyAsFelem;
-	  pop_frame(); 
-	  eq1_u64 s
-	end
-      else 
-	begin
-	  pop_frame();
-	  u64 18446744073709551615
-	end   
+    ecdsa_signature_step6 s kAsFelem hashAsFelem r privKeyAsFelem;
+    let sIsZero = isZero_uint64_CT s in 
+    logor_lemma step5Flag sIsZero;
+    pop_frame(); 
+    logor step5Flag sIsZero
 
 
 val ecdsa_signature: result: lbuffer uint8 (size 64) -> mLen: size_t -> m: lbuffer uint8 mLen {uint_v mLen < pow2 61} ->
   privKey: lbuffer uint8 (size 32) -> 
   k: lbuffer uint8 (size 32) -> 
-  Stack bool
+  Stack uint64
   (requires fun h -> 
     live h result /\ live h m /\ live h privKey /\ live h k /\
     LowStar.Monotonic.Buffer.all_disjoint [loc result; loc m; loc privKey; loc k] /\

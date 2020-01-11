@@ -33,7 +33,7 @@ Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_step45(
   secretToPublicWithoutNorm(result, k, tempBuffer);
   normX(result, x, tempForNorm);
   Hacl_Impl_ECDSA_MontgomeryMultiplication_reduction_prime_2prime_order(x, x);
-  return Hacl_Impl_LowLevel_eq0_u64((uint64_t)x);
+  return Hacl_Impl_LowLevel_isZero_uint64_CT(x);
 }
 
 void
@@ -72,24 +72,17 @@ Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_core_nist_compliant(
   uint64_t kAsFelem[4U] = { 0U };
   uint64_t hashAsFelem1[4U] = { 0U };
   uint64_t step5Flag;
-  uint64_t ite;
+  uint64_t sIsZero;
   Hacl_Impl_ECDSA_P256SHA256_Common_toUint64(m, hashAsFelem1);
   Hacl_Impl_ECDSA_P256SHA256_Common_toUint64(k, kAsFelem);
   step5Flag = Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_step45(r, k, tempBuffer);
-  if (!(bool)step5Flag)
-  {
-    Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_step6(s1,
-      kAsFelem,
-      hashAsFelem1,
-      r,
-      privKeyAsFelem);
-    ite = Hacl_Impl_LowLevel_eq1_u64((uint64_t)s1);
-  }
-  else
-  {
-    ite = (uint64_t)18446744073709551615U;
-  }
-  return ite;
+  Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_step6(s1,
+    kAsFelem,
+    hashAsFelem1,
+    r,
+    privKeyAsFelem);
+  sIsZero = Hacl_Impl_LowLevel_isZero_uint64_CT(s1);
+  return step5Flag | sIsZero;
 }
 
 uint64_t
@@ -132,27 +125,20 @@ Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_core(
   uint64_t tempBuffer[100U] = { 0U };
   uint64_t kAsFelem[4U] = { 0U };
   uint64_t step5Flag;
-  uint64_t ite;
+  uint64_t sIsZero;
   Hacl_Impl_ECDSA_P256SHA256_Common_toUint64(k, kAsFelem);
   Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_step12(hashAsFelem, mLen, m);
   step5Flag = Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_step45(r, k, tempBuffer);
-  if (!(bool)step5Flag)
-  {
-    Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_step6(s1,
-      kAsFelem,
-      hashAsFelem,
-      r,
-      privKeyAsFelem);
-    ite = Hacl_Impl_LowLevel_eq1_u64((uint64_t)s1);
-  }
-  else
-  {
-    ite = (uint64_t)18446744073709551615U;
-  }
-  return ite;
+  Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_step6(s1,
+    kAsFelem,
+    hashAsFelem,
+    r,
+    privKeyAsFelem);
+  sIsZero = Hacl_Impl_LowLevel_isZero_uint64_CT(s1);
+  return step5Flag | sIsZero;
 }
 
-bool
+uint64_t
 Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature(
   uint8_t *result,
   uint32_t mLen,
@@ -177,6 +163,6 @@ Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature(
       k);
   Hacl_Impl_ECDSA_P256SHA256_Common_toUint8(r, resultR);
   Hacl_Impl_ECDSA_P256SHA256_Common_toUint8(s1, resultS);
-  return (bool)flag;
+  return flag;
 }
 

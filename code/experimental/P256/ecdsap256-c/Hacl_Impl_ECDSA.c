@@ -21,7 +21,7 @@ Hacl_Impl_ECDSA_ecdsa_p256_sha2_sign(
   uint8_t *k
 )
 {
-  return Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature(result, mLen, m, privKey, k);
+  return (bool)Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature(result, mLen, m, privKey, k);
 }
 
 bool

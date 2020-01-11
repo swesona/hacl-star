@@ -17,17 +17,7 @@ bool Hacl_Impl_LowLevel_eq_0_u64(uint64_t a)
   return Hacl_Impl_LowLevel_eq_u64_nCT(a, (uint64_t)0U);
 }
 
-uint64_t Hacl_Impl_LowLevel_eq0_u64(uint64_t a)
-{
-  return FStar_UInt64_eq_mask(a, (uint64_t)0U);
-}
-
-uint64_t Hacl_Impl_LowLevel_eq1_u64(uint64_t a)
-{
-  return ~FStar_UInt64_eq_mask(a, (uint64_t)0U);
-}
-
-static uint64_t Hacl_Impl_LowLevel_isZero_uint64_CT(uint64_t *f)
+uint64_t Hacl_Impl_LowLevel_isZero_uint64_CT(uint64_t *f)
 {
   uint64_t a0 = f[0U];
   uint64_t a1 = f[1U];

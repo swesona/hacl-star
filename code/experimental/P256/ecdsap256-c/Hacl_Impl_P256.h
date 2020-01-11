@@ -19,9 +19,7 @@ bool Hacl_Impl_LowLevel_eq_u64_nCT(uint64_t a, uint64_t b);
 
 bool Hacl_Impl_LowLevel_eq_0_u64(uint64_t a);
 
-uint64_t Hacl_Impl_LowLevel_eq0_u64(uint64_t a);
-
-uint64_t Hacl_Impl_LowLevel_eq1_u64(uint64_t a);
+uint64_t Hacl_Impl_LowLevel_isZero_uint64_CT(uint64_t *f);
 
 uint64_t Hacl_Impl_LowLevel_add4(uint64_t *x, uint64_t *y, uint64_t *result);
 

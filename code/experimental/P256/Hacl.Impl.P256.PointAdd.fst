@@ -22,7 +22,6 @@ open Hacl.Impl.P256.MontgomeryMultiplication
 open Hacl.Spec.P256
 open Hacl.Math
 
-open Hacl.Impl.P256.PointDouble
 
 open FStar.Tactics 
 open FStar.Tactics.Canon
@@ -418,48 +417,16 @@ let point_add p q result tempBuffer =
   let tempBuffer28 = sub tempBuffer (size 60) (size 28) in 
 
   move_from_jacobian_coordinates u1 u2 s1 s2 p q tempBuffer16;
-    let h1 = ST.get() in
-  (*let flag = point_double_condition u1 u2 s1 s2 z1 z2 in 
-    let h2 = ST.get() in 
-  if flag then
-    begin
-      point_double p result tempBuffer
-    end	   
-  else
-    begin *)
-      compute_common_params_point_add h r uh hCube u1 u2 s1 s2 tempBuffer16;
-	let h3 = ST.get() in
-      point_add_if_second_branch_impl result p q u1 u2 s1 s2 r h uh hCube tempBuffer28;
-	let h4 = ST.get() in ()
-	(*
-      
+  compute_common_params_point_add h r uh hCube u1 u2 s1 s2 tempBuffer16;
+  point_add_if_second_branch_impl result p q u1 u2 s1 s2 r h uh hCube tempBuffer28;
+    let h1 = ST.get() in 
       let pxD = fromDomain_ (as_nat h0 (gsub p (size 0) (size 4))) in 
       let pyD = fromDomain_ (as_nat h0 (gsub p (size 4) (size 4))) in 
       let pzD = fromDomain_ (as_nat h0 (gsub p (size 8) (size 4))) in 
-
       let qxD = fromDomain_ (as_nat h0 (gsub q (size 0) (size 4))) in 
       let qyD = fromDomain_ (as_nat h0 (gsub q (size 4) (size 4))) in 
       let qzD = fromDomain_ (as_nat h0 (gsub q (size 8) (size 4))) in 
-
-      let x3 = as_nat h4 (gsub result (size 0) (size 4)) in 
-      let y3 = as_nat h4 (gsub result (size 4) (size 4)) in 
-      let z3 = as_nat h4 (gsub result (size 8) (size 4)) in 
-
-      lemma_xToSpecification_after_double pxD pyD pzD qxD qyD qzD x3 y3 z3 (as_nat h1 u1) (as_nat h1 u2) (as_nat h1 s1) (as_nat h1 s2) (as_nat h3 h) (as_nat h3 r); 
-
-  let h3 = ST.get() in 
-      
-      let pxD = fromDomain_ (as_nat h0 (gsub p (size 0) (size 4))) in 
-      let pyD = fromDomain_ (as_nat h0 (gsub p (size 4) (size 4))) in 
-      let pzD = fromDomain_ (as_nat h0 (gsub p (size 8) (size 4))) in 
-
-      let qxD = fromDomain_ (as_nat h0 (gsub q (size 0) (size 4))) in 
-      let qyD = fromDomain_ (as_nat h0 (gsub q (size 4) (size 4))) in 
-      let qzD = fromDomain_ (as_nat h0 (gsub q (size 8) (size 4))) in 
-
-      let x3 = as_nat h3 (gsub result (size 0) (size 4)) in 
-      let y3 = as_nat h3 (gsub result (size 4) (size 4)) in 
-      let z3 = as_nat h3 (gsub result (size 8) (size 4)) in 
-      
-      lemma_xToSpecification pxD pyD pzD qxD qyD qzD (as_nat h1 u1) (as_nat h1 u2) (as_nat h1 s1) (as_nat h1 s2) x3 y3 z3
-*)
+      let x3 = as_nat h1 (gsub result (size 0) (size 4)) in 
+      let y3 = as_nat h1 (gsub result (size 4) (size 4)) in 
+      let z3 = as_nat h1 (gsub result (size 8) (size 4)) in 
+      lemma_pointAddToSpecification pxD pyD pzD qxD qyD qzD x3 y3 z3 (as_nat h1 u1) (as_nat h1 u2) (as_nat h1 s1) (as_nat h1 s2) (as_nat h1 h) (as_nat h1 r)

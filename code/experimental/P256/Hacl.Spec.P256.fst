@@ -46,17 +46,12 @@ let _point_add (p:point_nat) (q:point_nat) : point_nat =
   assert_by_tactic (y1 * z2 * (z2 * z2) = y1 * z2 * z2 * z2) canon;
   assert_by_tactic (y2 * z1 * (z1 * z1) = y2 * z1 * z1 * z1) canon;
 
-  if u1 = u2 && s1 = s2 && z1 <> 0 && z2 <> 0 then 
-     _point_double (x1, y1, z1) 
-  else 
-    begin
+  let h = (u2 - u1) % prime256 in 
+  let r = (s2 - s1) % prime256 in
 
-      let h = (u2 - u1) % prime256 in 
-      let r = (s2 - s1) % prime256 in
-
-      let rr = (r * r)in 
-      let hh = (h * h) in 
-      let hhh = (h * h * h) in  
+  let rr = (r * r) in 
+  let hh = (h * h) in 
+  let hhh = (h * h * h) in  
 
   assert_by_tactic (forall (n: nat). n * h * h = n * (h * h)) canon; 
   assert_by_tactic (s1 * (h * h * h) = s1 * h * h * h) canon;
@@ -71,7 +66,6 @@ let _point_add (p:point_nat) (q:point_nat) : point_nat =
   (x2, y2, z2) 
       else  
   (x3, y3, z3)
-    end 
 
 
 val isPointAtInfinity: p: point_nat -> Tot bool

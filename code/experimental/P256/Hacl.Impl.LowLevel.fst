@@ -70,12 +70,13 @@ let isZero_uint64_CT f =
   let r3 = eq_mask a3 (u64 0) in 
   
   let r01 = logand r0 r1 in 
-     logand_lemma r0 r1;
+     logand_lemma r0 r1; 
   let r23 = logand r2 r3 in 
      logand_lemma r2 r3;
   let r = logand r01 r23 in 
-  logand_lemma r01 r23;
-      r
+    logand_lemma r01 r23;
+  r
+
 
 (* This code is not side channel resistant *)
 inline_for_extraction noextract
