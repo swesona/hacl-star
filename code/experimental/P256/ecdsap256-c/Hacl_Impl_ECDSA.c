@@ -12,7 +12,7 @@ void Hacl_Impl_ECDSA_ecdsa_p256_sha2_keyGen(uint8_t *result, uint8_t *privKey)
   Hacl_Impl_ECDSA_P256SHA256_KeyGeneration_key_gen(result, privKey);
 }
 
-bool
+uint64_t
 Hacl_Impl_ECDSA_ecdsa_p256_sha2_sign(
   uint8_t *result,
   uint32_t mLen,
@@ -21,10 +21,10 @@ Hacl_Impl_ECDSA_ecdsa_p256_sha2_sign(
   uint8_t *k
 )
 {
-  return (bool)Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature(result, mLen, m, privKey, k);
+  return Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature(result, mLen, m, privKey, k);
 }
 
-bool
+uint64_t
 Hacl_Impl_ECDSA_ecdsa_p256_sha2_sign_nist(
   uint8_t *result,
   uint8_t *m,
@@ -33,7 +33,7 @@ Hacl_Impl_ECDSA_ecdsa_p256_sha2_sign_nist(
 )
 {
   return
-    (bool)Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_nist_compliant(result,
+    Hacl_Impl_ECDSA_P256SHA256_Signature_ecdsa_signature_nist_compliant(result,
       m,
       privKey,
       k);

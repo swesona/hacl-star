@@ -1,5 +1,5 @@
 [
-  "ﬁ\u00141Ù…=\f[œÓÀúQÁæ5",
+  "{†»úèk0∂¿Ä¡ÊÓ1å\u0003",
   [
     [
       "Hacl.Spec.P256.Lemmas.pow",
@@ -240,7 +240,7 @@
         "well-founded-ordering-on-nat"
       ],
       0,
-      "0c861b2762cc28887be90707ff839ece"
+      "159948ff5fab88d7993e48ec747ab4e4"
     ],
     [
       "Hacl.Spec.P256.Lemmas.power_distributivity_2",
@@ -1304,7 +1304,7 @@
         "projection_inverse_BoxInt_proj_0"
       ],
       0,
-      "499b1fbf46ce9316b6d2f9bbc5bdd28f"
+      "2af086858da86eedca58c6009371188e"
     ],
     [
       "Hacl.Spec.P256.Lemmas.lemma_brackets1",
@@ -1527,10 +1527,7 @@
       2,
       2,
       [
-        "@MaxIFuel_assumption", "@query",
-        "constructor_distinct_Lib.IntTypes.S16",
-        "constructor_distinct_Lib.IntTypes.S8",
-        "constructor_distinct_Lib.IntTypes.U32", "equation_Prims.pos",
+        "@MaxIFuel_assumption", "@query", "equation_Prims.pos",
         "int_inversion", "primitive_Prims.op_Modulus",
         "primitive_Prims.op_Multiply", "projection_inverse_BoxInt_proj_0",
         "refinement_interpretation_Tm_refine_774ba3f728d91ead8ef40be66c9802e5",
@@ -1953,7 +1950,22 @@
         "refinement_interpretation_Tm_refine_414d0a9f578ab0048252f8c8f552b99f"
       ],
       0,
-      "d030ad9a97a9f36a5a1a9d4291a9c2da"
+      "3ee47eaf5b3907ad73be5b1955a3f353"
+    ],
+    [
+      "Hacl.Spec.P256.Lemmas.lemma_eq_funct_",
+      2,
+      2,
+      1,
+      [
+        "@MaxIFuel_assumption", "@query", "equation_Prims.eqtype",
+        "equation_Prims.nat", "function_token_typing_Prims.int",
+        "haseqTm_refine_542f9d4f129664613f2483a6c88bc7c2",
+        "primitive_Prims.op_Equality", "projection_inverse_BoxBool_proj_0",
+        "refinement_interpretation_Tm_refine_414d0a9f578ab0048252f8c8f552b99f"
+      ],
+      0,
+      "c7b75161e960bb3458b46582e5180aef"
     ],
     [
       "Hacl.Spec.P256.Lemmas.mul_lemma_1",
@@ -1966,7 +1978,7 @@
         "refinement_interpretation_Tm_refine_774ba3f728d91ead8ef40be66c9802e5"
       ],
       0,
-      "113c2048c6eff7ae98df0e2ea14299c8"
+      "6ff36d99b08ffc1a16269eaa532766c3"
     ],
     [
       "Hacl.Spec.P256.Lemmas.mul_lemma_",
@@ -1979,7 +1991,7 @@
         "refinement_interpretation_Tm_refine_542f9d4f129664613f2483a6c88bc7c2"
       ],
       0,
-      "bcfe8abcf358a1eb70a0eb52d5a61f13"
+      "2ee7527c0382d714d8070fda0fb8bec8"
     ],
     [
       "Hacl.Spec.P256.Lemmas.mul_lemma_2",
@@ -1994,7 +2006,7 @@
         "refinement_interpretation_Tm_refine_774ba3f728d91ead8ef40be66c9802e5"
       ],
       0,
-      "8de196ac41169df673d52b4e5de59b87"
+      "42ffddf6cf99810b681cb27d7b40e676"
     ],
     [
       "Hacl.Spec.P256.Lemmas.mul_lemma_3",
@@ -2009,7 +2021,7 @@
         "refinement_interpretation_Tm_refine_542f9d4f129664613f2483a6c88bc7c2"
       ],
       0,
-      "5c8abe20e8e5d084ce98035a1e53767c"
+      "77ee0baa2db0984911d5a165ba7512fe"
     ],
     [
       "Hacl.Spec.P256.Lemmas.mul_lemma_4",
@@ -2024,7 +2036,7 @@
         "refinement_interpretation_Tm_refine_542f9d4f129664613f2483a6c88bc7c2"
       ],
       0,
-      "c73ea51c1ff6adccffc2140b9da58208"
+      "19ed4398f1e837b3e5f079283286994b"
     ],
     [
       "Hacl.Spec.P256.Lemmas.dist_lemma_0",
@@ -2036,7 +2048,7 @@
         "primitive_Prims.op_Multiply", "projection_inverse_BoxInt_proj_0"
       ],
       0,
-      "7a3920f9f78134f3a5de3a43258c18ca"
+      "aa8c9a65e9b19289592c32c284747789"
     ],
     [
       "Hacl.Spec.P256.Lemmas.lemma_low_level0",
@@ -2064,7 +2076,7 @@
         "typing_Prims.pow2"
       ],
       0,
-      "08bfccda36b7d1216136855346ce85e9"
+      "fd75f05627061b839eecafddf43e7e8d"
     ],
     [
       "Hacl.Spec.P256.Lemmas.lemma_ll0",
@@ -2085,7 +2097,7 @@
         "refinement_interpretation_Tm_refine_542f9d4f129664613f2483a6c88bc7c2"
       ],
       0,
-      "7d61f33cb9228a5533a94b10ff1a6b00"
+      "09c4ee719d4caa5466d5c707f7aeb56b"
     ],
     [
       "Hacl.Spec.P256.Lemmas.lemma_pow_signature",
@@ -2101,7 +2113,7 @@
         "refinement_interpretation_Tm_refine_fd0d082075d797d9d29faee2f7221b9b"
       ],
       0,
-      "a701ed9ea6b8e41e8a15bf33ef6bae90"
+      "c03f4314c638024c2c18d1bf85f05b57"
     ],
     [
       "Hacl.Spec.P256.Lemmas.lemma_pow_signature",
@@ -2117,7 +2129,7 @@
         "refinement_interpretation_Tm_refine_fd0d082075d797d9d29faee2f7221b9b"
       ],
       0,
-      "11fbb092f020605102f760bffc8ec5b2"
+      "8569b59e50b0f17b97ed559eb96f47ff"
     ]
   ]
 ]

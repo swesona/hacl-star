@@ -59,7 +59,7 @@ let ecdsa_p256_sha2_keyGen result privKey = key_gen result privKey
 val ecdsa_p256_sha2_sign: result: lbuffer uint8 (size 64) -> mLen: size_t -> m: lbuffer uint8 mLen {uint_v mLen < pow2 61} ->
   privKey: lbuffer uint8 (size 32) -> 
   k: lbuffer uint8 (size 32) -> 
-  Stack bool
+  Stack uint64
   (requires fun h -> 
     live h result /\ live h m /\ live h privKey /\ live h k /\
     LowStar.Monotonic.Buffer.all_disjoint [loc result; loc m; loc privKey; loc k] /\
@@ -85,7 +85,7 @@ let ecdsa_p256_sha2_sign result mLen m privKey k = ecdsa_signature result mLen m
 val ecdsa_p256_sha2_sign_nist: result: lbuffer uint8 (size 64) -> m: lbuffer uint8 (size 32) -> 
   privKey: lbuffer uint8 (size 32) -> 
   k: lbuffer uint8 (size 32) -> 
-  Stack bool
+  Stack uint64
   (requires fun h -> 
     live h result /\ live h m /\ live h privKey /\ live h k /\ 
     LowStar.Monotonic.Buffer.all_disjoint [loc result; loc m; loc privKey; loc k] /\

@@ -1,5 +1,5 @@
 [
-  "¶QÕ°\u0001J²Äù¬Š±³¯‹\b",
+  "V¦0Ë\u0007\\&Ü®Óè€\u0014ÇMG",
   [
     [
       "Hacl.Impl.ECDSA.P256SHA256.KeyGeneration.key_gen",
@@ -47,7 +47,7 @@
         "typing_tok_Lib.IntTypes.PUB@tok", "typing_tok_Lib.IntTypes.U32@tok"
       ],
       0,
-      "2547455118c370c0ac631912d8840dcc"
+      "5e7186ba7b8bad7aa9f1b61f33765be5"
     ],
     [
       "Hacl.Impl.ECDSA.P256SHA256.KeyGeneration.key_gen",
@@ -157,7 +157,8 @@
         "lemma_FStar.Set.mem_singleton", "lemma_FStar.Set.mem_subset",
         "lemma_FStar.UInt.pow2_values", "lemma_FStar.UInt32.uv_inv",
         "lemma_Lib.Buffer.modifies_preserves_live",
-        "lemma_Lib.IntTypes.pow2_3", "lemma_Lib.IntTypes.v_mk_int",
+        "lemma_Lib.IntTypes.pow2_2", "lemma_Lib.IntTypes.pow2_3",
+        "lemma_Lib.IntTypes.v_mk_int",
         "lemma_LowStar.Monotonic.Buffer.as_addr_gsub",
         "lemma_LowStar.Monotonic.Buffer.as_seq_gsub",
         "lemma_LowStar.Monotonic.Buffer.frameOf_gsub",
@@ -232,8 +233,7 @@
         "typing_FStar.Set.singleton", "typing_Lib.Buffer.as_seq",
         "typing_Lib.Buffer.length", "typing_Lib.Buffer.loc",
         "typing_Lib.Buffer.op_Bar_Plus_Bar", "typing_Lib.IntTypes.bits",
-        "typing_Lib.IntTypes.minint", "typing_Lib.IntTypes.mk_int",
-        "typing_Lib.IntTypes.v", "typing_Lib.Sequence.index",
+        "typing_Lib.IntTypes.mk_int", "typing_Lib.Sequence.index",
         "typing_LowStar.Buffer.trivial_preorder",
         "typing_LowStar.Monotonic.Buffer.address_liveness_insensitive_locs",
         "typing_LowStar.Monotonic.Buffer.as_addr",
@@ -246,8 +246,7 @@
         "typing_LowStar.Monotonic.Buffer.loc_regions",
         "typing_LowStar.Monotonic.Buffer.loc_union", "typing_Prims.pow2",
         "typing_tok_Lib.Buffer.MUT@tok", "typing_tok_Lib.IntTypes.PUB@tok",
-        "typing_tok_Lib.IntTypes.U32@tok", "typing_tok_Lib.IntTypes.U64@tok",
-        "typing_tok_Lib.IntTypes.U8@tok"
+        "typing_tok_Lib.IntTypes.U32@tok", "typing_tok_Lib.IntTypes.U8@tok"
       ],
       0,
       "a7188ce2592e3adf1aecce3bdaee7ec6"

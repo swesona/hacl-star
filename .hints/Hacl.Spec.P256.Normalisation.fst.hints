@@ -25,7 +25,7 @@
         "typing_Hacl.Spec.P256.Normalisation.prime", "typing_Prims.pow2"
       ],
       0,
-      "6e27f38981996f9dfc03ae36dd53e84e"
+      "d9822227b12ac33480011a1ee2e829e0"
     ],
     [
       "Hacl.Spec.P256.Normalisation.lemma_norm_as_specification",
@@ -51,7 +51,7 @@
         "typing_Hacl.Spec.P256.Normalisation.prime", "typing_Prims.pow2"
       ],
       0,
-      "7b2aeadb9d58e1e5c71b74feda8141ed"
+      "56eea29013f5de6b895ec3ea64d02abb"
     ],
     [
       "Hacl.Spec.P256.Normalisation.lemma_norm_as_specification",
@@ -60,13 +60,11 @@
       1,
       [
         "@MaxFuel_assumption", "@MaxIFuel_assumption",
+        "@fuel_correspondence_Hacl.Spec.P256.Lemmas.pow.fuel_instrumented",
         "@fuel_correspondence_Prims.pow2.fuel_instrumented",
         "@fuel_irrelevance_Prims.pow2.fuel_instrumented", "@query",
         "Prims_pretyping_ae567c2fb75be05905677af440075565",
         "constructor_distinct_Lib.IntTypes.U32",
-        "data_elim_FStar.Pervasives.Native.Mktuple3",
-        "data_typing_intro_FStar.Pervasives.Native.Mktuple3@tok",
-        "equation_Hacl.Spec.P256.Definitions.point_nat",
         "equation_Hacl.Spec.P256.Definitions.prime256",
         "equation_Hacl.Spec.P256.Lemmas.modp_inv2_pow",
         "equation_Hacl.Spec.P256.Normalisation.prime",
@@ -74,6 +72,7 @@
         "equation_Hacl.Spec.P256.isPointAtInfinity",
         "equation_Lib.IntTypes.minint", "equation_Lib.IntTypes.unsigned",
         "equation_Prims.nat", "equation_Prims.pos",
+        "equation_with_fuel_Hacl.Spec.P256.Lemmas.pow.fuel_instrumented",
         "equation_with_fuel_Prims.pow2.fuel_instrumented",
         "function_token_typing_Prims.__cache_version_number__",
         "int_inversion", "int_typing", "primitive_Prims.op_Addition",
@@ -89,13 +88,12 @@
         "refinement_interpretation_Tm_refine_542f9d4f129664613f2483a6c88bc7c2",
         "refinement_interpretation_Tm_refine_774ba3f728d91ead8ef40be66c9802e5",
         "refinement_interpretation_Tm_refine_bfc14a90c86084df96cf5d91e1a25040",
-        "refinement_kinding_Tm_refine_542f9d4f129664613f2483a6c88bc7c2",
         "token_correspondence_Prims.pow2.fuel_instrumented",
-        "typing_Hacl.Spec.P256.Normalisation.prime",
-        "typing_Hacl.Spec.P256._norm", "typing_Prims.pow2"
+        "typing_Hacl.Spec.P256.Lemmas.pow",
+        "typing_Hacl.Spec.P256.Normalisation.prime", "typing_Prims.pow2"
       ],
       0,
-      "5ff5591d70e8c8195c6108a60d00cf9c"
+      "706ec266878f8f314a7a2fceb8bf51bb"
     ]
   ]
 ]

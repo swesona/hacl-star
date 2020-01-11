@@ -19,7 +19,7 @@
 
 void Hacl_Impl_ECDSA_ecdsa_p256_sha2_keyGen(uint8_t *result, uint8_t *privKey);
 
-bool
+uint64_t
 Hacl_Impl_ECDSA_ecdsa_p256_sha2_sign(
   uint8_t *result,
   uint32_t mLen,
@@ -28,7 +28,7 @@ Hacl_Impl_ECDSA_ecdsa_p256_sha2_sign(
   uint8_t *k
 );
 
-bool
+uint64_t
 Hacl_Impl_ECDSA_ecdsa_p256_sha2_sign_nist(
   uint8_t *result,
   uint8_t *m,

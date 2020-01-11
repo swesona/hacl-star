@@ -1,54 +1,6 @@
 [
-  "\u001de{KÎú–?¸™oƒO4Ý‚",
+  "y\u00176æt\u0002˜¶¸2ž$È)Éü",
   [
-    [
-      "Hacl.Spec.P256.Ladder.point_prime_to_coordinates",
-      1,
-      2,
-      1,
-      [
-        "@MaxFuel_assumption", "@MaxIFuel_assumption",
-        "@fuel_correspondence_Prims.pow2.fuel_instrumented",
-        "@fuel_irrelevance_Prims.pow2.fuel_instrumented", "@query",
-        "constructor_distinct_Lib.IntTypes.S16",
-        "constructor_distinct_Lib.IntTypes.S8",
-        "constructor_distinct_Lib.IntTypes.U32",
-        "equality_tok_Lib.IntTypes.U32@tok", "equation_Lib.IntTypes.bits",
-        "equation_Lib.IntTypes.minint", "equation_Lib.IntTypes.unsigned",
-        "equation_Prims.nat",
-        "equation_with_fuel_Prims.pow2.fuel_instrumented", "int_typing",
-        "lemma_FStar.UInt.pow2_values", "primitive_Prims.op_Multiply",
-        "primitive_Prims.op_Subtraction", "projection_inverse_BoxInt_proj_0",
-        "refinement_interpretation_Tm_refine_542f9d4f129664613f2483a6c88bc7c2",
-        "typing_Lib.IntTypes.bits", "typing_tok_Lib.IntTypes.U32@tok"
-      ],
-      0,
-      "f79e3029ccb1873cd1eec26bd4488b26"
-    ],
-    [
-      "Hacl.Spec.P256.Ladder.point_prime_to_coordinates",
-      2,
-      2,
-      1,
-      [
-        "@MaxFuel_assumption", "@MaxIFuel_assumption",
-        "@fuel_correspondence_Prims.pow2.fuel_instrumented",
-        "@fuel_irrelevance_Prims.pow2.fuel_instrumented", "@query",
-        "constructor_distinct_Lib.IntTypes.S16",
-        "constructor_distinct_Lib.IntTypes.S8",
-        "constructor_distinct_Lib.IntTypes.U32",
-        "equality_tok_Lib.IntTypes.U32@tok", "equation_Lib.IntTypes.bits",
-        "equation_Lib.IntTypes.minint", "equation_Lib.IntTypes.unsigned",
-        "equation_Prims.nat",
-        "equation_with_fuel_Prims.pow2.fuel_instrumented", "int_typing",
-        "lemma_FStar.UInt.pow2_values", "primitive_Prims.op_Multiply",
-        "primitive_Prims.op_Subtraction", "projection_inverse_BoxInt_proj_0",
-        "refinement_interpretation_Tm_refine_542f9d4f129664613f2483a6c88bc7c2",
-        "typing_Lib.IntTypes.bits", "typing_tok_Lib.IntTypes.U32@tok"
-      ],
-      0,
-      "74c92de132973abb21633e4f7974a9ca"
-    ],
     [
       "Hacl.Spec.P256.Ladder.conditional_swap",
       1,
@@ -60,7 +12,7 @@
         "equation_Lib.IntTypes.unsigned", "projection_inverse_BoxBool_proj_0"
       ],
       0,
-      "643f9bcd189eabd89486d79a7d0f9a6d"
+      "b1966c80ea30391dd5646d92a25a1c20"
     ],
     [
       "Hacl.Spec.P256.Ladder.conditional_swap",
@@ -78,7 +30,7 @@
         "projection_inverse_FStar.Pervasives.Native.Mktuple2__2"
       ],
       0,
-      "48fbde253914a804a136fcd8b7256fbe"
+      "c67220c059e9a8ed2e9e4f186d0b4a02"
     ],
     [
       "Hacl.Spec.P256.Ladder.lemma_cswap2_step",
@@ -99,7 +51,7 @@
         "typing_tok_Lib.IntTypes.U64@tok"
       ],
       0,
-      "dc9b015ec9d7a4e8bb3ab95094d058ab"
+      "c3428305612c867c8ff08a8c2b6e55a6"
     ],
     [
       "Hacl.Spec.P256.Ladder.lemma_cswap2_step",
@@ -147,7 +99,7 @@
         "typing_tok_Lib.IntTypes.SEC@tok", "typing_tok_Lib.IntTypes.U64@tok"
       ],
       0,
-      "a157d77fed892199664e1161b23f1db0"
+      "ee703ae535de94d5912c5ea3442bc0fa"
     ],
     [
       "Hacl.Spec.P256.Ladder.cswap",
@@ -219,7 +171,7 @@
         "typing_tok_Lib.IntTypes.U64@tok"
       ],
       0,
-      "fd3d211058bc9852625ee18768b5d698"
+      "f9f1d392419b9bc8d00ede9095469c96"
     ],
     [
       "Hacl.Spec.P256.Ladder.cswap",
@@ -234,6 +186,7 @@
         "bool_inversion", "constructor_distinct_Lib.Buffer.MUT",
         "constructor_distinct_Lib.IntTypes.PUB",
         "constructor_distinct_Lib.IntTypes.S16",
+        "constructor_distinct_Lib.IntTypes.S32",
         "constructor_distinct_Lib.IntTypes.S8",
         "constructor_distinct_Lib.IntTypes.U32",
         "constructor_distinct_Lib.IntTypes.U64",
@@ -314,6 +267,7 @@
         "refinement_interpretation_Tm_refine_43d3cccb3f0ed455f77411a93c2a5c4d",
         "refinement_interpretation_Tm_refine_542f9d4f129664613f2483a6c88bc7c2",
         "refinement_interpretation_Tm_refine_6706898800c3990c491b1a46c0a760f8",
+        "refinement_interpretation_Tm_refine_68ee6d2c8678eb431259a3d4f412550b",
         "refinement_interpretation_Tm_refine_6c00a4a5d3fc0fcf7ab0b723115ae00e",
         "refinement_interpretation_Tm_refine_818b08e49238083809d72cd1e3babbc1",
         "refinement_interpretation_Tm_refine_83845a86f2550cdf941eeb1d9b59602b",
@@ -350,7 +304,7 @@
         "typing_tok_Lib.IntTypes.U64@tok"
       ],
       0,
-      "91285972e716feeda14b3b609f39c1c2"
+      "c969c7b3b747c60dcef9d2c90d99ef11"
     ]
   ]
 ]
