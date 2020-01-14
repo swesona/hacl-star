@@ -1,0 +1,23 @@
+[
+  "*≥Jëâ+√pﬁ√≈√£!\u0019\u0018",
+  [
+    [
+      "Vale.X64.Stack_i.lemma_same_init_rsp_free_stack64",
+      1,
+      1,
+      0,
+      [ "@query" ],
+      0,
+      "8b7ce3d0cbd30fd2f7bdad6b3712f8ce"
+    ],
+    [
+      "Vale.X64.Stack_i.lemma_same_init_rsp_store_stack64",
+      1,
+      1,
+      0,
+      [ "@query" ],
+      0,
+      "c06cd8836537ee31b8a0040b808370aa"
+    ]
+  ]
+]

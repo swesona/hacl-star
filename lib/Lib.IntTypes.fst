@@ -2,7 +2,7 @@ module Lib.IntTypes
 
 open FStar.Math.Lemmas
 
-#push-options "--max_fuel 0 --max_ifuel 1 --z3rlimit 50"
+#push-options "--max_fuel 0 --max_ifuel 1 --z3rlimit 100"
 
 let pow2_2 _   = assert_norm (pow2 2 = 4)
 let pow2_3 _   = assert_norm (pow2 3 = 8)
@@ -672,6 +672,8 @@ val shift_right_value_aux_1: #n:pos{1 < n} -> a:Int.int_t n -> s:nat{n <= s} ->
 let shift_right_value_aux_1 #n a s =
   pow2_le_compat s n;
   if a >= 0 then Int.sign_bit_positive a else Int.sign_bit_negative a
+
+#push-options "--z3rlimit 200"
 
 val shift_right_value_aux_2: #n:pos{1 < n} -> a:Int.int_t n ->
   Lemma (Int.shift_arithmetic_right #n a 1 = a / 2)

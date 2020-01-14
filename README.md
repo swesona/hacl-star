@@ -1,145 +1,74 @@
-HACL*
-=====
+# A High-Assurance Cryptographic Library
 
-HACL* is a formally verified cryptographic library in [F\*],
-developed by the [Prosecco](http://prosecco.inria.fr) team at
-[INRIA Paris](https://www.inria.fr/en/centre/paris) in collaboration
-with Microsoft Research, as part of [Project Everest].
+This repository contains verified code for a library of modern
+cryptographic algorithms, including Curve25519, Ed25519, AES-GCM,
+Chacha20, Poly1305, SHA-2, SHA-3, HMAC, and HKDF. This set of algorithms
+is enough to support the full NaCl API and several TLS 1.3 ciphersuites.
+The code for all of these algorithms is formally verified using the
+[F\*](https://fstarlang.github.io/) verification framework for memory
+safety, functional correctness, and secret independence (resistance to
+some types of timing side-channels).
 
-HACL stands for High-Assurance Cryptographic Library and its design is
-inspired by discussions at the [HACS series of workshops](https://github.com/HACS-workshop).
-The goal of this library is to develop verified C reference implementations
-for popular cryptographic primitives and to verify them for memory safety,
-functional correctness, and secret independence.
+More detailed documentation on the library and our verification method
+can be found at [hacl-star.github.io](https://hacl-star.github.io).
 
-More details about the HACL* library and its design can be found in our ACM CCS 2017 research paper:
-https://eprint.iacr.org/2017/536
+The code in this repository is divided into three closely-related sub-projects,
+all developed as part of [Project Everest](https://project-everest.github.io/).
 
-All our code is written and verified in [F\*] and then compiled to C via
-the [KreMLin tool](https://github.com/FStarLang/kremlin/). Details on the verification and compilation
-toolchain and their formal guarantees can be found in the ICFP 2017 paper:
-https://arxiv.org/abs/1703.00053
+## HACL\*
 
-# Warning
+[HACL\*](code/) is a formally verified library
+of modern cryptographic algorithms written in a subset of
+[F\*](https://fstarlang.github.io) called Low\* and compiled to C
+using a compiler called
+[KreMLin](https://github.com/FStarLang/kremlin). The Low\* source code
+for each primitive is verified for memory safety, functional
+correctness, and secret independence. The compiler generates
+efficient, readable, standalone C code for each algorithm that
+can be easily integrated into any C project.  We include the current C code for various HACL\*
+algorithms in the [dist](dist/) directory. HACL\* can also be compiled to WebAssembly.
 
-While HACL* is used in several products such as Mozilla Firefox or Wireguard,
-we highly recommand to consult the authors before using HACL* in production systems.
+## ValeCrypt
 
-# Supported Cryptographic Algorithms
+[ValeCrypt](vale/) provides formally verified high-performance
+cryptographic code for selected primitives in assembly language. It relies on the
+[Vale tool](https://github.com/project-everest/vale) to produce
+code and proofs in [F\*](https://github.com/FStarLang/FStar). Vale supports
+multiple platforms and proves that its implementations are memory safe,
+functionally correct, and that timing and memory accesses are secret
+independent.
 
-The primitives and constructions supported currently are:
+## EverCrypt
 
-* Stream ciphers: Chacha20, Salsa20
-* MACs: Poly1305, HMAC
-* Elliptic Curves: Curve25519
-* Elliptic Curves Signatures: Ed25519
-* Hash functions: SHA2 (256,384,512)
-* NaCl API: secret_box, box, sign
-* TLS API: IETF Chacha20Poly1305 AEAD
+[EverCrypt](providers/evercrypt/) is a high-performance, cross-platform, formally
+verified modern cryptographic provider that packages implementations from
+HACL\* and ValeCrypt, and automatically picks the fastest one available,
+depending on processor support and the target execution environment
+(*multiplexing*). Furthermore, EverCrypt offers an (*agile*) API that makes it
+simple to switch between algorithms (e.g., from SHA2 to SHA3).
 
-Developers can use HACL* through the [NaCl API].
-In particular, we implement the same C API as [libsodium] for the
-NaCl constructions, so any application that relies on
-libsodium only for these constructions can be immediately ported to use the verified code in HACL*
-instead. (Warning: libsodium also implements other algorithms not in NaCl
-that are not implemented by HACL*)
+## Status
 
-The verified primitives can also be used to support larger F* verification projects.
-For example, HACL* code is used through the agile cryptographic model developed in
-[secure_api/] as the basis for cryptographic proofs of the TLS record layer in [miTLS].
-A detailed description of the code in [secure_api/] and its formal security guarantees
-appears in the IEEE S&P 2017 paper: https://eprint.iacr.org/2016/1178.pdf
+*Warning*: This is a research project. Although some of our code is currently used in popular products like Mozilla Firefox and Wireguard,
+we highly recommend that users consult with the HACL\* maintainers before using this code in production systems.
 
-[F\*]: https://github.com/FStarLang/FStar
-[KreMLin]: https://github.com/FStarLang/kremlin
-[miTLS]: https://github.com/mitls/mitls-fstar
-[NaCl API]: https://nacl.cr.yp.to
-[libsodium]: https://github.com/jedisct1/libsodium
-[Project Everest]: https://github.com/project-everest
-[secure_api/]: https://github.com/mitls/hacl-star/tree/master/secure_api
+We are actively developing and integrating our code on the
+[master](https://github.com/project-everest/hacl-star/tree/master/)
+branch, which tracks F\*'s `master` branch. Ongoing developments on new
+cryptographic primitives happen in the [dev](https://github.com/project-everest/hacl-star/tree/dev/)
+branch, which runs a little ahead of master. You can find a current snapshot
+of our C and assembly code in the [dist](dist/) directory; stable releases of the full library
+can be found in the [releases](https://github.com/project-everest/hacl-star/releases) page, including EverCrypt 0.1 (currently in **alpha**).
 
-# Licenses
+## License
 
-All F* source code is released under Apache 2.0.
+All the code in this repository is released under an Apache 2.0 license.
+The generated C code from HACL\* is also released under an MIT license.
+Contact the maintainers if you have other licensing requirements.
 
-All generated C, OCaml, Javascript and Web Assembly code is released under MIT.
+## Contact or Contribute
 
-# Installation
+This repository contains contributions from many students and researchers at INRIA, Microsoft Research, and Carnegie Mellon University,
+and it is under active development. The primary authors of each verified algorithm are noted in the corresponding AUTHORS.md file.
+For questions and comments, or if you want to contribute to the project, contact the current maintainers at hacl-star-maintainers@lists.gforge.inria.fr.
 
-If you only are interested in the latest version of the generated C code,
-or Web Assembly code, installing the toolchain is not required.
-In that scenario, only a recent C compiler and CMake are needed for building libraries.
-
-The latest version of the verified C code is available
-in [snapshots/hacl-c](snapshots/hacl-c).
-
-The latest version of the Web Assembly code is available
-in [snapshots/hacl-c-wasm](snapshots/hacl-c-wasm).
-
-HACL* relies on [F*](https://github.com/FStarLang/FStar) (`stable` branch) and
-[KreMLin](https://github.com/FStarLang/kremlin) (`master` branch) for verification,
-extraction to OCaml (`specs/`) and extraction to C (`code/`).
-
-See [INSTALL.md](https://github.com/mitls/hacl-star/INSTALL.md) for more information on how to install the toolchain.
-
-# Verifying and Building HACL*
-
-Type `make` to get more information:
-```
-HACL* Makefile:
-If you want to run and test the C library:
-- 'make build' will use CMake to generate static and shared libraries for snapshots/hacl-c (no verification)
-- 'make build-make' will use Makefiles to do the same thing (no verification)
-- 'make unit-tests' will run tests on the library built from the hacl-c snapshot (no verification)
-- 'make clean-build' will clean 'build' artifacts
-
-If you want to verify the F* code and regenerate the C library:
-- 'make prepare' will try to install F* and Kremlin (still has some prerequisites)
-- 'make verify' will run F* verification on all specs, code and secure-api directories
-- 'make extract' will generate all the C code into a snapshot and test it (no verification)
-- 'make test-all' will generate and test everything (no verification)
-- 'make world' will run everything (except make prepare)
-- 'make clean' will remove all artifacts created by other targets
-```
-
-Verification and C code generation requires [F\*] and [KreMLin].
-Benchmarking performance in `test-all` requires [openssl] and [libsodium].
-An additional CMake build is available and can be run with `make build-cmake`.
-
-# Performance
-
-To measure see the performance of HACL* primitives on your platform and C compiler,
-run the targets from `test/Makefile` if you have the dependencies installed. (experimental)
-To compare its performance with the C reference code (not the assembly versions) in [libsodium] and [openssl],
-download and compile [libsodium] with the `--disable-asm` flag and [openssl] with the `-no-asm` flag.
-
-While HACL* is typically as fast as hand-written C code, it is typically 1.1-5.7x slower than
-assembly code in our experiments. In the future, we hope to close this gap by using verified assembly implementations
-like [Vale](https://github.com/project-everest/vale) for some primitives.
-
-[openssl]: https://github.com/openssl/openssl
-[libsodium]: https://github.com/jedisct1/libsodium
-
-# Experimental features
-
-The [code/experimental](code/experimental) directory includes other (partially verified) cryptographic primitives that will become part of the library in the near future:
-* Randomness: System + RDRAND mixing
-* Stream cipher: XSalsa20
-* Encryption: AES-128, AES-256
-* MACs: GCM
-* Hash functions: Blake2s
-* Key Derivation: HKDF
-* Signatures: RSA-PSS
-
-We are also working on a JavaScript backend for F* that would enable us to extract HACL* as a JavaScript library.
-
-# Authors and Maintainers
-
-HACL* was originially developed as part of the Ph.D. thesis of Jean Karim Zinzindohoué
-in the [Prosecco](http://prosecco.inria.fr) team at [INRIA Paris](https://www.inria.fr/en/centre/paris).
-It contains contributions from many researchers at INRIA and Microsoft Research, and is
-being actively developed and maintained within [Project Everest].
-
-For questions and comments, or if you want to contribute to the project, do contact the current maintainers at:
-* Benjamin Beurdouche (benjamin.beurdouche@inria.fr)
-* Karthikeyan Bhargavan (karthikeyan.bhargavan@inria.fr)

@@ -1,0 +1,77 @@
+[
+  "G\u0017X’÷Ìõ\u000b\u0004–7cﬁñßv",
+  [
+    [
+      "Vale.Lib.Map16.sel2",
+      1,
+      1,
+      0,
+      [ "@query", "primitive_Prims.op_LessThan" ],
+      0,
+      "6c26bccc38c505fe0f365508621561c8"
+    ],
+    [
+      "Vale.Lib.Map16.sel4",
+      1,
+      1,
+      0,
+      [ "@query", "primitive_Prims.op_LessThan" ],
+      0,
+      "5876d3eff4c89daaa6c3f12ee6525735"
+    ],
+    [
+      "Vale.Lib.Map16.sel8",
+      1,
+      1,
+      0,
+      [ "@query", "primitive_Prims.op_LessThan" ],
+      0,
+      "a00b22361ff2154be78c08e0422a7f96"
+    ],
+    [
+      "Vale.Lib.Map16.sel16",
+      1,
+      1,
+      0,
+      [ "@query", "primitive_Prims.op_LessThan" ],
+      0,
+      "ef195c4cb3424ea73fa116fca2e83ade"
+    ],
+    [
+      "Vale.Lib.Map16.upd2",
+      1,
+      1,
+      0,
+      [ "@query", "primitive_Prims.op_LessThan" ],
+      0,
+      "481dd687b96f013dd6fb933213448e48"
+    ],
+    [
+      "Vale.Lib.Map16.upd4",
+      1,
+      1,
+      0,
+      [ "@query", "primitive_Prims.op_LessThan" ],
+      0,
+      "03f33710b8c4cef9ccff21b23e316018"
+    ],
+    [
+      "Vale.Lib.Map16.upd8",
+      1,
+      1,
+      0,
+      [ "@query", "primitive_Prims.op_LessThan" ],
+      0,
+      "cce918d34a23ca9954f075e4d49adf92"
+    ],
+    [
+      "Vale.Lib.Map16.upd16",
+      1,
+      1,
+      0,
+      [ "@query", "primitive_Prims.op_LessThan" ],
+      0,
+      "c71a06f1693d9481756daf4c5eb2bc6c"
+    ]
+  ]
+]

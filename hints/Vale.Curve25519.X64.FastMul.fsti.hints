@@ -1,0 +1,133 @@
+[
+  "ÂLˆzù◊UYﬂ\tpƒ\u0007ù{ö",
+  [
+    [
+      "Vale.Curve25519.X64.FastMul.va_lemma_Fast_multiply",
+      1,
+      1,
+      0,
+      [
+        "@MaxIFuel_assumption", "@query", "equation_Prims.nat",
+        "projection_inverse_BoxInt_proj_0",
+        "refinement_interpretation_Tm_refine_542f9d4f129664613f2483a6c88bc7c2"
+      ],
+      0,
+      "b0c9ce99d4982885700557de3d2ab74d"
+    ],
+    [
+      "Vale.Curve25519.X64.FastMul.va_wp_Fast_multiply",
+      1,
+      1,
+      0,
+      [
+        "@MaxIFuel_assumption", "@query", "equation_Prims.nat",
+        "projection_inverse_BoxInt_proj_0",
+        "refinement_interpretation_Tm_refine_542f9d4f129664613f2483a6c88bc7c2"
+      ],
+      0,
+      "bb6ea572a6bc93cc577f94153149c8ce"
+    ],
+    [
+      "Vale.Curve25519.X64.FastMul.va_quick_Fast_multiply",
+      1,
+      1,
+      0,
+      [
+        "@MaxIFuel_assumption", "@query",
+        "fuel_guarded_inversion_FStar.Pervasives.Native.tuple3"
+      ],
+      0,
+      "dac9644de664950f8cbb7431e1a106f8"
+    ],
+    [
+      "Vale.Curve25519.X64.FastMul.va_lemma_Fast_mul_stdcall",
+      1,
+      1,
+      0,
+      [
+        "@MaxIFuel_assumption", "@query", "bool_inversion", "eq2-interp",
+        "equality_tok_Vale.X64.Machine_s.Secret@tok", "equation_Prims.nat",
+        "equation_Vale.Def.Words_s.nat64", "equation_Vale.Def.Words_s.natN",
+        "equation_Vale.X64.Decls.va_require_total",
+        "equation_Vale.X64.Decls.validDstAddrs64",
+        "equation_Vale.X64.Decls.validSrcAddrs64",
+        "equation_Vale.X64.Memory.get_vale_heap",
+        "fuel_guarded_inversion_Vale.X64.State.vale_state",
+        "proj_equation_Vale.X64.State.Mkvale_state_vs_memTaint",
+        "projection_inverse_BoxInt_proj_0",
+        "refinement_interpretation_Tm_refine_2111fb9198de365561cfa31855f8c970",
+        "refinement_interpretation_Tm_refine_542f9d4f129664613f2483a6c88bc7c2",
+        "refinement_interpretation_Tm_refine_c1424615841f28cac7fc34e92b7ff33c"
+      ],
+      0,
+      "e9fd2c5926cbb29702f50b0ff9b721e5"
+    ],
+    [
+      "Vale.Curve25519.X64.FastMul.va_wp_Fast_mul_stdcall",
+      1,
+      1,
+      0,
+      [
+        "@MaxIFuel_assumption", "@query", "equation_Prims.nat",
+        "equation_Vale.Def.Words_s.nat64", "equation_Vale.Def.Words_s.natN",
+        "projection_inverse_BoxInt_proj_0",
+        "refinement_interpretation_Tm_refine_542f9d4f129664613f2483a6c88bc7c2",
+        "refinement_interpretation_Tm_refine_c1424615841f28cac7fc34e92b7ff33c"
+      ],
+      0,
+      "78fa71e87d950143a379791e5e541e91"
+    ],
+    [
+      "Vale.Curve25519.X64.FastMul.va_quick_Fast_mul_stdcall",
+      1,
+      1,
+      0,
+      [
+        "@MaxIFuel_assumption", "@query",
+        "fuel_guarded_inversion_FStar.Pervasives.Native.tuple3"
+      ],
+      0,
+      "3e106a8de3f0c88ae6e3e63705135ce5"
+    ],
+    [
+      "Vale.Curve25519.X64.FastMul.va_lemma_Fast_mul2_stdcall",
+      1,
+      1,
+      0,
+      [
+        "@MaxIFuel_assumption", "@query", "bool_inversion", "eq2-interp",
+        "equality_tok_Vale.X64.Machine_s.Secret@tok",
+        "equation_Vale.X64.Decls.va_require_total",
+        "equation_Vale.X64.Decls.validDstAddrs64",
+        "equation_Vale.X64.Decls.validSrcAddrs64",
+        "equation_Vale.X64.Memory.get_vale_heap",
+        "fuel_guarded_inversion_Vale.X64.State.vale_state",
+        "proj_equation_Vale.X64.State.Mkvale_state_vs_memTaint",
+        "refinement_interpretation_Tm_refine_12858e97eec0ea4a967ef81772c81ae1"
+      ],
+      0,
+      "77b08838a7ed62ad923af02be402f745"
+    ],
+    [
+      "Vale.Curve25519.X64.FastMul.va_wp_Fast_mul2_stdcall",
+      1,
+      1,
+      0,
+      [ "@query" ],
+      0,
+      "02e790ea28bcfaa2078974354981ad47"
+    ],
+    [
+      "Vale.Curve25519.X64.FastMul.va_quick_Fast_mul2_stdcall",
+      1,
+      1,
+      0,
+      [
+        "@MaxIFuel_assumption", "@query",
+        "fuel_guarded_inversion_FStar.Pervasives.Native.tuple3"
+      ],
+      0,
+      "138c615c8187616d7632e6251addb315"
+    ]
+  ]
+]

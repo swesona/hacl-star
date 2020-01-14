@@ -97,8 +97,8 @@ let load_precompute_r_post #w h p =
   let rn = gsub p 10ul 5ul in
   let rn_5 = gsub p 15ul 5ul in
   fmul_precomp_r_pre h p /\
-  felem_fits h rn (1, 2, 1, 1, 1) /\
-  felem_fits h rn_5 (5, 10, 5, 5, 5) /\
+  felem_fits h rn (2, 2, 2, 2, 2) /\
+  felem_fits h rn_5 (10, 10, 10, 10, 10) /\
   as_tup5 h rn_5 == precomp_r5 (as_tup5 h rn) /\
   feval h rn == Vec.compute_rw (feval h r).[0]
 
@@ -116,6 +116,7 @@ let create_felem w =
   LSeq.eq_intro (feval h1 r) (LSeq.create w 0);
   r
 
+#push-options "--z3rlimit 100"
 inline_for_extraction noextract
 val set_bit:
     #w:lanes
@@ -138,6 +139,7 @@ let set_bit #w f i =
   let h0 = ST.get () in
   f.(i /. 26ul) <- vec_or fi mask;
   set_bit5_lemma (as_seq h0 f) (v i)
+#pop-options
 
 inline_for_extraction noextract
 val set_bit128:
@@ -211,12 +213,12 @@ val fadd:
   -> Stack unit
     (requires fun h ->
       live h f1 /\ live h f2 /\ live h out /\
-      felem_fits h f1 (1,2,1,1,1) /\
+      felem_fits h f1 (2,2,2,2,2) /\
       felem_fits h f2 (1,1,1,1,1))
     (ensures  fun h0 _ h1 ->
       modifies (loc out) h0 h1 /\
       //as_tup5 h1 out == fadd5 (as_tup5 h0 f1) (as_tup5 h0 f2) /\
-      felem_fits h1 out (2, 3, 2, 2, 2) /\
+      felem_fits h1 out (3,3,3,3,3) /\
       feval h1 out == LSeq.map2 Vec.pfadd (feval h0 f1) (feval h0 f2))
 let fadd #w out f1 f2 =
   let f10 = f1.(0ul) in
@@ -250,13 +252,13 @@ val fmul_r:
     (requires fun h ->
       live h out /\ live h f1 /\
       live h r /\ live h r5 /\
-      felem_fits h f1 (2, 3, 2, 2, 2) /\
-      felem_fits h r (1, 2, 1, 1, 1) /\
-      felem_fits h r5 (5, 10, 5, 5, 5) /\
+      felem_fits h f1 (3,3,3,3,3) /\
+      felem_fits h r (2,2,2,2,2) /\
+      felem_fits h r5 (10,10,10,10,10) /\
       as_tup5 h r5 == precomp_r5 (as_tup5 h r))
     (ensures  fun h0 _ h1 ->
       modifies (loc out) h0 h1 /\
-      acc_inv_t (as_tup5 h1 out) /\
+      felem_fits h1 out (1,2,1,1,2) /\
       feval h1 out == LSeq.map2 (Vec.pfmul) (feval h0 f1) (feval h0 r))
 let fmul_r #w out f1 r r5 =
   let r0 = r.(0ul) in
@@ -297,13 +299,12 @@ val fadd_mul_r:
   -> Stack unit
     (requires fun h ->
       live h acc /\ live h f1 /\ live h p /\
-      felem_fits h acc (1, 2, 1, 1, 1) /\
-      felem_fits h f1 (1, 1, 1, 1, 1) /\
+      felem_fits h acc (2,2,2,2,2) /\
+      felem_fits h f1 (1,1,1,1,1) /\
       fmul_precomp_r_pre h p)
     (ensures  fun h0 _ h1 ->
       modifies (loc acc) h0 h1 /\
-      //as_tup5 h1 acc == fadd_mul_r5 (as_tup5 h0 acc) (as_tup5 h0 f1) (as_tup5 h0 r) (as_tup5 h0 r5) /\
-      acc_inv_t (as_tup5 h1 acc) /\
+      felem_fits h1 acc (1,2,1,1,2) /\
       feval h1 acc == LSeq.map2 (Vec.pfmul)
         (LSeq.map2 (Vec.pfadd) (feval h0 acc) (feval h0 f1)) (feval h0 (gsub p 0ul 5ul)))
 let fadd_mul_r #w out f1 p =
@@ -353,13 +354,13 @@ val fmul_rn:
       live h out /\ live h f1 /\ live h p /\
      (let rn = gsub p 10ul 5ul in
       let rn_5 = gsub p 15ul 5ul in
-      felem_fits h f1 (2, 3, 2, 2, 2) /\
-      felem_fits h rn (1, 2, 1, 1, 1) /\
-      felem_fits h rn_5 (5, 10, 5, 5, 5) /\
+      felem_fits h f1 (3,3,3,3,3) /\
+      felem_fits h rn (2,2,2,2,2) /\
+      felem_fits h rn_5 (10,10,10,10,10) /\
       as_tup5 h rn_5 == precomp_r5 (as_tup5 h rn)))
     (ensures  fun h0 _ h1 ->
       modifies (loc out) h0 h1 /\
-      acc_inv_t (as_tup5 h1 out) /\
+      felem_fits h1 out (1,2,1,1,2) /\
       feval h1 out == LSeq.map2 Vec.pfmul (feval h0 f1) (feval h0 (gsub p 10ul 5ul)))
 let fmul_rn #w out f1 p =
   let rn = sub p 10ul 5ul in
@@ -372,7 +373,7 @@ val reduce_felem:
   -> f:felem w
   -> Stack unit
     (requires fun h ->
-      live h f /\ acc_inv_t (as_tup5 h f))
+      live h f /\ felem_fits h f (2,2,2,2,2))
     (ensures  fun h0 _ h1 ->
       modifies (loc f) h0 h1 /\
       felem_fits h1 f (1, 1, 1, 1, 1) /\
@@ -435,6 +436,8 @@ let load_felem #w f lo hi =
   f.(2ul) <- f2;
   f.(3ul) <- f3;
   f.(4ul) <- f4
+
+#push-options "--max_fuel 2"
 
 inline_for_extraction noextract
 val load_precompute_r1:
@@ -565,6 +568,7 @@ let load_precompute_r #w p r0 r1 =
   | 2 -> load_precompute_r2 p r0 r1
   | 4 -> load_precompute_r4 p r0 r1
 
+#pop-options
 
 inline_for_extraction noextract
 val load_felem1_le:
@@ -624,22 +628,16 @@ val load_felem4_le:
       feval h1 f == Vec.load_elem4 (as_seq h0 b))
 let load_felem4_le f b =
   let h0 = ST.get () in
-  let lo0 = vec_load_le U64 4 (sub b 0ul 32ul) in
-  let hi0 = vec_load_le U64 4 (sub b 32ul 32ul) in
-  let lo1 = vec_interleave_low_n 2 lo0 hi0 in
-  vec_interleave_low_n_lemma_uint64_4_2 lo0 hi0;
-  let hi1 = vec_interleave_high_n 2 lo0 hi0 in
-  vec_interleave_high_n_lemma_uint64_4_2 lo0 hi0;
+  let lo = vec_load_le U64 4 (sub b 0ul 32ul) in
+  let hi = vec_load_le U64 4 (sub b 32ul 32ul) in
+  let (o0, o1, o2, o3, o4) = load_felem5_4 lo hi in
+  load_felem5_le (as_seq h0 b);
+  f.(0ul) <- o0;
+  f.(1ul) <- o1;
+  f.(2ul) <- o2;
+  f.(3ul) <- o3;
+  f.(4ul) <- o4
 
-  let lo = vec_interleave_low lo1 hi1 in
-  vec_interleave_low_lemma_uint64_4 lo1 hi1;
-  let hi = vec_interleave_high lo1 hi1 in
-  vec_interleave_high_lemma_uint64_4 lo1 hi1;
-
-  load_felem f lo hi;
-  let h1 = ST.get () in
-  uints_from_bytes_le_lemma64_4 (as_seq h0 b);
-  LSeq.eq_intro (feval h1 f) (Vec.load_elem4 (as_seq h0 b))
 
 inline_for_extraction noextract
 val load_felems_le:
@@ -674,104 +672,6 @@ val load_blocks:
 let load_blocks #s f b =
   load_felems_le f b;
   set_bit128 f
-
-//inline_for_extraction noextract
-[@CInline]
-val load_acc1:
-    acc:felem 1
-  -> b:lbuffer uint8 16ul
-  -> Stack unit
-    (requires fun h ->
-      live h acc /\ live h b /\ disjoint acc b /\
-      felem_fits h acc (1, 2, 1, 1, 1))
-    (ensures  fun h0 _ h1 ->
-      modifies (loc acc) h0 h1 /\
-      felem_fits h1 acc (2, 3, 2, 2, 2) /\
-      feval h1 acc == Vec.load_acc1 (as_seq h0 b) (feval h0 acc).[0])
-let load_acc1 acc b =
-  push_frame();
-  let h0 = ST.get () in
-  LSeq.eq_intro (feval h0 acc) (LSeq.create 1 (feval h0 acc).[0]);
-  let e = create 5ul (zero 1) in
-  load_blocks e b;
-  fadd acc acc e;
-  pop_frame()
-
-//inline_for_extraction noextract
-[@CInline]
-val load_acc2:
-    acc:felem 2
-  -> b:lbuffer uint8 32ul
-  -> Stack unit
-    (requires fun h ->
-      live h acc /\ live h b /\ disjoint acc b /\
-      felem_fits h acc (1, 2, 1, 1, 1))
-    (ensures  fun h0 _ h1 ->
-      modifies (loc acc) h0 h1 /\
-      felem_fits h1 acc (2, 3, 2, 2, 2) /\
-      feval h1 acc == Vec.load_acc2 (as_seq h0 b) (feval h0 acc).[0])
-let load_acc2 acc b =
-  push_frame();
-  let e = create 5ul (zero 2) in
-  load_blocks e b;
-
-  let acc0 = acc.(0ul) in
-  let acc1 = acc.(1ul) in
-  let acc2 = acc.(2ul) in
-  let acc3 = acc.(3ul) in
-  let acc4 = acc.(4ul) in
-  let e0 = e.(0ul) in
-  let e1 = e.(1ul) in
-  let e2 = e.(2ul) in
-  let e3 = e.(3ul) in
-  let e4 = e.(4ul) in
-
-  let (acc0, acc1, acc2, acc3, acc4) =
-    load_acc5_2 (acc0, acc1, acc2, acc3, acc4) (e0, e1, e2, e3, e4) in
-  acc.(0ul) <- acc0;
-  acc.(1ul) <- acc1;
-  acc.(2ul) <- acc2;
-  acc.(3ul) <- acc3;
-  acc.(4ul) <- acc4;
-  pop_frame()
-
-//inline_for_extraction noextract
-[@CInline]
-val load_acc4:
-    acc:felem 4
-  -> b:lbuffer uint8 64ul
-  -> Stack unit
-    (requires fun h ->
-      live h acc /\ live h b /\ disjoint acc b /\
-      felem_fits h acc (1, 2, 1, 1, 1))
-    (ensures  fun h0 _ h1 ->
-      modifies (loc acc) h0 h1 /\
-      felem_fits h1 acc (2, 3, 2, 2, 2) /\
-      feval h1 acc == Vec.load_acc4 (as_seq h0 b) (feval h0 acc).[0])
-let load_acc4 acc b =
-  push_frame();
-  let e = create 5ul (zero 4) in
-  load_blocks e b;
-
-  let acc0 = acc.(0ul) in
-  let acc1 = acc.(1ul) in
-  let acc2 = acc.(2ul) in
-  let acc3 = acc.(3ul) in
-  let acc4 = acc.(4ul) in
-  let e0 = e.(0ul) in
-  let e1 = e.(1ul) in
-  let e2 = e.(2ul) in
-  let e3 = e.(3ul) in
-  let e4 = e.(4ul) in
-
-  let (acc0, acc1, acc2, acc3, acc4) =
-    load_acc5_4 (acc0, acc1, acc2, acc3, acc4) (e0, e1, e2, e3, e4) in
-  acc.(0ul) <- acc0;
-  acc.(1ul) <- acc1;
-  acc.(2ul) <- acc2;
-  acc.(3ul) <- acc3;
-  acc.(4ul) <- acc4;
-  pop_frame()
 
 inline_for_extraction noextract
 val load_felem_le:
@@ -848,145 +748,6 @@ let uints64_to_bytes_le b r0 r1 =
   uints64_to_bytes_le_lemma r0 r1;
   LSeq.eq_intro (LSeq.sub (as_seq h2 b) 0 8) (BSeq.uint_to_bytes_le #U64 r0);
   LSeq.lemma_concat2 8 (BSeq.uint_to_bytes_le #U64 r0) 8 (BSeq.uint_to_bytes_le #U64 r1) (as_seq h2 b)
-
-//inline_for_extraction noextract
-[@CInline]
-val fmul_r1_normalize:
-    out:felem 1
-  -> p:precomp_r 1
-  -> Stack unit
-    (requires fun h ->
-      live h out /\ live h p /\
-      felem_fits h out (2,3,2,2,2) /\
-      load_precompute_r_post h p)
-    (ensures  fun h0 _ h1 ->
-      modifies (loc out) h0 h1 /\
-      acc_inv_t (as_tup5 h1 out) /\
-     (let r = feval h0 (gsub p 0ul 5ul) in
-      (feval h1 out).[0] == Vec.normalize_1 r.[0] (feval h0 out)))
-let fmul_r1_normalize out p =
-  let r = sub p 0ul 5ul in
-  let r5 = sub p 5ul 5ul in
-  fmul_r out out r r5
-
-//inline_for_extraction noextract
-[@CInline]
-val fmul_r2_normalize:
-    out:felem 2
-  -> p:precomp_r 2
-  -> Stack unit
-    (requires fun h ->
-      live h out /\ live h p /\
-      felem_fits h out (2,3,2,2,2) /\
-      load_precompute_r_post h p)
-    (ensures  fun h0 _ h1 ->
-      modifies (loc out) h0 h1 /\
-      acc_inv_t (as_tup5 h1 out) /\
-     (let r = feval h0 (gsub p 0ul 5ul) in
-      (feval h1 out).[0] == Vec.normalize_2 r.[0] (feval h0 out)))
-let fmul_r2_normalize out p =
-  let r = sub p 0ul 5ul in
-  let r2 = sub p 10ul 5ul in
-
-  let a0 = out.(0ul) in
-  let a1 = out.(1ul) in
-  let a2 = out.(2ul) in
-  let a3 = out.(3ul) in
-  let a4 = out.(4ul) in
-
-  let r10 = r.(0ul) in
-  let r11 = r.(1ul) in
-  let r12 = r.(2ul) in
-  let r13 = r.(3ul) in
-  let r14 = r.(4ul) in
-
-  let r20 = r2.(0ul) in
-  let r21 = r2.(1ul) in
-  let r22 = r2.(2ul) in
-  let r23 = r2.(3ul) in
-  let r24 = r2.(4ul) in
-
-  let (o0, o1, o2, o3, o4) =
-    fmul_r2_normalize5 (a0, a1, a2, a3, a4) (r10, r11, r12, r13, r14) (r20, r21, r22, r23, r24) in
-  out.(0ul) <- o0;
-  out.(1ul) <- o1;
-  out.(2ul) <- o2;
-  out.(3ul) <- o3;
-  out.(4ul) <- o4
-
-//inline_for_extraction noextract
-[@CInline]
-val fmul_r4_normalize:
-    out:felem 4
-  -> p:precomp_r 4
-  -> Stack unit
-    (requires fun h ->
-      live h out /\ live h p /\
-      felem_fits h out (2,3,2,2,2) /\
-      load_precompute_r_post h p)
-    (ensures  fun h0 _ h1 ->
-      modifies (loc out) h0 h1 /\
-      acc_inv_t (as_tup5 h1 out) /\
-     (let r = feval h0 (gsub p 0ul 5ul) in
-      (feval h1 out).[0] == Vec.normalize_4 r.[0] (feval h0 out)))
-let fmul_r4_normalize out p =
-  let r = sub p 0ul 5ul in
-  let r_5 = sub p 5ul 5ul in
-  let r4 = sub p 10ul 5ul in
-
-  let a0 = out.(0ul) in
-  let a1 = out.(1ul) in
-  let a2 = out.(2ul) in
-  let a3 = out.(3ul) in
-  let a4 = out.(4ul) in
-
-  let r10 = r.(0ul) in
-  let r11 = r.(1ul) in
-  let r12 = r.(2ul) in
-  let r13 = r.(3ul) in
-  let r14 = r.(4ul) in
-
-  let r150 = r_5.(0ul) in
-  let r151 = r_5.(1ul) in
-  let r152 = r_5.(2ul) in
-  let r153 = r_5.(3ul) in
-  let r154 = r_5.(4ul) in
-
-  let r40 = r4.(0ul) in
-  let r41 = r4.(1ul) in
-  let r42 = r4.(2ul) in
-  let r43 = r4.(3ul) in
-  let r44 = r4.(4ul) in
-
-  let (o0, o1, o2, o3, o4) =
-    fmul_r4_normalize5 (a0, a1, a2, a3, a4) (r10, r11, r12, r13, r14)
-      (r150, r151, r152, r153, r154) (r40, r41, r42, r43, r44) in
-  out.(0ul) <- o0;
-  out.(1ul) <- o1;
-  out.(2ul) <- o2;
-  out.(3ul) <- o3;
-  out.(4ul) <- o4
-
-inline_for_extraction noextract
-val fmul_rn_normalize:
-    #w:lanes
-  -> out:felem w
-  -> p:precomp_r w
-  -> Stack unit
-    (requires fun h ->
-      live h out /\ live h p /\
-      felem_fits h out (2,3,2,2,2) /\
-      load_precompute_r_post h p)
-    (ensures  fun h0 _ h1 ->
-      modifies (loc out) h0 h1 /\
-      acc_inv_t (as_tup5 h1 out) /\
-     (let r = feval h0 (gsub p 0ul 5ul) in
-      (feval h1 out).[0] == Vec.normalize_n r.[0] (feval h0 out)))
-let fmul_rn_normalize #w out p =
-  match w with
-  | 1 -> fmul_r1_normalize out p
-  | 2 -> fmul_r2_normalize out p
-  | 4 -> fmul_r4_normalize out p
 
 inline_for_extraction noextract
 val mod_add128:

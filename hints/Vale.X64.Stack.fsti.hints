@@ -1,0 +1,29 @@
+[
+  "ØH¨›kv&£2‹”ß\u0015É]@",
+  [
+    [
+      "Vale.X64.Stack.va_quick_Callee_save_registers",
+      1,
+      1,
+      0,
+      [
+        "@MaxIFuel_assumption", "@query",
+        "fuel_guarded_inversion_FStar.Pervasives.Native.tuple3"
+      ],
+      0,
+      "f711ef5893dd9340a161b4f90d896379"
+    ],
+    [
+      "Vale.X64.Stack.va_quick_Callee_restore_registers",
+      1,
+      1,
+      0,
+      [
+        "@MaxIFuel_assumption", "@query",
+        "fuel_guarded_inversion_FStar.Pervasives.Native.tuple3"
+      ],
+      0,
+      "5cf645b749e36f1936da99ed047046ee"
+    ]
+  ]
+]

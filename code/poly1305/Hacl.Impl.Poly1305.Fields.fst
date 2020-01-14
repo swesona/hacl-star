@@ -7,6 +7,11 @@ open FStar.Mul
 open Lib.IntTypes
 open Lib.Buffer
 
+open Hacl.Impl.Poly1305.Field32xN_32
+open Hacl.Impl.Poly1305.Field32xN_128
+open Hacl.Impl.Poly1305.Field32xN_256
+open Hacl.Impl.Poly1305.Field32xN
+
 module ST = FStar.HyperStack.ST
 module LSeq = Lib.Sequence
 module BSeq = Lib.ByteSequence
@@ -18,6 +23,7 @@ module F32xN = Hacl.Impl.Poly1305.Field32xN
 
 #reset-options "--z3rlimit 50 --max_fuel 0 --max_fuel 0"
 
+noextract
 type field_spec =
   | M32
   | M128
@@ -183,17 +189,17 @@ val load_acc:
   Stack unit
   (requires fun h ->
     live h acc /\ live h b /\ disjoint acc b /\
-    felem_fits h acc (1, 2, 1, 1, 1))
+    felem_fits h acc (2, 2, 2, 2, 2))
   (ensures  fun h0 _ h1 ->
     modifies (loc acc) h0 h1 /\
-    felem_fits h1 acc (2, 3, 2, 2, 2) /\
+    felem_fits h1 acc (3, 3, 3, 3, 3) /\
     feval h1 acc == Vec.load_acc #(width s) (as_seq h0 b) (feval h0 acc).[0])
 
 let load_acc #s acc b =
   match s with
-  | M32 -> F32xN.load_acc1 acc b
-  | M128 -> F32xN.load_acc2 acc b
-  | M256 -> F32xN.load_acc4 acc b
+  | M32 -> Field32xN_32.load_acc1 acc b
+  | M128 -> Field32xN_128.load_acc2 acc b
+  | M256 -> Field32xN_256.load_acc4 acc b
 
 
 inline_for_extraction noextract
@@ -263,8 +269,7 @@ val reduce_felem:
     #s:field_spec
   -> f:felem s ->
   Stack unit
-  (requires fun h ->
-    live h f /\ F32xN.acc_inv_t #(width s) (F32xN.as_tup5 h f))
+  (requires fun h -> live h f /\ felem_fits h f (2, 2, 2, 2, 2))
   (ensures  fun h0 _ h1 ->
     modifies (loc f) h0 h1 /\
     felem_fits h1 f (1, 1, 1, 1, 1) /\
@@ -309,11 +314,11 @@ val fadd_mul_r:
   (requires fun h ->
     live h out /\ live h f1 /\ live h precomp /\
     F32xN.fmul_precomp_r_pre #(width s) h precomp /\
-    felem_fits h out (1, 2, 1, 1, 1) /\
+    felem_fits h out (2, 2, 2, 2, 2) /\
     felem_fits h f1 (1, 1, 1, 1, 1))
   (ensures  fun h0 _ h1 ->
     modifies (loc out) h0 h1 /\
-    F32xN.acc_inv_t #(width s) (F32xN.as_tup5 h1 out) /\
+    felem_fits h1 out (1, 2, 1, 1, 2) /\
     feval h1 out ==
     Vec.fmul (Vec.fadd (feval h0 out) (feval h0 f1)) (feval h0 (gsub precomp 0ul 5ul)))
 
@@ -335,13 +340,13 @@ val fmul_rn:
     live h out /\ live h f1 /\ live h precomp /\
     (let rn = gsub precomp 10ul 5ul in
     let rn_5 = gsub precomp 15ul 5ul in
-    felem_fits h f1 (2,3,2,2,2) /\
-    felem_fits h rn (1,2,1,1,1) /\
-    felem_fits h rn_5 (5,10,5,5,5) /\
+    felem_fits h f1 (3, 3, 3, 3, 3) /\
+    felem_fits h rn (2, 2, 2, 2, 2) /\
+    felem_fits h rn_5 (10, 10, 10, 10, 10) /\
     F32xN.as_tup5 #(width s) h rn_5 == F32xN.precomp_r5 (F32xN.as_tup5 h rn)))
   (ensures fun h0 _ h1 ->
     modifies (loc out) h0 h1 /\
-    F32xN.acc_inv_t #(width s) (F32xN.as_tup5 h1 out) /\
+    felem_fits h1 out (1, 2, 1, 1, 2) /\
     feval h1 out == Vec.fmul (feval h0 f1) (feval h0 (gsub precomp 10ul 5ul)))
 
 let fmul_rn #s out f1 precomp =
@@ -359,20 +364,19 @@ val fmul_rn_normalize:
   Stack unit
   (requires fun h ->
     live h out /\ live h precomp /\
-    felem_fits h out (2,3,2,2,2) /\
+    felem_fits h out (3, 3, 3, 3, 3) /\
     F32xN.load_precompute_r_post #(width s) h precomp)
   (ensures fun h0 _ h1 ->
     modifies (loc out) h0 h1 /\
-    F32xN.acc_inv_t #(width s) (F32xN.as_tup5 h1 out) /\
+    felem_fits h1 out (2, 2, 2, 2, 2) /\
     (feval h1 out).[0] ==
     Vec.normalize_n #(width s) (feval h0 (gsub precomp 0ul 5ul)).[0] (feval h0 out))
 
 let fmul_rn_normalize #s out precomp =
   match s with
-  | M32  -> F32xN.fmul_rn_normalize #1 out precomp
-  | M128 -> F32xN.fmul_rn_normalize #2 out precomp
-  | M256 -> F32xN.fmul_rn_normalize #4 out precomp
-
+  | M32  -> Field32xN_32.fmul_r1_normalize out precomp
+  | M128 -> Field32xN_128.fmul_r2_normalize out precomp
+  | M256 -> Field32xN_256.fmul_r4_normalize out precomp
 
 inline_for_extraction noextract
 val fadd:
@@ -383,11 +387,11 @@ val fadd:
   Stack unit
   (requires fun h ->
     live h out /\ live h f1 /\ live h f2 /\
-    felem_fits h f1 (1,2,1,1,1) /\
-    felem_fits h f2 (1,1,1,1,1))
+    felem_fits h f1 (2, 2, 2, 2, 2) /\
+    felem_fits h f2 (1, 1, 1, 1, 1))
   (ensures fun h0 _ h1 ->
     modifies (loc out) h0 h1 /\
-    felem_fits h1 out (2,3,2,2,2) /\
+    felem_fits h1 out (3, 3, 3, 3, 3) /\
     feval h1 out == Vec.fadd (feval h0 f1) (feval h0 f2))
 
 let fadd #s out f1 f2 =
