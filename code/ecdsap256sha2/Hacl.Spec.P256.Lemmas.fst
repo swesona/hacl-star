@@ -459,7 +459,7 @@ val lemma_mul_nat5: a: nat -> b: nat -> c: nat -> d: nat -> e: nat -> Lemma (a *
 let lemma_mul_nat5 a b c d e = ()
 
 
-#reset-options " --z3rlimit 200" 
+#reset-options " --z3rlimit 300" 
 
 val modulo_distributivity_mult2: a: int -> b: int -> c: int -> d: pos -> Lemma (((a % d) * (b % d) * c) % d = (a * b * c)% d)
 

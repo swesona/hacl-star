@@ -56,7 +56,7 @@ val ecdsa_p256_sha2_keyGen: result: lbuffer uint8 (size 64) -> privKey: lbuffer 
 let ecdsa_p256_sha2_keyGen result privKey = key_gen result privKey
 
 
-val ecdsa_p256_sha2_sign: result: lbuffer uint8 (size 64) -> mLen: size_t -> m: lbuffer uint8 mLen {uint_v mLen < pow2 61} ->
+val ecdsa_p256_sha2_sign: result: lbuffer uint8 (size 64) -> mLen: size_t -> m: lbuffer uint8 mLen {uint_v mLen < Spec.Hash.Definitions.max_input_length (Spec.Hash.Definitions.SHA2_256)} ->
   privKey: lbuffer uint8 (size 32) -> 
   k: lbuffer uint8 (size 32) -> 
   Stack uint64
@@ -108,7 +108,7 @@ val ecdsa_p256_sha2_sign_nist: result: lbuffer uint8 (size 64) -> m: lbuffer uin
 let ecdsa_p256_sha2_sign_nist result m privKey k = ecdsa_signature_nist_compliant result m privKey k
 
 
-val ecdsa_p256_sha2_verify: mLen: size_t{uint_v mLen < pow2 61} ->  m: lbuffer uint8 mLen ->
+val ecdsa_p256_sha2_verify: mLen: size_t ->  m: lbuffer uint8 mLen {uint_v mLen < Spec.Hash.Definitions.max_input_length (Spec.Hash.Definitions.SHA2_256)} ->
   pubKey: lbuffer uint64 (size 8) -> 
   r: lbuffer uint64 (size 4) -> 
   s: lbuffer uint64 (size 4) ->
@@ -129,8 +129,8 @@ val ecdsa_p256_sha2_verify: mLen: size_t{uint_v mLen < pow2 61} ->  m: lbuffer u
 let ecdsa_p256_sha2_verify mLen m pubKey r s = ecdsa_verification pubKey r s mLen m
 
 val ecdsa_p256_sha2_verify_u8: pubKey: lbuffer uint8 (size 64) -> r: lbuffer uint8 (size 32) -> s: lbuffer uint8 (size 32) -> 
-  mLen: size_t{uint_v mLen < pow2 61} ->
-  m: lbuffer uint8 mLen -> 
+  mLen: size_t ->
+  m: lbuffer uint8 mLen {uint_v mLen < Spec.Hash.Definitions.max_input_length (Spec.Hash.Definitions.SHA2_256)} ->
   Stack bool
       (requires fun h -> 
 	live h pubKey /\ live h r /\ live h s /\ live h m /\

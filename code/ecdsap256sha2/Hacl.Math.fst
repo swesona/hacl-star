@@ -7,8 +7,8 @@ open FStar.Mul
 open Hacl.Spec.P256.Lemmas
 
 noextract
-let prime256:pos =
-  assert_norm (pow2 256 - pow2 224 + pow2 192 + pow2 96 -1 > 0);
+let prime256: (p: pos {p > 3}) =
+  assert_norm (pow2 256 - pow2 224 + pow2 192 + pow2 96 -1 > 3);
   pow2 256 - pow2 224 + pow2 192 + pow2 96 -1
 
 noextract

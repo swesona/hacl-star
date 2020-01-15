@@ -34,7 +34,7 @@ module Def = Spec.Hash.Definitions
 
 #set-options "--z3rlimit 100"
 
-val ecdsa_signature_step12: hashAsFelem: felem -> mLen: size_t -> m: lbuffer uint8 mLen {uint_v mLen < pow2 61} -> Stack unit 
+val ecdsa_signature_step12: hashAsFelem: felem -> mLen: size_t -> m: lbuffer uint8 mLen {uint_v mLen < Spec.Hash.Definitions.max_input_length (Spec.Hash.Definitions.SHA2_256)} -> Stack unit 
   (requires fun h -> live h hashAsFelem /\ live h m)
   (ensures fun h0 _ h1 -> modifies (loc hashAsFelem) h0 h1 /\
     (
@@ -262,7 +262,7 @@ let ecdsa_signature_nist_compliant result m privKey k =
     flag  
 
 
-val ecdsa_signature_core: r: felem -> s: felem -> mLen: size_t -> m: lbuffer uint8 mLen {uint_v mLen < pow2 61} ->  
+val ecdsa_signature_core: r: felem -> s: felem -> mLen: size_t -> m: lbuffer uint8 mLen {uint_v mLen < Spec.Hash.Definitions.max_input_length (Spec.Hash.Definitions.SHA2_256)} ->  
   privKeyAsFelem: felem  -> 
   k: lbuffer uint8 (size 32) -> 
   Stack uint64
@@ -315,7 +315,7 @@ let ecdsa_signature_core r s mLen m privKeyAsFelem k =
     logor step5Flag sIsZero
 
 
-val ecdsa_signature: result: lbuffer uint8 (size 64) -> mLen: size_t -> m: lbuffer uint8 mLen {uint_v mLen < pow2 61} ->
+val ecdsa_signature: result: lbuffer uint8 (size 64) -> mLen: size_t -> m: lbuffer uint8 mLen {uint_v mLen < Spec.Hash.Definitions.max_input_length (Spec.Hash.Definitions.SHA2_256)} ->
   privKey: lbuffer uint8 (size 32) -> 
   k: lbuffer uint8 (size 32) -> 
   Stack uint64

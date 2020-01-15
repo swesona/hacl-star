@@ -488,8 +488,8 @@ let ecdsa_verification_core publicKeyBuffer hashAsFelem r s mLen m xBuffer tempB
 
 
 val ecdsa_verification: pubKey: lbuffer uint64 (size 8) -> r: lbuffer uint64 (size 4) -> s: lbuffer uint64 (size 4) ->
-  mLen: size_t{uint_v mLen < pow2 61} ->
-  m: lbuffer uint8 mLen -> 
+  mLen: size_t ->
+  m: lbuffer uint8 mLen {uint_v mLen < Spec.Hash.Definitions.max_input_length (Spec.Hash.Definitions.SHA2_256)} ->
   Stack bool
     (requires fun h -> 
       live h pubKey /\ live h r /\ live h s /\ live h m /\
@@ -539,8 +539,8 @@ let ecdsa_verification pubKey r s mLen m =
     
    
 val ecdsa_verification_u8: pubKey: lbuffer uint8 (size 64) -> r: lbuffer uint8 (size 32) -> s: lbuffer uint8 (size 32) -> 
-  mLen: size_t{uint_v mLen < pow2 61} ->
-  m: lbuffer uint8 mLen -> 
+  mLen: size_t ->
+  m: lbuffer uint8 mLen {uint_v mLen < Spec.Hash.Definitions.max_input_length (Spec.Hash.Definitions.SHA2_256)} -> 
   Stack bool
       (requires fun h -> 
 	live h pubKey /\ live h r /\ live h s /\ live h m /\
