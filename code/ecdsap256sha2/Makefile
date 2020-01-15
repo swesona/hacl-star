@@ -5,6 +5,7 @@ HACL_HOME=../..
 all: dist/ecdsa-test.exe
 
 test: all
+	dist/ecdsa-test.exe
 
 # Defines rules for producing .checked, .krml, .depend, etc.
 include ../../Makefile.local

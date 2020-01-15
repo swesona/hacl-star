@@ -9,7 +9,7 @@
 #include <stdbool.h>
 #include <time.h>
 
-#include "../dist/Hacl_Impl_ECDSA_P256SHA256_Verification.h"
+#include "../dist/Hacl_Impl_ECDSA.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -212,7 +212,7 @@ m[127] = 0x0e;
       s[1] =  0x823f2e7058cbc148ul;
       s[0] =  0x4fcad1599db5018cul;
 
-      bool result = Hacl_Impl_ECDSA_P256SHA256_Verification_ecdsa_verification (pubKey, r, s, mLen, m);
+      bool result = Hacl_Impl_ECDSA_ecdsa_p256_sha2_verify (mLen, m , pubKey, r, s);
 
       bool expectedResult = false;
       if (result == expectedResult)
@@ -379,7 +379,7 @@ void testEcdsaVerification1()
       s[1] =  0x444e323075d98f31ul;
       s[0] =  0x920b9e0f57ec871cul;
 
-      bool result = Hacl_Impl_ECDSA_P256SHA256_Verification_ecdsa_verification (pubKey, r, s, mLen, m);
+      bool result = Hacl_Impl_ECDSA_ecdsa_p256_sha2_verify (mLen, m, pubKey, r, s);
 
       bool expectedResult = true;
       if (result == expectedResult)
@@ -555,7 +555,7 @@ void testEcdsaVerification2()
       s[1] =  0x0ba6c3a91fa54710;
       s[0] =  0x568e61aca3e847c6;
 
-      bool result = Hacl_Impl_ECDSA_P256SHA256_Verification_ecdsa_verification (pubKey, r, s, mLen, m);
+      bool result = Hacl_Impl_ECDSA_ecdsa_p256_sha2_verify  (mLen, m , pubKey, r, s);
 
       bool expectedResult = false;
       if (result == expectedResult)
@@ -724,7 +724,7 @@ void testEcdsaVerification3()
       s[1] =  0xe48955214783ecf5;
       s[0] =  0x0a4f0414a319c05a;
 
-      bool result = Hacl_Impl_ECDSA_P256SHA256_Verification_ecdsa_verification (pubKey, r, s, mLen, m);
+      bool result = Hacl_Impl_ECDSA_ecdsa_p256_sha2_verify  (mLen, m , pubKey, r, s);
 
       bool expectedResult = true;
       if (result == expectedResult)
@@ -893,7 +893,7 @@ m[127] = 0x84;
       s[1] =  0xa74673eb315680cb;
       s[0] =  0x89ccbc4eec477dce;
 
-      bool result = Hacl_Impl_ECDSA_P256SHA256_Verification_ecdsa_verification (pubKey, r, s, mLen, m);
+      bool result = Hacl_Impl_ECDSA_ecdsa_p256_sha2_verify  (mLen, m , pubKey, r, s);
 
       bool expectedResult = true;
       if (result == expectedResult)
