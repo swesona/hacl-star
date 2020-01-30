@@ -70,7 +70,7 @@ BASE_FLAGS = \
   -add-include '"kremlin/internal/types.h"' \
   -add-include '"kremlin/lowstar_endianness.h"' \
   -add-include '<string.h>' \
-  -header dist/LICENSE.txt
+  -header $(HACL_HOME)/dist/LICENSE.txt
 
 CURVE_BUNDLE_SLOW= \
   -bundle 'Hacl.Curve25519_64_Slow=Hacl.Impl.Curve25519.Field64.Hacl,Hacl.Spec.Curve25519,Hacl.Spec.Curve25519.\*'
@@ -99,6 +99,7 @@ NACLBOX_BUNDLE=-bundle Hacl.NaCl=Hacl.Impl.SecretBox,Hacl.Impl.Box
 HPKE_BUNDLE=
 
 TUTORIAL_BUNDLE=-bundle Tutorial
+ECDSA_BUNDLE=-bundle Hacl.Impl.ECDSA=Hacl.Impl.ECDSA,Hacl.Impl.ECDSA.*,Hacl.Impl.P256.*,Hacl.Hash.SHA2,Hacl.Hash.Core.SHA2,Hacl.Hash.Core.SHA2.Constants,Hacl.Hash.Definitions,Hacl.Impl.P256,Hacl.Spec.P256.*,Hacl.Impl.SolinasReduction,Hacl.Impl.LowLevel[rename=Hacl_ECDSA]
 FRODO_BUNDLE=-bundle 'Hacl.Frodo.KEM=Frodo.Params,Hacl.Impl.Frodo.*,Hacl.Impl.Matrix,Hacl.Frodo.*,Hacl.Keccak'
 
 # 3. OCaml
